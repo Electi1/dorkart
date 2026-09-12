@@ -87,6 +87,22 @@
   .leaflet-top.leaflet-right{margin-top:172px;}
   .done-badge{background:#eef1f5; color:var(--muted);}
   .meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+  .meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+  .apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+  .apptbox.has{background:#fff7e6; border-color:#f0d488;}
+  .appt-row{display:flex; align-items:center; gap:8px;}
+  .appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+  .appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+  .appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+  .appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+  .appt-save{background:var(--electi); color:#fff;}
+  .appt-cal{background:#e8a90c; color:#3a2c00;}
+  .appt-open{background:#eef1f6; color:var(--electi);}
+  .appt-del{background:#eef1f6; color:#b3261e;}
+  .apptline{margin-top:9px;}
+  .apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
   .locate{
     position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
     width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
@@ -122,6 +138,7 @@
     <div class="areatabs" id="areatabs"></div>
     <div class="chips" id="chips"></div>
     <label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
+    <div class="apptline" id="apptline" hidden></div>
   </div>
 </div>
 <button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
@@ -136,6 +153,7 @@
   <div class="sub" id="sSub"></div>
   <div class="badges" id="sBadges"></div>
   <div class="meta" id="sMeta"></div>
+  <div class="apptbox" id="sAppt"></div>
   <div class="actions">
     <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
     <button class="btn-done" id="sDone"></button>
@@ -146,6 +164,8 @@ var DATA = [{"navn": "Villaveien 1", "grp": "HP", "lat": 59.133901, "lon": 11.44
 var AREAS = ["Tistedal"];
 var STORE_KEY = "dorkart_Joakim_11.09.26";
 var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Joakim";
 var GROUPS = {
   "HP":       {raw:"#2f9e57", label:"HP"},
   "HC":       {raw:"#2f6fe0", label:"HC"},
@@ -156,6 +176,9 @@ var GROUPS = {
 function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
 function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
 var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
 var activeGroups = new Set(Object.keys(GROUPS));
 var area = "alle";
 var showDone = false;
@@ -182,7 +205,7 @@ function bounds(pred){
 function visible(d){
   if(!activeGroups.has(d.grp)) return false;
   if(area !== "alle" && d.area !== area) return false;
-  if(done.has(d.bnr) && !showDone) return false;
+  if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
   return true;
 }
 function refresh(){
@@ -190,7 +213,8 @@ function refresh(){
     var m = d._m, on = visible(d);
     if(on){
       if(!group.hasLayer(m)) group.addLayer(m);
-      m.setStyle({fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2});
+      if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+      else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
     } else { if(group.hasLayer(m)) group.removeLayer(m); }
   });
   updateCounts();
@@ -204,6 +228,13 @@ function updateCounts(){
     if(activeGroups.has(k)) rem += n;
   });
   document.getElementById("remN").textContent = rem;
+  var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+  var al = document.getElementById("apptline");
+  if(na>0){
+    al.hidden=false;
+    al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+    document.getElementById("apptZoom").onclick=function(){ var bb=bounds(function(d){return appts[d.bnr];}); if(bb) map.fitBounds(bb,{padding:[50,50], maxZoom:16}); };
+  } else { al.hidden=true; al.innerHTML=""; }
 }
 function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
 
@@ -245,6 +276,55 @@ Object.keys(GROUPS).forEach(function(k){
 document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
 
 var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function icsUri(d,a){
+  var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+  var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+  var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+  var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+  var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+  function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+  var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+    "SUMMARY:"+esc("Besøk: "+d.navn),"LOCATION:"+esc(d.adr),
+    "DESCRIPTION:"+esc("Electi dørsalg. Besøksnr "+d.bnr+(sfurl?"\n"+sfurl:"")),
+    "BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+    "END:VEVENT","END:VCALENDAR"];
+  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(L.join("\r\n"));
+}
+function renderAppt(d){
+  var box=document.getElementById("sAppt"), a=appts[d.bnr];
+  if(a){
+    box.className="apptbox has";
+    box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+      '<div class="appt-actions"><a class="appt-cal" id="aCal" download="avtale.ics">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+    document.getElementById("aCal").href=icsUri(d,a);
+    document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+    document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+  } else {
+    box.className="apptbox";
+    box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+    document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+  }
+}
+function showApptForm(d,a){
+  var box=document.getElementById("sAppt");
+  var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+  var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+  box.className="apptbox";
+  box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+    '<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+    '<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+  document.getElementById("aSave").onclick=function(){
+    var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+    if(!dd||!tt) return;
+    appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+  };
+  document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+
 var cur = null;
 function openSheet(d){
   cur = d;
@@ -255,10 +335,11 @@ function openSheet(d){
   if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
   document.getElementById("sBadges").innerHTML = badges;
   if(d.sfid){
-    document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+    document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol + ' · <a class="mini" href="' + SF_BASE + '/lightning/r/' + SF_OBJECT + '/' + d.sfid + '/edit" target="_blank" rel="noopener">Rediger ↗</a>';
   } else {
     document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
   }
+  renderAppt(d);
   document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
   var db = document.getElementById("sDone");
   if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
