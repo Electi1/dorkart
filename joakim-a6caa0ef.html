@@ -166,6 +166,7 @@ var STORE_KEY = "dorkart_Joakim_11.09.26";
 var SF_BASE = "https://cview.lightning.force.com";
 var SF_OBJECT = "Visit__c";
 var APPT_KEY = "dorkart_appt_Joakim";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
 var GROUPS = {
   "HP":       {raw:"#2f9e57", label:"HP"},
   "HC":       {raw:"#2f6fe0", label:"HC"},
@@ -280,16 +281,20 @@ function pad2(n){ return (n<10?"0":"")+n; }
 function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
 function icsUri(d,a){
   var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+  var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+  var sum="Besøk: "+d.navn;
+  var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+  if(ICS_ENDPOINT){
+    return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+  }
   var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
   var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
   var end=dt+"T"+pad2(eh)+pad2(em)+"00";
   var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
   function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
-  var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
   var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
     "UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
-    "SUMMARY:"+esc("Besøk: "+d.navn),"LOCATION:"+esc(d.adr),
-    "DESCRIPTION:"+esc("Electi dørsalg. Besøksnr "+d.bnr+(sfurl?"\n"+sfurl:"")),
+    "SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
     "BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
     "END:VEVENT","END:VCALENDAR"];
   var ics=L.join("\r\n");
