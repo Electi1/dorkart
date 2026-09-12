@@ -286,20 +286,23 @@ function icsUri(d,a){
   var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
   function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
   var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
-  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
     "UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
     "SUMMARY:"+esc("Besøk: "+d.navn),"LOCATION:"+esc(d.adr),
     "DESCRIPTION:"+esc("Electi dørsalg. Besøksnr "+d.bnr+(sfurl?"\n"+sfurl:"")),
     "BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
     "END:VEVENT","END:VCALENDAR"];
-  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(L.join("\r\n"));
+  var ics=L.join("\r\n");
+  try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+  try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+  catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
 }
 function renderAppt(d){
   var box=document.getElementById("sAppt"), a=appts[d.bnr];
   if(a){
     box.className="apptbox has";
     box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
-      '<div class="appt-actions"><a class="appt-cal" id="aCal" download="avtale.ics">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+      '<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
     document.getElementById("aCal").href=icsUri(d,a);
     document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
     document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
