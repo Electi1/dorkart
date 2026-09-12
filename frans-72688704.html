@@ -335,7 +335,7 @@ function openSheet(d){
   if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
   document.getElementById("sBadges").innerHTML = badges;
   if(d.sfid){
-    document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol + ' · <a class="mini" href="' + SF_BASE + '/lightning/r/' + SF_OBJECT + '/' + d.sfid + '/edit" target="_blank" rel="noopener">Rediger ↗</a>';
+    document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
   } else {
     document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
   }
