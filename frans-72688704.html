@@ -59,6 +59,19 @@
   .chip.off{opacity:.4; text-decoration:line-through;}
   .showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
   .showdone input{width:17px; height:17px;}
+  .searchwrap{position:relative; margin-top:8px;}
+  .searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+  .searchwrap input::placeholder{color:var(--muted);}
+  .searchwrap input:focus{outline:none; border-color:var(--electi);}
+  .search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+  .searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+  .search-item:last-child{border-bottom:none;}
+  .search-item:active{background:#f5f7fb;}
+  .search-main{display:flex; flex-direction:column; min-width:0;}
+  .search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
   .sheet{
     position:absolute; left:0; right:0; bottom:0; z-index:1200;
     background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
@@ -150,6 +163,11 @@
   <div class="controls">
     <div class="areatabs" id="areatabs"></div>
     <div class="chips" id="chips"></div>
+    <div class="searchwrap">
+      <input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+      <button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+      <div class="searchresults" id="searchResults" hidden></div>
+    </div>
     <label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
     <div class="apptline" id="apptline" hidden></div>
   </div>
@@ -329,6 +347,56 @@ function openApptList(){
 }
 function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
 function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+
+// Adressesøk
+function renderSearch(q){
+  var box=document.getElementById("searchResults");
+  q=(q||"").trim().toLowerCase();
+  if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+  var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+  hits.sort(function(a,b){
+    var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+    if(ai!==bi) return ai-bi;
+    return a.navn.localeCompare(b.navn,"no");
+  });
+  hits=hits.slice(0,8);
+  if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+  box.hidden=false;
+  box.innerHTML=hits.map(function(d){
+    var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+    return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+escH(d.adr)+'</span></span></button>';
+  }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+    btn.addEventListener("click", function(){
+      var bnr=btn.getAttribute("data-bnr"), d=null;
+      for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+      if(d) goToSearchDoor(d);
+    });
+  });
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+  hideSearch();
+  if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+  map.setView([d.lat, d.lon], 18, {animate:true});
+  openSheet(d);
+}
+(function(){
+  var si=document.getElementById("searchInput"); if(!si) return;
+  var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+  si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+  si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+  sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+  document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+  var tb=document.querySelector(".topbar"); if(!tb) return;
+  var el=document.querySelector(".leaflet-top.leaflet-right");
+  if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
 function icsUri(d,a){
   var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
   var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
@@ -438,6 +506,7 @@ locBtn.addEventListener("click", function(){
 var all = bounds(function(){ return true; });
 if(all) map.fitBounds(all, {padding:[40,40], maxZoom:16});
 refresh();
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
 </script>
 </body>
 </html>
