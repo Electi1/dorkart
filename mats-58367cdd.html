@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Mats Markus Dammann Johnsen 14.09.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --electi:#000089; }
+*{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
+html,body{ margin:0; padding:0; height:100%; }
+body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden;
+  font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:#fff; color:#16202c; -webkit-text-size-adjust:100%; }
+#top{ flex:0 0 auto; z-index:1200; box-shadow:0 2px 10px rgba(0,0,0,.12); }
+#brandbar{ background:var(--electi); color:#fff; display:flex; align-items:center; gap:12px;
+  padding:10px 12px; padding-top:calc(10px + env(safe-area-inset-top)); }
+#brandbar .logo{ height:38px; width:auto; display:block; flex:0 0 auto; }
+#brandbar .sep{ width:1px; align-self:stretch; background:rgba(255,255,255,.45); flex:0 0 auto; }
+#brandbar .who{ min-width:0; flex:1 1 auto; }
+#brandbar .who .nm{ font-family:Montserrat,sans-serif; font-weight:700; font-size:15px; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#brandbar .who .dt{ font-size:11px; opacity:.85; margin-top:1px; }
+#brandbar .right{ display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+#apptBtn{ background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.5);
+  border-radius:999px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+#apptBtn[hidden]{ display:none !important; }
+#leftPill{ background:#fff; color:var(--electi); border-radius:999px; padding:5px 12px;
+  font-size:13px; font-weight:700; white-space:nowrap; }
+#controls{ background:#fff; padding:8px 10px; display:flex; flex-direction:column; gap:7px;
+  border-bottom:1px solid #e3e7ec; }
+.searchwrap{ position:relative; }
+#q{ width:100%; padding:8px 30px 8px 32px; border:1px solid #ccd3db; border-radius:9px; font-size:14px;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237b8794' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 8px 50%/16px 16px; }
+#q:focus{ outline:none; border-color:var(--electi); }
+#qclear{ position:absolute; right:4px; top:50%; transform:translateY(-50%); border:0; background:none;
+  font-size:18px; color:#7b8794; cursor:pointer; padding:2px 6px; display:none; }
+#qres{ position:absolute; left:0; right:0; top:calc(100% + 4px); background:#fff; border:1px solid #ccd3db;
+  border-radius:9px; box-shadow:0 6px 20px rgba(0,0,0,.15); max-height:46vh; overflow:auto; z-index:1300; display:none; }
+#qres .r{ padding:9px 11px; border-bottom:1px solid #eef1f4; cursor:pointer; display:flex; align-items:center; gap:9px; }
+#qres .r:last-child{ border-bottom:0; }
+#qres .r .t{ font-family:Montserrat,sans-serif; font-weight:600; font-size:13px; }
+#qres .r .s{ font-size:11px; color:#6b7683; }
+.dot{ width:11px; height:11px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 0 1.5px #fff inset; }
+#tabs{ display:flex; gap:6px; overflow-x:auto; }
+#tabs button{ border:1px solid #ccd3db; background:#fff; border-radius:999px; padding:5px 12px;
+  font-size:12.5px; cursor:pointer; white-space:nowrap; color:#3b4757; }
+#tabs button.on{ background:var(--electi); border-color:var(--electi); color:#fff; font-weight:600; }
+#tabs[hidden]{ display:none !important; }
+#chips{ display:flex; gap:6px; overflow-x:auto; align-items:center; }
+#chips .chip{ border:1.5px solid #d3d9e0; background:#fff; border-radius:999px; padding:4px 10px;
+  font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+#chips .chip.off{ opacity:.4; }
+#chips .chip .n{ font-weight:700; }
+.togglewrap{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:#3b4757; white-space:nowrap; }
+#map{ flex:1 1 auto; min-height:0; }
+#locbtn{ position:fixed; right:12px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:1100;
+  width:46px; height:46px; border-radius:50%; border:0; background:#fff; cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.28); font-size:20px; line-height:46px; }
+.sheet{ position:fixed; left:0; right:0; bottom:0; z-index:1400; background:#fff;
+  border-radius:16px 16px 0 0; box-shadow:0 -4px 24px rgba(0,0,0,.25);
+  padding:14px 16px calc(16px + env(safe-area-inset-bottom)); max-height:76vh; overflow:auto;
+  transform:translateY(102%); transition:transform .2s ease; }
+.sheet.open{ transform:translateY(0); }
+.sheet .close{ position:absolute; right:10px; top:8px; border:0; background:none; font-size:22px;
+  color:#7b8794; cursor:pointer; padding:2px 8px; }
+.sheet h2{ font-family:Montserrat,sans-serif; font-weight:700; font-size:19px; margin:0 30px 2px 0; }
+.sheet .full{ font-size:12.5px; color:#6b7683; margin-bottom:8px; }
+.badges{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.badge{ border-radius:999px; padding:3px 9px; font-size:11.5px; font-weight:600; color:#fff; }
+.badge.grey{ background:#8a94a0; }
+.badge.done{ background:#16202c; }
+.meta{ font-size:13px; color:#3b4757; margin-bottom:10px; }
+.meta a{ color:var(--electi); font-weight:600; text-decoration:none; }
+.units{ border:1px solid #e3e7ec; border-radius:11px; margin-bottom:11px; overflow:hidden; }
+.units .hd{ background:#f4f6f8; padding:7px 11px; font-size:12px; font-weight:700; color:#3b4757; }
+.units .u{ display:flex; align-items:center; gap:9px; padding:8px 11px; border-top:1px solid #eef1f4; cursor:pointer; }
+.units .u .txt{ flex:1 1 auto; min-width:0; }
+.units .u .p{ font-size:13px; font-weight:600; }
+.units .u .sub{ font-size:11px; color:#6b7683; }
+.units .u a.vis{ color:var(--electi); font-size:12px; font-weight:600; text-decoration:none; flex:0 0 auto; }
+.units .u.cur{ background:#f0f3ff; }
+.appt{ border:1px solid #e3e7ec; border-radius:11px; padding:9px 11px; margin-bottom:11px; }
+.appt .lab{ font-size:12px; font-weight:700; color:#3b4757; margin-bottom:6px; }
+.appt .row{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.appt input{ border:1px solid #ccd3db; border-radius:8px; padding:6px 8px; font-size:13px; }
+.btn{ border:0; border-radius:10px; padding:11px 14px; font-size:14px; font-weight:700; cursor:pointer;
+  text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.btn.pri{ background:var(--electi); color:#fff; }
+.btn.sec{ background:#eef1f4; color:#16202c; }
+.btn.sm{ padding:7px 11px; font-size:12.5px; border-radius:9px; }
+.actions{ display:flex; gap:8px; }
+.actions .btn{ flex:1 1 0; }
+#apptList .a{ display:flex; align-items:center; gap:9px; padding:9px 2px; border-bottom:1px solid #eef1f4; cursor:pointer; }
+#apptList .a:last-child{ border-bottom:0; }
+#apptList .a.past{ opacity:.45; }
+#apptList .a .txt{ flex:1 1 auto; min-width:0; }
+#apptList .a .p{ font-size:13.5px; font-weight:600; }
+#apptList .a .s{ font-size:11.5px; color:#6b7683; }
+#apptList .a .tm{ font-family:Montserrat,sans-serif; font-weight:700; font-size:14px; color:var(--electi); }
+.leaflet-container{ font:inherit; }
+</style>
+</head>
+<body>
+<div id="top">
+  <div id="brandbar">
+    <img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi">
+    <div class="sep"></div>
+    <div class="who">
+      <div class="nm">Mats Markus Dammann Johnsen</div>
+      <div class="dt">14.09.26</div>
+    </div>
+    <div class="right">
+      <button id="apptBtn" hidden></button>
+      <span id="leftPill">0 igjen</span>
+    </div>
+  </div>
+  <div id="controls">
+    <div class="searchwrap">
+      <input id="q" type="search" placeholder="Søk adresse…" autocomplete="off">
+      <button id="qclear" aria-label="Tøm">&times;</button>
+      <div id="qres"></div>
+    </div>
+    <div id="tabs" hidden></div>
+    <div id="chips"></div>
+    <div class="togglewrap"><input type="checkbox" id="showDone"><label for="showDone">Vis fullførte dører</label></div>
+  </div>
+</div>
+<div id="map"></div>
+<button id="locbtn" title="Min posisjon">◎</button>
+
+<div class="sheet" id="sheet">
+  <button class="close" data-close="sheet">&times;</button>
+  <h2 id="shTitle"></h2>
+  <div class="full" id="shFull"></div>
+  <div class="badges" id="shBadges"></div>
+  <div class="meta" id="shMeta"></div>
+  <div id="shUnits"></div>
+  <div class="appt">
+    <div class="lab">📅 Avtale</div>
+    <div class="row">
+      <input type="date" id="apDate"><input type="time" id="apTime">
+      <button class="btn pri sm" id="apSave">Legg i kalender</button>
+      <button class="btn sec sm" id="apDel" hidden>Fjern avtale</button>
+    </div>
+  </div>
+  <div class="actions">
+    <a class="btn pri" id="navBtn" target="_blank" rel="noopener">Naviger</a>
+    <button class="btn sec" id="doneBtn">Ferdig – fjern</button>
+  </div>
+</div>
+
+<div class="sheet" id="apptSheet">
+  <button class="close" data-close="apptSheet">&times;</button>
+  <h2>Avtaler</h2>
+  <div id="apptList"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+"use strict";
+var DATA = [{"b": "V-10861637", "g": "Brekka 33", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130816, "lon": 9.661185, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CKsxMAG"}, {"b": "V-10862857", "g": "Brekka 52", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131652, "lon": 9.664608, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLCdMAO"}, {"b": "V-10862948", "g": "Brekka 39", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131133, "lon": 9.662396, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLE6MAO"}, {"b": "V-10863102", "g": "Østre Bjørntvedtveg 8", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133987, "lon": 9.666173, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLGaMAO"}, {"b": "V-10863239", "g": "Vidsynvegen 22 B", "bo": "U0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130502, "lon": 9.660186, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLInMAO"}, {"b": "V-10863276", "g": "Bjørnlivegen 21 B", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132517, "lon": 9.663908, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLJOMA4"}, {"b": "V-10863608", "g": "Brekka 13", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132081, "lon": 9.657784, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLQLMA4"}, {"b": "V-10863617", "g": "Østre Bjørntvedtveg 72", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131506, "lon": 9.668502, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLQUMA4"}, {"b": "V-10863882", "g": "Brekka 43", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131248, "lon": 9.66349, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLUlMAO"}, {"b": "V-10864323", "g": "Brekka 40", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131455, "lon": 9.6627, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLbsMAG"}, {"b": "V-10864585", "g": "Bjørnlivegen 14", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133371, "lon": 9.663733, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLg6MAG"}, {"b": "V-10864772", "g": "Bjørnhullvegen 16", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133491, "lon": 9.661446, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLj7MAG"}, {"b": "V-10865486", "g": "Vidsynvegen 21", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130191, "lon": 9.659217, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLudMAG"}, {"b": "V-10865708", "g": "Vidsynvegen 8", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131698, "lon": 9.657323, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CLyDMAW"}, {"b": "V-10866050", "g": "Bjørnefaret 12", "bo": "H0102", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133486, "lon": 9.664172, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CM3jMAG"}, {"b": "V-10866051", "g": "Gråbjørnvegen 21", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131723, "lon": 9.66288, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CM3kMAG"}, {"b": "V-10866285", "g": "Bjørnlivegen 29", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.132769, "lon": 9.665608, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CM7WMAW"}, {"b": "V-10866740", "g": "Bjørnlivegen 43", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133645, "lon": 9.666016, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMErMAO"}, {"b": "V-10866757", "g": "Bjørntvedtåsen 15", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13164, "lon": 9.666932, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMF8MAO"}, {"b": "V-10866840", "g": "Brekka 27", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13094, "lon": 9.659684, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMGTMA4"}, {"b": "V-10866890", "g": "Brekka 38", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131341, "lon": 9.662165, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMHHMA4"}, {"b": "V-10867010", "g": "Brekka 29", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130849, "lon": 9.660015, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMJDMA4"}, {"b": "V-10867208", "g": "Gråbjørnvegen 19 E", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131585, "lon": 9.662135, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMMPMA4"}, {"b": "V-10867273", "g": "Bjørnhullvegen 19", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133071, "lon": 9.660931, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMNSMA4"}, {"b": "V-10867386", "g": "Vidsynvegen 7", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131458, "lon": 9.656829, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMPHMA4"}, {"b": "V-10867561", "g": "Bjørntvedtåsen 22", "bo": "H0201", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132328, "lon": 9.665739, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMS6MAO"}, {"b": "V-10867615", "g": "Bjørntvedtåsen 26", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132486, "lon": 9.665478, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMSyMAO"}, {"b": "V-10867763", "g": "Østre Bjørntvedtveg 70", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131706, "lon": 9.668016, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMVMMA4"}, {"b": "V-10868590", "g": "Bjørnlivegen 47", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133785, "lon": 9.665331, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMihMAG"}, {"b": "V-10868786", "g": "Bjørnlivegen 5", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13374, "lon": 9.661905, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMlrMAG"}, {"b": "V-10868870", "g": "Bjørntvedtåsen 4", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131319, "lon": 9.666489, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMnDMAW"}, {"b": "V-10868982", "g": "Bjørnhullvegen 18", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133327, "lon": 9.661508, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMp1MAG"}, {"b": "V-10869157", "g": "Bjørnefaret 12", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133486, "lon": 9.664172, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMrqMAG"}, {"b": "V-10869159", "g": "Bjørnlivegen 19", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.132797, "lon": 9.663634, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMrsMAG"}, {"b": "V-10869378", "g": "Østre Bjørntvedtveg 90", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13044, "lon": 9.667398, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CMvPMAW"}, {"b": "V-10869755", "g": "Bjørnhullvegen 28", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131938, "lon": 9.661241, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CN1UMAW"}, {"b": "V-10869906", "g": "Vidsynvegen 10", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131454, "lon": 9.65751, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CN3vMAG"}, {"b": "V-10869973", "g": "Bjørnefaret 7", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133733, "lon": 9.663338, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CN50MAG"}, {"b": "V-10870451", "g": "Brekka 19", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131576, "lon": 9.658369, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNCiMAO"}, {"b": "V-10870587", "g": "Bjørnlivegen 45", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133701, "lon": 9.665677, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNEuMAO"}, {"b": "V-10871091", "g": "Vidsynvegen 22 A", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130472, "lon": 9.659937, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNN2MAO"}, {"b": "V-10871248", "g": "Bjørnlivegen 41 B", "bo": "U0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133616, "lon": 9.666384, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNPZMA4"}, {"b": "V-10871393", "g": "Bjørntvedtåsen 44", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.132101, "lon": 9.667549, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNRuMAO"}, {"b": "V-10871689", "g": "Brekka 53", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131488, "lon": 9.665059, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNWgMAO"}, {"b": "V-10872776", "g": "Bjørnlivegen 10", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133762, "lon": 9.662901, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNoDMAW"}, {"b": "V-10872810", "g": "Vidsynvegen 12", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13121, "lon": 9.65782, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNolMAG"}, {"b": "V-10872817", "g": "Gråbjørnvegen 19 B", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131721, "lon": 9.662003, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNosMAG"}, {"b": "V-10873039", "g": "Vidsynvegen 17", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130417, "lon": 9.658434, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CNsSMAW"}, {"b": "V-10873545", "g": "Bjørnhullvegen 19 B", "bo": "H0201", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133173, "lon": 9.660374, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CO0cMAG"}, {"b": "V-10873922", "g": "Bjørnlivegen 3", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133949, "lon": 9.661385, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CO6hMAG"}, {"b": "V-10874393", "g": "Bjørnhullvegen 14", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133751, "lon": 9.661451, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COEIMA4"}, {"b": "V-10874424", "g": "Bjørnlivegen 41 A", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133563, "lon": 9.666313, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COEnMAO"}, {"b": "V-10874730", "g": "Bjørnlivegen 8 B", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133934, "lon": 9.662503, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COJjMAO"}, {"b": "V-10874960", "g": "Østre Bjørntvedtveg 1", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.134122, "lon": 9.664394, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CONRMA4"}, {"b": "V-10875108", "g": "Bjørnhullvegen 19 B", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133173, "lon": 9.660374, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COPpMAO"}, {"b": "V-10875160", "g": "Bjørntvedtåsen 38", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13272, "lon": 9.667245, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COQfMAO"}, {"b": "V-10875342", "g": "Bjørnhullvegen 22", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132978, "lon": 9.661391, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COTbMAO"}, {"b": "V-10875790", "g": "Brekka 44 B", "bo": "U0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131481, "lon": 9.663641, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COapMAG"}, {"b": "V-10875805", "g": "Bjørnlivegen 20", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133081, "lon": 9.664286, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COb4MAG"}, {"b": "V-10876783", "g": "Brekka 35", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130885, "lon": 9.661745, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COqqMAG"}, {"b": "V-10876954", "g": "Bjørnlivegen 57", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133023, "lon": 9.665194, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COtbMAG"}, {"b": "V-10877074", "g": "Brekka 34", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131246, "lon": 9.66142, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COvXMAW"}, {"b": "V-10877162", "g": "Vidsynvegen 23", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130132, "lon": 9.659669, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COwxMAG"}, {"b": "V-10877274", "g": "Bjørnlivegen 51", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133383, "lon": 9.665026, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000COylMAG"}, {"b": "V-10877423", "g": "Gråbjørnvegen 23", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132073, "lon": 9.662974, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CP1AMAW"}, {"b": "V-10877485", "g": "Brekka 21", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131359, "lon": 9.658539, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CP2AMAW"}, {"b": "V-10878139", "g": "Bjørntvedtåsen 24", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132301, "lon": 9.665721, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPCiMAO"}, {"b": "V-10878140", "g": "Brekka 46", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131475, "lon": 9.663906, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPCjMAO"}, {"b": "V-10878456", "g": "Bjørnlivegen 35", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.132929, "lon": 9.667106, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPHpMAO"}, {"b": "V-10878649", "g": "Bjørnlivegen 23", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132596, "lon": 9.664364, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPKwMAO"}, {"b": "V-10878713", "g": "Bjørnhullvegen 25", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132156, "lon": 9.660791, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPLyMAO"}, {"b": "V-10879225", "g": "Vidsynvegen 19", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.130284, "lon": 9.658831, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPUEMA4"}, {"b": "V-10879298", "g": "Stangsgate 43", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.13431, "lon": 9.662895, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPVPMA4"}, {"b": "V-10879341", "g": "Bjørnlivegen 55", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133112, "lon": 9.66523, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPW6MAO"}, {"b": "V-10879431", "g": "Bjørnlivegen 8 A", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133962, "lon": 9.662433, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPXYMA4"}, {"b": "V-10879584", "g": "Gråbjørnvegen 25", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131854, "lon": 9.663686, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPa1MAG"}, {"b": "V-10879781", "g": "Bjørnhullvegen 21 B", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.132787, "lon": 9.660366, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPdCMAW"}, {"b": "V-10879860", "g": "Vidsynvegen 18", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.130603, "lon": 9.658944, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPeTMAW"}, {"b": "V-10880348", "g": "Vidsynvegen 25 A", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130165, "lon": 9.660108, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPmLMAW"}, {"b": "V-10880786", "g": "Bjørnlivegen 4", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.134251, "lon": 9.662055, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CPtPMAW"}, {"b": "V-10881276", "g": "Brekka 49", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131166, "lon": 9.664721, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQ1JMAW"}, {"b": "V-10881432", "g": "Brekka 42", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131471, "lon": 9.663032, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQ3pMAG"}, {"b": "V-10881678", "g": "Bjørnlivegen 22", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132881, "lon": 9.664807, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQ7nMAG"}, {"b": "V-10882037", "g": "Bjørnhullvegen 15", "bo": "H0201", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133547, "lon": 9.660888, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQDaMAO"}, {"b": "V-10882340", "g": "Bjørntvedtåsen 41", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132331, "lon": 9.666928, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQK4MAO"}, {"b": "V-10883022", "g": "Brekka 7", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132535, "lon": 9.656954, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQWfMAO"}, {"b": "V-10883039", "g": "Bjørnhullvegen 31", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131412, "lon": 9.66048, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQWwMAO"}, {"b": "V-10884063", "g": "Bjørntvedtåsen 36", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.132727, "lon": 9.666761, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQnSMAW"}, {"b": "V-10884538", "g": "Bjørnefaret 6", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.134037, "lon": 9.663553, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQv7MAG"}, {"b": "V-10884615", "g": "Bjørnhullvegen 23", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.132551, "lon": 9.660834, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQwMMAW"}, {"b": "V-10884670", "g": "Brekka 20", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131643, "lon": 9.659139, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CQxFMAW"}, {"b": "V-10885043", "g": "Bjørnefaret 8", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.1339, "lon": 9.663883, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CR3GMAW"}, {"b": "V-10886194", "g": "Bjørnlivegen 42", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133451, "lon": 9.665779, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRLpMAO"}, {"b": "V-10886223", "g": "Bjørnlivegen 11", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133251, "lon": 9.662629, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRMIMA4"}, {"b": "V-10886475", "g": "Vidsynvegen 25 B", "bo": "U0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130179, "lon": 9.660198, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRQMMA4"}, {"b": "V-10886500", "g": "Vidsynvegen 13", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.130888, "lon": 9.657657, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRQlMAO"}, {"b": "V-10886602", "g": "Østre Bjørntvedtveg 6", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.134116, "lon": 9.665617, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRSPMA4"}, {"b": "V-10886835", "g": "Brekka 44 A", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.131425, "lon": 9.66359, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRWAMA4"}, {"b": "V-10886909", "g": "Bjørntvedtåsen 10", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131404, "lon": 9.665582, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRXMMA4"}, {"b": "V-10886994", "g": "Bjørnlivegen 30", "bo": "H0101", "grp": "HC", "st": "Ikke besøkt", "lat": 59.133272, "lon": 9.6656, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRYjMAO"}, {"b": "V-10887459", "g": "Bjørntvedtåsen 2", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131353, "lon": 9.666856, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRgEMAW"}, {"b": "V-10887564", "g": "Gråbjørnvegen 5", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.131947, "lon": 9.659512, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRhvMAG"}, {"b": "V-10887854", "g": "Bjørnlivegen 7", "bo": "H0101", "grp": "HP", "st": "Ikke besøkt", "lat": 59.13372, "lon": 9.662254, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRmbMAG"}, {"b": "V-10888273", "g": "Bjørnhullvegen 15 B", "bo": "H0201", "grp": "HP", "st": "Ikke besøkt", "lat": 59.133523, "lon": 9.660381, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CRtMMAW"}, {"b": "V-10888947", "g": "Brekka 11", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.132244, "lon": 9.657525, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CS8iMAG"}, {"b": "V-10888998", "g": "Bjørnåsvegen 4", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.133972, "lon": 9.660372, "post": "3916", "sted": "PORSGRUNN", "sf": "a4CSg000000CS9XMAW"}, {"b": "V-10889297", "g": "Bjørnlivegen 6", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.134088, "lon": 9.662296, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CSEMMA4"}, {"b": "V-10890450", "g": "Vidsynvegen 24", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.130775, "lon": 9.660415, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CSWxMAO"}, {"b": "V-10890881", "g": "Bjørnhullvegen 16 B", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.133379, "lon": 9.661985, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CSfVMAW"}, {"b": "V-10891087", "g": "Bjørnlivegen 32", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.13317, "lon": 9.66621, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CSkRMAW"}, {"b": "V-10891195", "g": "Bjørnlivegen 16", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.133253, "lon": 9.663975, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CSnmMAG"}, {"b": "V-10892004", "g": "Gråbjørnvegen 22", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.132412, "lon": 9.663434, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CT0pMAG"}, {"b": "V-10892319", "g": "Bjørntvedtåsen 14", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.131737, "lon": 9.666426, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CT5uMAG"}, {"b": "V-10892594", "g": "Gråbjørnvegen 30", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.132051, "lon": 9.665454, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CTALMA4"}, {"b": "V-10892706", "g": "Bjørntvedtåsen 43", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.132124, "lon": 9.667028, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CTC9MAO"}, {"b": "V-10893516", "g": "Bjørnlivegen 53", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.133256, "lon": 9.665146, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CTPDMA4"}, {"b": "V-10893735", "g": "Gråbjørnvegen 20", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.132406, "lon": 9.662858, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CTSkMAO"}, {"b": "V-10894619", "g": "Bjørntvedtåsen 42", "bo": "H0101", "grp": "Kun mobil", "st": "Ikke besøkt", "lat": 59.132347, "lon": 9.667483, "post": "3917", "sted": "PORSGRUNN", "sf": "a4CSg000000CTh0MAG"}];
+var SELGER = "Mats Markus Dammann Johnsen";
+var DATO = "14.09.26";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var SF_BASE = "https://cview.lightning.force.com";
+var GRP = {"HP": "#2f9e57", "HC": "#2f6fe0", "HC Vula": "#e07d2f", "Kun mobil": "#6b7683"};
+var GOLD = "#d4a017";
+var STACK_PX = 15;
+
+var KEY_DONE = "dorkart_" + SELGER + "_" + DATO;
+var KEY_APPT = "dorkart_appt_" + SELGER;
+
+function lsGet(k, fb){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; }catch(e){ return fb; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+var done = {}; (lsGet(KEY_DONE, []) || []).forEach(function(b){ done[b] = 1; });
+var appts = lsGet(KEY_APPT, {}) || {};
+function saveDone(){ lsSet(KEY_DONE, Object.keys(done)); }
+function saveAppts(){ lsSet(KEY_APPT, appts); }
+
+/* ---- stacks: doors sharing one coordinate ---- */
+var stacks = {};
+DATA.forEach(function(d){
+  d._k = d.lat.toFixed(5) + "," + d.lon.toFixed(5);
+  (stacks[d._k] = stacks[d._k] || []).push(d);
+});
+Object.keys(stacks).forEach(function(k){
+  var arr = stacks[k], n = arr.length;
+  var gates = {}; arr.forEach(function(d){ gates[d.g] = 1; });
+  var mixed = Object.keys(gates).length > 1;
+  arr.forEach(function(d, i){
+    d._stackN = n; d._mixed = mixed;
+    var ang = 2 * Math.PI * i / n - Math.PI / 2;
+    d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+  });
+});
+
+/* ---- areas from poststed ---- */
+var steder = []; DATA.forEach(function(d){ if(steder.indexOf(d.sted) < 0) steder.push(d.sted); });
+steder.sort();
+var area = "*";
+
+/* ---- map ---- */
+var map = L.map("map", { zoomControl:true, tap:false });
+map.setView([DATA.length ? DATA[0].lat : 59.1400, DATA.length ? DATA[0].lon : 9.6600], 14);
+var farge = L.tileLayer("https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png",
+  { maxNativeZoom:18, maxZoom:19, attribution:"&copy; Kartverket" });
+var graa = L.tileLayer("https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png",
+  { maxNativeZoom:18, maxZoom:19, attribution:"&copy; Kartverket" });
+farge.addTo(map);
+L.control.layers({ "Kartverket farge": farge, "Kartverket gråtone": graa }, null, { position:"topright" }).addTo(map);
+
+var active = {}; Object.keys(GRP).forEach(function(g){ active[g] = true; });
+var showDone = false;
+
+function colorOf(d){ return appts[d.b] ? GOLD : (GRP[d.grp] || "#6b7683"); }
+function visible(d){
+  if(area !== "*" && d.sted !== area) return false;
+  if(!active[d.grp]) return false;
+  if(done[d.b] && !showDone) return false;
+  return true;
+}
+
+DATA.forEach(function(d){
+  d._m = L.circleMarker([d.lat, d.lon], { radius:8, weight:2, color:"#fff", fillColor:colorOf(d), fillOpacity:1 });
+  d._m.on("click", function(){ openDoor(d); });
+});
+
+function refresh(){
+  DATA.forEach(function(d){
+    var v = visible(d);
+    if(v && !map.hasLayer(d._m)) d._m.addTo(map);
+    if(!v && map.hasLayer(d._m)) map.removeLayer(d._m);
+    if(v) d._m.setStyle({ fillColor: colorOf(d), fillOpacity: done[d.b] ? 0.3 : 1, opacity: done[d.b] ? 0.4 : 1 });
+  });
+  layoutStacks();
+  var left = DATA.filter(function(d){
+    return (area === "*" || d.sted === area) && active[d.grp] && !done[d.b];
+  }).length;
+  document.getElementById("leftPill").textContent = left + " igjen";
+  Object.keys(GRP).forEach(function(g){
+    var el = document.querySelector('.chip[data-g="' + g + '"] .n');
+    if(el) el.textContent = DATA.filter(function(d){
+      return d.grp === g && (area === "*" || d.sted === area) && !done[d.b];
+    }).length;
+  });
+  var na = Object.keys(appts).length, ab = document.getElementById("apptBtn");
+  ab.hidden = na === 0; ab.textContent = "📅 " + na + (na === 1 ? " avtale" : " avtaler");
+}
+
+function layoutStacks(){
+  DATA.forEach(function(d){
+    if(!d._stackN || d._stackN < 2) return;
+    if(!map.hasLayer(d._m)) return;
+    var base = map.latLngToLayerPoint([d.lat, d.lon]);
+    d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox * STACK_PX, base.y + d._oy * STACK_PX)));
+  });
+}
+map.on("zoomend", layoutStacks);
+
+/* ---- bottom sheet ---- */
+var cur = null;
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function sfUrl(d){ return d.sf ? (SF_BASE + "/lightning/r/" + d.sf + "/view") : ""; }
+function unitLabel(d){ return (d._mixed ? d.g + " " : "") + (d.bo ? "Bolig " + d.bo : "Bolig –"); }
+
+function openDoor(d){
+  cur = d;
+  document.getElementById("shTitle").textContent = d.g;
+  document.getElementById("shFull").textContent = d.g + ", " + d.post + " " + d.sted;
+  var bg = [];
+  bg.push('<span class="badge" style="background:' + (GRP[d.grp] || "#6b7683") + '">' + esc(d.grp) + "</span>");
+  bg.push('<span class="badge grey">' + esc(d.st) + "</span>");
+  if(done[d.b]) bg.push('<span class="badge done">Fullført</span>');
+  document.getElementById("shBadges").innerHTML = bg.join("");
+  var bnrHtml = d.sf
+    ? '<a href="' + esc(sfUrl(d)) + '" target="_blank" rel="noopener">Besøksnr ' + esc(d.b) + " ↗</a>"
+    : "Besøksnr " + esc(d.b);
+  document.getElementById("shMeta").innerHTML = bnrHtml + " · Bolig " + esc(d.bo || "–");
+
+  var uw = document.getElementById("shUnits");
+  if(d._stackN > 1){
+    var arr = stacks[d._k], h = '<div class="units"><div class="hd">🏠 ' + arr.length + " boenheter her</div>";
+    arr.forEach(function(u){
+      h += '<div class="u' + (u === d ? " cur" : "") + '" data-b="' + esc(u.b) + '">'
+        + '<span class="dot" style="background:' + (GRP[u.grp] || "#6b7683") + '"></span>'
+        + '<span class="txt"><span class="p">' + esc(unitLabel(u)) + (u === d ? " (denne)" : "") + (done[u.b] ? " ✓" : "")
+        + '</span><br><span class="sub">' + esc(u.grp) + " · " + esc(u.st) + "</span></span>"
+        + (u.sf ? '<a class="vis" href="' + esc(sfUrl(u)) + '" target="_blank" rel="noopener">Besøk ↗</a>' : "")
+        + "</div>";
+    });
+    uw.innerHTML = h + "</div>";
+    uw.querySelectorAll(".u").forEach(function(row){
+      row.addEventListener("click", function(ev){
+        if(ev.target.closest("a")) return;
+        var t = DATA.filter(function(x){ return x.b === row.getAttribute("data-b"); })[0];
+        if(t) openDoor(t);
+      });
+    });
+  } else { uw.innerHTML = ""; }
+
+  var a = appts[d.b];
+  document.getElementById("apDate").value = a ? a.slice(0, 10) : "";
+  document.getElementById("apTime").value = a ? a.slice(11, 16) : "";
+  document.getElementById("apDel").hidden = !a;
+  document.getElementById("navBtn").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+  document.getElementById("doneBtn").textContent = done[d.b] ? "Angre" : "Ferdig – fjern";
+  document.getElementById("sheet").classList.add("open");
+}
+function closeSheet(id){ document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll("[data-close]").forEach(function(b){
+  b.addEventListener("click", function(){ closeSheet(b.getAttribute("data-close")); });
+});
+document.getElementById("doneBtn").addEventListener("click", function(){
+  if(!cur) return;
+  if(done[cur.b]) delete done[cur.b]; else done[cur.b] = 1;
+  saveDone(); refresh();
+  document.getElementById("doneBtn").textContent = done[cur.b] ? "Angre" : "Ferdig – fjern";
+  if(!showDone && done[cur.b]) closeSheet("sheet"); else openDoor(cur);
+});
+
+/* ---- appointments ---- */
+function pad(n){ return (n < 10 ? "0" : "") + n; }
+function icsStamp(dt){
+  return dt.getUTCFullYear() + pad(dt.getUTCMonth() + 1) + pad(dt.getUTCDate()) + "T"
+    + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + "00Z";
+}
+document.getElementById("apSave").addEventListener("click", function(){
+  if(!cur) return;
+  var dv = document.getElementById("apDate").value, tv = document.getElementById("apTime").value;
+  if(!dv || !tv){ alert("Velg dato og klokkeslett."); return; }
+  appts[cur.b] = dv + "T" + tv; saveAppts(); refresh();
+  document.getElementById("apDel").hidden = false;
+  var start = new Date(dv + "T" + tv);
+  var sum = "Avtale " + cur.g, loc = cur.g + ", " + cur.post + " " + cur.sted;
+  var uid = "dorkart-" + cur.b + "@electi";
+  if(ICS_ENDPOINT){
+    var u = ICS_ENDPOINT + "?start=" + encodeURIComponent(icsStamp(start)) + "&dur=30"
+      + "&sum=" + encodeURIComponent(sum) + "&loc=" + encodeURIComponent(loc)
+      + "&desc=" + encodeURIComponent("Besøksnr " + cur.b) + "&uid=" + encodeURIComponent(uid);
+    window.location.href = u;
+  } else {
+    var end = new Date(start.getTime() + 30 * 60000);
+    var ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//dorkart//NO","BEGIN:VEVENT",
+      "UID:" + uid, "DTSTAMP:" + icsStamp(new Date()), "DTSTART:" + icsStamp(start), "DTEND:" + icsStamp(end),
+      "SUMMARY:" + sum, "LOCATION:" + loc, "BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY",
+      "DESCRIPTION:" + sum, "END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+    var blob = new Blob([ics], { type:"text/calendar" });
+    var a2 = document.createElement("a");
+    a2.href = URL.createObjectURL(blob); a2.download = "avtale.ics"; a2.click();
+  }
+});
+document.getElementById("apDel").addEventListener("click", function(){
+  if(!cur) return;
+  delete appts[cur.b]; saveAppts(); refresh();
+  document.getElementById("apDate").value = ""; document.getElementById("apTime").value = "";
+  document.getElementById("apDel").hidden = true;
+});
+document.getElementById("apptBtn").addEventListener("click", function(){
+  var list = Object.keys(appts).map(function(b){
+    var d = DATA.filter(function(x){ return x.b === b; })[0];
+    return d ? { d:d, t:appts[b] } : null;
+  }).filter(Boolean).sort(function(a, b){ return a.t < b.t ? -1 : 1; });
+  var now = new Date(), h = "";
+  list.forEach(function(it){
+    var past = new Date(it.t) < now;
+    h += '<div class="a' + (past ? " past" : "") + '" data-b="' + esc(it.d.b) + '">'
+      + '<span class="dot" style="background:' + GOLD + '"></span>'
+      + '<span class="txt"><span class="p">' + esc(it.d.g) + '</span><br><span class="s">'
+      + esc(it.t.slice(8, 10) + "." + it.t.slice(5, 7) + " · Bolig " + (it.d.bo || "–")) + "</span></span>"
+      + '<span class="tm">' + esc(it.t.slice(11, 16)) + "</span></div>";
+  });
+  var el = document.getElementById("apptList");
+  el.innerHTML = h || "<p>Ingen avtaler.</p>";
+  el.querySelectorAll(".a").forEach(function(row){
+    row.addEventListener("click", function(){
+      var t = DATA.filter(function(x){ return x.b === row.getAttribute("data-b"); })[0];
+      if(!t) return;
+      closeSheet("apptSheet"); map.setView([t.lat, t.lon], 18); setTimeout(function(){ openDoor(t); }, 150);
+    });
+  });
+  document.getElementById("apptSheet").classList.add("open");
+});
+
+/* ---- chips / tabs / toggle ---- */
+var chipHtml = "";
+Object.keys(GRP).forEach(function(g){
+  chipHtml += '<button class="chip" data-g="' + esc(g) + '"><span class="dot" style="background:' + GRP[g] + '"></span>'
+    + esc(g) + ' <span class="n">0</span></button>';
+});
+document.getElementById("chips").innerHTML = chipHtml;
+document.querySelectorAll("#chips .chip").forEach(function(c){
+  c.addEventListener("click", function(){
+    var g = c.getAttribute("data-g");
+    active[g] = !active[g]; c.classList.toggle("off", !active[g]); refresh();
+  });
+});
+if(steder.length > 1){
+  var t = document.getElementById("tabs");
+  t.hidden = false;
+  var th = '<button data-a="*" class="on">Alle</button>';
+  steder.forEach(function(s){ th += '<button data-a="' + esc(s) + '">' + esc(s) + "</button>"; });
+  t.innerHTML = th;
+  t.querySelectorAll("button").forEach(function(b){
+    b.addEventListener("click", function(){
+      t.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on"); area = b.getAttribute("data-a"); refresh(); fit();
+    });
+  });
+}
+document.getElementById("showDone").addEventListener("change", function(){ showDone = this.checked; refresh(); });
+
+/* ---- search ---- */
+var q = document.getElementById("q"), qres = document.getElementById("qres"), qclear = document.getElementById("qclear");
+function runSearch(){
+  var v = q.value.trim().toLowerCase();
+  qclear.style.display = v ? "block" : "none";
+  if(!v){ qres.style.display = "none"; return; }
+  var hits = DATA.filter(function(d){ return d.g.toLowerCase().indexOf(v) >= 0; }).slice(0, 40);
+  if(!hits.length){ qres.innerHTML = '<div class="r"><span class="t">Ingen treff</span></div>'; qres.style.display = "block"; return; }
+  qres.innerHTML = hits.map(function(d){
+    var sub = d.post + " " + d.sted + " · " + d.grp + (d._stackN > 1 ? " · Bolig " + (d.bo || "–") : "");
+    return '<div class="r" data-b="' + esc(d.b) + '"><span class="dot" style="background:' + colorOf(d)
+      + '"></span><span><span class="t">' + esc(d.g) + '</span><br><span class="s">' + esc(sub) + "</span></span></div>";
+  }).join("");
+  qres.style.display = "block";
+  qres.querySelectorAll(".r[data-b]").forEach(function(row){
+    row.addEventListener("click", function(){
+      var d = DATA.filter(function(x){ return x.b === row.getAttribute("data-b"); })[0];
+      if(!d) return;
+      qres.style.display = "none"; q.blur();
+      map.setView([d.lat, d.lon], 18); setTimeout(function(){ openDoor(d); }, 150);
+    });
+  });
+}
+q.addEventListener("input", runSearch);
+qclear.addEventListener("click", function(){ q.value = ""; runSearch(); });
+document.addEventListener("click", function(e){
+  if(!e.target.closest(".searchwrap")) qres.style.display = "none";
+});
+
+/* ---- geolocation ---- */
+var meDot = null, meCirc = null;
+document.getElementById("locbtn").addEventListener("click", function(){
+  if(!navigator.geolocation){ alert("Posisjon støttes ikke."); return; }
+  navigator.geolocation.watchPosition(function(p){
+    var ll = [p.coords.latitude, p.coords.longitude];
+    if(!meDot){
+      meCirc = L.circle(ll, { radius:p.coords.accuracy, color:"#1a73e8", weight:1, fillOpacity:.12 }).addTo(map);
+      meDot = L.circleMarker(ll, { radius:7, weight:3, color:"#fff", fillColor:"#1a73e8", fillOpacity:1 }).addTo(map);
+      map.setView(ll, 17);
+    } else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(p.coords.accuracy); }
+  }, function(){ alert("Fant ikke posisjon."); }, { enableHighAccuracy:true, maximumAge:10000 });
+});
+
+/* ---- init ---- */
+function fit(){
+  var pts = DATA.filter(visible).map(function(d){ return [d.lat, d.lon]; });
+  if(!pts.length) pts = DATA.map(function(d){ return [d.lat, d.lon]; });
+  if(pts.length) map.fitBounds(L.latLngBounds(pts), { padding:[30, 30] });
+}
+refresh(); fit(); layoutStacks();
+window.DATA = DATA;
+})();
+</script>
+</body>
+</html>
