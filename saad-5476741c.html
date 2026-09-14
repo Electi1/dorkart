@@ -101,6 +101,16 @@
   .done-badge{background:#eef1f5; color:var(--muted);}
   .meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
   .meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+  .stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+  .stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+  .stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+  .stack-item:active{background:#f5f7fb;}
+  .stack-item.cur{background:#f3f5fb; cursor:default;}
+  .stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+  .stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .stack-item .mini{flex:none;}
+  .stack-check{color:var(--hp); font-weight:800;}
   .apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
   .apptbox.has{background:#fff7e6; border-color:#f0d488;}
   .appt-row{display:flex; align-items:center; gap:8px;}
@@ -184,6 +194,7 @@
   <div class="sub" id="sSub"></div>
   <div class="badges" id="sBadges"></div>
   <div class="meta" id="sMeta"></div>
+  <div class="stackbox" id="sStack" hidden></div>
   <div class="apptbox" id="sAppt"></div>
   <div class="actions">
     <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
@@ -229,6 +240,21 @@ var kvGraa  = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png",
 kvFarge.addTo(map);
 L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
 
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+  var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+  (__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+  var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+  d._stack = s; d._stackN = s.length;
+  if(s.length > 1){
+    var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+    d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+  } else { d._ox = 0; d._oy = 0; }
+});
+
 var group = L.layerGroup().addTo(map);
 DATA.forEach(function(d){
   var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
@@ -236,6 +262,21 @@ DATA.forEach(function(d){
   m.on("click", function(){ openSheet(d); });
   d._m = m;
 });
+
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+  if(!map._loaded) return;
+  DATA.forEach(function(d){
+    if(d._stackN > 1){
+      try{
+        var base = map.latLngToLayerPoint([d.lat, d.lon]);
+        d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+      }catch(e){}
+    }
+  });
+}
+map.on("zoomend", layoutStacks);
 
 function bounds(pred){
   var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
@@ -364,7 +405,8 @@ function renderSearch(q){
   box.hidden=false;
   box.innerHTML=hits.map(function(d){
     var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
-    return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+escH(d.adr)+'</span></span></button>';
+    var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+    return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
   }).join("");
   Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
     btn.addEventListener("click", function(){
@@ -465,6 +507,31 @@ function openSheet(d){
   } else {
     document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
   }
+  var stackBox = document.getElementById("sStack");
+  if(d._stackN > 1){
+    stackBox.hidden = false;
+    var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+    var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+    stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+      var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+      var isCur = String(sd.bnr) === String(d.bnr);
+      var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+      var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+      var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+      return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+        '<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+        '<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+        '<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+    }).join("");
+    Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+      btn.addEventListener("click", function(ev){
+        if(ev.target.closest("a")) return;
+        var bnr = btn.getAttribute("data-bnr"), nd = null;
+        for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+        if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+      });
+    });
+  } else { stackBox.hidden = true; stackBox.innerHTML = ""; }
   renderAppt(d);
   document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
   var db = document.getElementById("sDone");
@@ -506,6 +573,7 @@ locBtn.addEventListener("click", function(){
 var all = bounds(function(){ return true; });
 if(all) map.fitBounds(all, {padding:[40,40], maxZoom:16});
 refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
 fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
 </script>
 </body>
