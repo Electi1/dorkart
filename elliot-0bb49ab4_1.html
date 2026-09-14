@@ -11,6 +11,7 @@
 <style>
 :root{ --electi:#000089; }
 *{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
 html,body{ margin:0; padding:0; height:100%; }
 body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden;
   font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -207,6 +208,7 @@ var area = "*";
 
 /* ---- map ---- */
 var map = L.map("map", { zoomControl:true, tap:false });
+map.setView([DATA.length ? DATA[0].lat : 59.1400, DATA.length ? DATA[0].lon : 9.6600], 14);
 var farge = L.tileLayer("https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png",
   { maxNativeZoom:18, maxZoom:19, attribution:"&copy; Kartverket" });
 var graa = L.tileLayer("https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png",
