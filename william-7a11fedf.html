@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart William 14.09.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+  --hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+  --electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+  --bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+  --shadow:0 6px 24px rgba(10,20,40,.18);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+  background:var(--electi); color:#fff;
+  padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+  background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+  border-bottom:1px solid var(--line);
+  padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+  flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+  border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+  border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+  border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+  position:absolute; left:0; right:0; bottom:0; z-index:1200;
+  background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+  padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+  transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+  flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+  font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+  position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+  width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+  background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+  position:absolute; left:50%; transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+  background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+  padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+  <div class="brandbar">
+    <div class="brand">
+      <img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+      <div class="vr"></div>
+      <div class="brandtext">
+        <div class="title">William</div>
+        <div class="date">14.09.26</div>
+      </div>
+    </div>
+    <div class="remaining"><b id="remN">0</b> igjen</div>
+  </div>
+  <div class="controls">
+    <div class="areatabs" id="areatabs"></div>
+    <div class="chips" id="chips"></div>
+    <div class="searchwrap">
+      <input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+      <button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+      <div class="searchresults" id="searchResults" hidden></div>
+    </div>
+    <label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
+    <div class="apptline" id="apptline" hidden></div>
+  </div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <button class="close" id="sheetClose">×</button>
+  <div class="addr" id="sAddr"></div>
+  <div class="sub" id="sSub"></div>
+  <div class="badges" id="sBadges"></div>
+  <div class="meta" id="sMeta"></div>
+  <div class="stackbox" id="sStack" hidden></div>
+  <div class="apptbox" id="sAppt"></div>
+  <div class="actions">
+    <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+    <button class="btn-done" id="sDone"></button>
+  </div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+  <div class="grab"></div>
+  <button class="close" id="apptClose">×</button>
+  <div class="apptsheet-title">📅 Avtaler</div>
+  <div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+  <div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Vebergs Gate 2 B", "grp": "HP", "lat": 59.03789722503074, "lon": 10.065642917896765, "adr": "Vebergs Gate 2 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10861517", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CKr1MAG"}, {"navn": "Halsegata 15", "grp": "HP", "lat": 59.037443409210425, "lon": 10.068728973365515, "adr": "Halsegata 15, 3260 Larvik", "area": "Larvik", "bnr": "V-10861827", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000CKw1MAG"}, {"navn": "Rekkeviks Gate 32 A", "grp": "HP", "lat": 59.0342416012436, "lon": 10.069051279370616, "adr": "Rekkeviks Gate 32 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10861936", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CKxmMAG"}, {"navn": "Oterøyveien 38", "grp": "HP", "lat": 59.03440415862861, "lon": 10.059535558260842, "adr": "Oterøyveien 38, 3260 Larvik", "area": "Larvik", "bnr": "V-10862593", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CL8NMAW"}, {"navn": "Rekkeviks Gate 11 B", "grp": "HP", "lat": 59.03647264690522, "lon": 10.068932347052177, "adr": "Rekkeviks Gate 11 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10862651", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CL9JMAW"}, {"navn": "Rekkevik Brygge 4", "grp": "HP", "lat": 59.0326625413932, "lon": 10.067651928748052, "adr": "Rekkevik Brygge 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10863028", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLFOMA4"}, {"navn": "Saltverksveien 6", "grp": "HC", "lat": 59.030128419269744, "lon": 10.069345232845402, "adr": "Saltverksveien 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10863062", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLFwMAO"}, {"navn": "Hølensgate 13", "grp": "HP", "lat": 59.035456235868246, "lon": 10.061028148706676, "adr": "Hølensgate 13, 3260 Larvik", "area": "Larvik", "bnr": "V-10863133", "bol": "H0102", "st": "Ikke hjemme", "sfid": "a4CSg000000CLH5MAO"}, {"navn": "Halsegata 57", "grp": "HC", "lat": 59.036752401953756, "lon": 10.06221469982939, "adr": "Halsegata 57, 3260 Larvik", "area": "Larvik", "bnr": "V-10863287", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLJZMA4"}, {"navn": "Solaveien 6", "grp": "HP", "lat": 59.034196370184546, "lon": 10.058255440294982, "adr": "Solaveien 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10863381", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLL5MAO"}, {"navn": "Hølensgate 6", "grp": "HP", "lat": 59.03640774837272, "lon": 10.063720090871183, "adr": "Hølensgate 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10863873", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLUcMAO"}, {"navn": "Rekkeviks Gate 11 B", "grp": "HP", "lat": 59.03647264690522, "lon": 10.068932347052177, "adr": "Rekkeviks Gate 11 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10864088", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLY5MAO"}, {"navn": "Vebergs Gate 2 B", "grp": "HP", "lat": 59.03789722503074, "lon": 10.065642917896765, "adr": "Vebergs Gate 2 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10865003", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLmqMAG"}, {"navn": "Saltverksveien 5 A", "grp": "HC", "lat": 59.02944307898539, "lon": 10.069897140988683, "adr": "Saltverksveien 5 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10865022", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLn9MAG"}, {"navn": "Solaveien 10", "grp": "HP", "lat": 59.0343173553446, "lon": 10.05894742504654, "adr": "Solaveien 10, 3260 Larvik", "area": "Larvik", "bnr": "V-10865051", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLncMAG"}, {"navn": "Iver Hesselbergs Vei 4 A", "grp": "HC", "lat": 59.036262888663806, "lon": 10.070407002558385, "adr": "Iver Hesselbergs Vei 4 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10865139", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLp2MAG"}, {"navn": "Vebergs Gate 2 A", "grp": "HP", "lat": 59.037760242354224, "lon": 10.065699670320795, "adr": "Vebergs Gate 2 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10865258", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLqxMAG"}, {"navn": "Halsegata 16", "grp": "HP", "lat": 59.03771686699126, "lon": 10.068568426578477, "adr": "Halsegata 16, 3260 Larvik", "area": "Larvik", "bnr": "V-10866305", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CM7qMAG"}, {"navn": "Rekkeviks Gate 50", "grp": "HP", "lat": 59.033285717493676, "lon": 10.06788556297506, "adr": "Rekkeviks Gate 50, 3260 Larvik", "area": "Larvik", "bnr": "V-10866409", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CM9WMAW"}, {"navn": "Iver Hesselbergs Vei 10", "grp": "HC", "lat": 59.03634657368008, "lon": 10.069299597306355, "adr": "Iver Hesselbergs Vei 10, 3260 Larvik", "area": "Larvik", "bnr": "V-10867086", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMKRMA4"}, {"navn": "Rekkevik Brygge 4", "grp": "HP", "lat": 59.0326625413932, "lon": 10.067651928748052, "adr": "Rekkevik Brygge 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10867580", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CMSPMA4"}, {"navn": "Gonveien 35", "grp": "HP", "lat": 59.0307527508122, "lon": 10.072047713626992, "adr": "Gonveien 35, 3260 Larvik", "area": "Larvik", "bnr": "V-10867607", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CMSqMAO"}, {"navn": "Aarstens Vei 6", "grp": "HP", "lat": 59.03448199410033, "lon": 10.060890099369095, "adr": "Aarstens Vei 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10867672", "bol": "H0102", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CMTtMAO"}, {"navn": "Hvittensandveien 3", "grp": "HC", "lat": 59.03643811936476, "lon": 10.057813764997762, "adr": "Hvittensandveien 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10867823", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CMWKMA4"}, {"navn": "Oterøyveien 4", "grp": "HP", "lat": 59.036231645562054, "lon": 10.06219515088295, "adr": "Oterøyveien 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10868009", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMZKMA4"}, {"navn": "Gonveien 29", "grp": "HP", "lat": 59.03138446124219, "lon": 10.070704895772908, "adr": "Gonveien 29, 3260 Larvik", "area": "Larvik", "bnr": "V-10868423", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMg0MAG"}, {"navn": "Tolstrupveien 3", "grp": "HC", "lat": 59.03192448988852, "lon": 10.071544064163753, "adr": "Tolstrupveien 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10868602", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMitMAG"}, {"navn": "Saltverksveien 18", "grp": "HC", "lat": 59.02913111300325, "lon": 10.068519833024581, "adr": "Saltverksveien 18, 3260 Larvik", "area": "Larvik", "bnr": "V-10868676", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMk5MAG"}, {"navn": "Brekkegata 4", "grp": "HP", "lat": 59.03412491032037, "lon": 10.070892902126277, "adr": "Brekkegata 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10868795", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMm0MAG"}, {"navn": "Gonveien 13", "grp": "HP", "lat": 59.03395840954475, "lon": 10.070391131175521, "adr": "Gonveien 13, 3260 Larvik", "area": "Larvik", "bnr": "V-10869927", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CN4GMAW"}, {"navn": "Oterøyveien 12", "grp": "HP", "lat": 59.034778836269496, "lon": 10.062040563283986, "adr": "Oterøyveien 12, 3260 Larvik", "area": "Larvik", "bnr": "V-10870143", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000CN7kMAG"}, {"navn": "C J Andersens Vei 2", "grp": "HC", "lat": 59.03490505406196, "lon": 10.057918268027258, "adr": "C J Andersens Vei 2, 3260 Larvik", "area": "Larvik", "bnr": "V-10870860", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNJJMA4"}, {"navn": "Gonveien 11", "grp": "HP", "lat": 59.03425115469931, "lon": 10.070396745409925, "adr": "Gonveien 11, 3260 Larvik", "area": "Larvik", "bnr": "V-10870973", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNL8MAO"}, {"navn": "Rekkeviks Gate 10", "grp": "HC", "lat": 59.03627123248163, "lon": 10.067979890368939, "adr": "Rekkeviks Gate 10, 3260 Larvik", "area": "Larvik", "bnr": "V-10871496", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNTZMA4"}, {"navn": "Hvittensandveien 2", "grp": "HP", "lat": 59.03680211428606, "lon": 10.057232471942106, "adr": "Hvittensandveien 2, 3260 Larvik", "area": "Larvik", "bnr": "V-10871629", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNViMAO"}, {"navn": "Nansens Vei 5", "grp": "HP", "lat": 59.030090942916225, "lon": 10.071490505545398, "adr": "Nansens Vei 5, 3260 Larvik", "area": "Larvik", "bnr": "V-10871772", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNY1MAO"}, {"navn": "Hølensgate 42", "grp": "HP", "lat": 59.035113839241454, "lon": 10.062150216853444, "adr": "Hølensgate 42, 3260 Larvik", "area": "Larvik", "bnr": "V-10871942", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNalMAG"}, {"navn": "Halsegata 77", "grp": "HC", "lat": 59.036531200492476, "lon": 10.058513648329187, "adr": "Halsegata 77, 3260 Larvik", "area": "Larvik", "bnr": "V-10872166", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNeNMAW"}, {"navn": "Rekkeviks Gate 3", "grp": "HP", "lat": 59.0369328757956, "lon": 10.068667820660913, "adr": "Rekkeviks Gate 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10872559", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNkiMAG"}, {"navn": "Traveien 2", "grp": "HP", "lat": 59.029455997364046, "lon": 10.070942865286339, "adr": "Traveien 2, 3260 Larvik", "area": "Larvik", "bnr": "V-10872654", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNmFMAW"}, {"navn": "C J Andersens Vei 3", "grp": "HP", "lat": 59.0347144440636, "lon": 10.05805355229335, "adr": "C J Andersens Vei 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10872678", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CNmdMAG"}, {"navn": "Wesleyveien 8", "grp": "HP", "lat": 59.03762025993356, "lon": 10.066557933286953, "adr": "Wesleyveien 8, 3260 Larvik", "area": "Larvik", "bnr": "V-10872714", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNnDMAW"}, {"navn": "Sukkersletta 3", "grp": "HP", "lat": 59.033233049808125, "lon": 10.060956169097903, "adr": "Sukkersletta 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10872971", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNrMMAW"}, {"navn": "Nansens Vei 1", "grp": "HP", "lat": 59.03043148612742, "lon": 10.071037659869791, "adr": "Nansens Vei 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10873144", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNu9MAG"}, {"navn": "Rekkeviks Gate 13", "grp": "HP", "lat": 59.036017158155175, "lon": 10.06862197654374, "adr": "Rekkeviks Gate 13, 3260 Larvik", "area": "Larvik", "bnr": "V-10873151", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNuGMAW"}, {"navn": "Traveien 11", "grp": "HP", "lat": 59.028816733021934, "lon": 10.070374205142322, "adr": "Traveien 11, 3260 Larvik", "area": "Larvik", "bnr": "V-10873700", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CO37MAG"}, {"navn": "Saltverksveien 8", "grp": "HP", "lat": 59.02991302224954, "lon": 10.069544128428232, "adr": "Saltverksveien 8, 3260 Larvik", "area": "Larvik", "bnr": "V-10873967", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CO7QMAW"}, {"navn": "Gonveien 35", "grp": "HP", "lat": 59.0307527508122, "lon": 10.072047713626992, "adr": "Gonveien 35, 3260 Larvik", "area": "Larvik", "bnr": "V-10874063", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CO8yMAG"}, {"navn": "Oterøyveien 28", "grp": "HP", "lat": 59.03418124388239, "lon": 10.062081376795591, "adr": "Oterøyveien 28, 3260 Larvik", "area": "Larvik", "bnr": "V-10874277", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COCQMA4"}, {"navn": "Rekkeviks Gate 66 B", "grp": "HP", "lat": 59.03196989114486, "lon": 10.068982506055004, "adr": "Rekkeviks Gate 66 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10874356", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CODhMAO"}, {"navn": "Sauegata 3", "grp": "HC", "lat": 59.038043762234246, "lon": 10.06464195081605, "adr": "Sauegata 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10874376", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COE1MAO"}, {"navn": "Vebergs Gate 2 C", "grp": "HP", "lat": 59.037923716720975, "lon": 10.065370144522834, "adr": "Vebergs Gate 2 C, 3260 Larvik", "area": "Larvik", "bnr": "V-10874491", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COFsMAO"}, {"navn": "Aarstens Vei 11", "grp": "HP", "lat": 59.03536779611236, "lon": 10.059432777401685, "adr": "Aarstens Vei 11, 3260 Larvik", "area": "Larvik", "bnr": "V-10874514", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COGFMA4"}, {"navn": "Rekkevikhågan 11", "grp": "HP", "lat": 59.033217850002224, "lon": 10.070777576782914, "adr": "Rekkevikhågan 11, 3260 Larvik", "area": "Larvik", "bnr": "V-10874560", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COGzMAO"}, {"navn": "Rekkeviks Gate 25 A", "grp": "HC", "lat": 59.03483084617971, "lon": 10.06980489698944, "adr": "Rekkeviks Gate 25 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10874585", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COHOMA4"}, {"navn": "Sauegata 22", "grp": "HP", "lat": 59.03841032880419, "lon": 10.064844977354783, "adr": "Sauegata 22, 3260 Larvik", "area": "Larvik", "bnr": "V-10874755", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COK8MAO"}, {"navn": "Vebergs Gate 3", "grp": "HP", "lat": 59.0374177672187, "lon": 10.065406768506696, "adr": "Vebergs Gate 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10875080", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COPNMA4"}, {"navn": "Rekkevik Brygge 7", "grp": "HP", "lat": 59.031887827767434, "lon": 10.068260377641883, "adr": "Rekkevik Brygge 7, 3260 Larvik", "area": "Larvik", "bnr": "V-10875095", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COPcMAO"}, {"navn": "Møllergaten 3", "grp": "HP", "lat": 59.037328157023424, "lon": 10.064288730649096, "adr": "Møllergaten 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10876164", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COgrMAG"}, {"navn": "Rekkevikhågan 5", "grp": "HP", "lat": 59.03264117463552, "lon": 10.070677755884232, "adr": "Rekkevikhågan 5, 3260 Larvik", "area": "Larvik", "bnr": "V-10876556", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COnBMAW"}, {"navn": "Bergeskogen 17", "grp": "HC", "lat": 59.03319656361449, "lon": 10.074110116289829, "adr": "Bergeskogen 17, 3260 Larvik", "area": "Larvik", "bnr": "V-10877147", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COwiMAG"}, {"navn": "Halsegata 46", "grp": "HC", "lat": 59.036924329675486, "lon": 10.06468575567952, "adr": "Halsegata 46, 3260 Larvik", "area": "Larvik", "bnr": "V-10877339", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COzoMAG"}, {"navn": "Aarstens Vei 12", "grp": "HP", "lat": 59.03523395484114, "lon": 10.060094292689925, "adr": "Aarstens Vei 12, 3260 Larvik", "area": "Larvik", "bnr": "V-10877517", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CP2gMAG"}, {"navn": "Iver Hesselbergs Vei 12 C", "grp": "HP", "lat": 59.03513994112517, "lon": 10.068263681255313, "adr": "Iver Hesselbergs Vei 12 C, 3260 Larvik", "area": "Larvik", "bnr": "V-10877540", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CP33MAG"}, {"navn": "Iver Hesselbergs Vei 8", "grp": "HC", "lat": 59.03615636934715, "lon": 10.069166485233163, "adr": "Iver Hesselbergs Vei 8, 3260 Larvik", "area": "Larvik", "bnr": "V-10878222", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPE3MAO"}, {"navn": "Oterøyveien 20", "grp": "HP", "lat": 59.03431284206262, "lon": 10.06158535267192, "adr": "Oterøyveien 20, 3260 Larvik", "area": "Larvik", "bnr": "V-10878422", "bol": "H0201", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CPHHMA4"}, {"navn": "Rekkevikhågan 9", "grp": "HP", "lat": 59.03314006909873, "lon": 10.070843111689609, "adr": "Rekkevikhågan 9, 3260 Larvik", "area": "Larvik", "bnr": "V-10878465", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPHyMAO"}, {"navn": "Vebergs Gate 2 C", "grp": "HP", "lat": 59.037923716720975, "lon": 10.065370144522834, "adr": "Vebergs Gate 2 C, 3260 Larvik", "area": "Larvik", "bnr": "V-10878563", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CPJYMA4"}, {"navn": "Rekkevikhågan 15", "grp": "HP", "lat": 59.033494038661175, "lon": 10.070721694995562, "adr": "Rekkevikhågan 15, 3260 Larvik", "area": "Larvik", "bnr": "V-10878698", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPLjMAO"}, {"navn": "Halsegata 19", "grp": "HC", "lat": 59.0372380540656, "lon": 10.068363624387109, "adr": "Halsegata 19, 3260 Larvik", "area": "Larvik", "bnr": "V-10878803", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPNQMA4"}, {"navn": "Saltverksveien 5 B", "grp": "HP", "lat": 59.02941978740078, "lon": 10.070324999485385, "adr": "Saltverksveien 5 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10879010", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPQlMAO"}, {"navn": "Halsegata 24", "grp": "HC", "lat": 59.03727385080159, "lon": 10.067725200850509, "adr": "Halsegata 24, 3260 Larvik", "area": "Larvik", "bnr": "V-10879278", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPV5MAO"}, {"navn": "C A Larsens Vei 1", "grp": "HC", "lat": 59.037358163569046, "lon": 10.06610196576229, "adr": "C A Larsens Vei 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10879460", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPY1MAO"}, {"navn": "Sukkersletta 12", "grp": "HP", "lat": 59.03304648248824, "lon": 10.05960878588952, "adr": "Sukkersletta 12, 3260 Larvik", "area": "Larvik", "bnr": "V-10879635", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPaqMAG"}, {"navn": "Oterøyveien 1", "grp": "HP", "lat": 59.03670333901324, "lon": 10.062612234797724, "adr": "Oterøyveien 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10880032", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPhFMAW"}, {"navn": "Rekkevik Brygge 29", "grp": "HP", "lat": 59.032433357731634, "lon": 10.066907807865393, "adr": "Rekkevik Brygge 29, 3260 Larvik", "area": "Larvik", "bnr": "V-10880183", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPjgMAG"}, {"navn": "Hølensgate 20", "grp": "HP", "lat": 59.036037694943786, "lon": 10.060653994289996, "adr": "Hølensgate 20, 3260 Larvik", "area": "Larvik", "bnr": "V-10880324", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPlxMAG"}, {"navn": "Rekkeviks Gate 27", "grp": "HC", "lat": 59.03457275436947, "lon": 10.06951808502865, "adr": "Rekkeviks Gate 27, 3260 Larvik", "area": "Larvik", "bnr": "V-10880610", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPqZMAW"}, {"navn": "Rekkevikhågan 18", "grp": "HP", "lat": 59.033381088844955, "lon": 10.071239162043009, "adr": "Rekkevikhågan 18, 3260 Larvik", "area": "Larvik", "bnr": "V-10880988", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPwfMAG"}, {"navn": "Gonveien 36 B", "grp": "HP", "lat": 59.03045325417155, "lon": 10.071663806580498, "adr": "Gonveien 36 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10881378", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQ2xMAG"}, {"navn": "Møllergaten 12", "grp": "HC", "lat": 59.03795214416536, "lon": 10.063767801358221, "adr": "Møllergaten 12, 3260 Larvik", "area": "Larvik", "bnr": "V-10881445", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQ42MAG"}, {"navn": "Sukkersletta 1", "grp": "HP", "lat": 59.03338455305038, "lon": 10.061100228565964, "adr": "Sukkersletta 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10881900", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQBNMA4"}, {"navn": "Traveien 4", "grp": "HP", "lat": 59.029291977571305, "lon": 10.070793163229602, "adr": "Traveien 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10882105", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CQEgMAO"}, {"navn": "Møllergaten 9", "grp": "HC", "lat": 59.03750590788576, "lon": 10.06342291940807, "adr": "Møllergaten 9, 3260 Larvik", "area": "Larvik", "bnr": "V-10882405", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQL7MAO"}, {"navn": "Sukkersletta 4", "grp": "HP", "lat": 59.033487314701944, "lon": 10.060615520976015, "adr": "Sukkersletta 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10882760", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQSRMA4"}, {"navn": "Bergeskogen 12 B", "grp": "HP", "lat": 59.03308156375178, "lon": 10.072487849970281, "adr": "Bergeskogen 12 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10883021", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQWeMAO"}, {"navn": "Kampeløkka 2", "grp": "HC", "lat": 59.03658660626917, "lon": 10.061951686023434, "adr": "Kampeløkka 2, 3260 Larvik", "area": "Larvik", "bnr": "V-10883040", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQWxMAO"}, {"navn": "Sukkersletta 7", "grp": "HP", "lat": 59.03298591259144, "lon": 10.060425841324571, "adr": "Sukkersletta 7, 3260 Larvik", "area": "Larvik", "bnr": "V-10883929", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000CQlIMAW"}, {"navn": "Tolstrupveien 7 A", "grp": "HP", "lat": 59.031159877195236, "lon": 10.072774725628236, "adr": "Tolstrupveien 7 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10883932", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQlLMAW"}, {"navn": "Rekkeviks Gate 13", "grp": "HP", "lat": 59.036017158155175, "lon": 10.06862197654374, "adr": "Rekkeviks Gate 13, 3260 Larvik", "area": "Larvik", "bnr": "V-10883978", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CQm5MAG"}, {"navn": "Sauegata 10", "grp": "HP", "lat": 59.03804118629177, "lon": 10.064955546003693, "adr": "Sauegata 10, 3260 Larvik", "area": "Larvik", "bnr": "V-10884444", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQtbMAG"}, {"navn": "Rekkevikhågan 6", "grp": "HP", "lat": 59.03227798359058, "lon": 10.071154322399481, "adr": "Rekkevikhågan 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10884480", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQuBMAW"}, {"navn": "Rekkeviks Gate 40", "grp": "HC", "lat": 59.03358197274287, "lon": 10.068772925680788, "adr": "Rekkeviks Gate 40, 3260 Larvik", "area": "Larvik", "bnr": "V-10884818", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQzdMAG"}, {"navn": "Nansens Vei 7", "grp": "HP", "lat": 59.02976997434824, "lon": 10.071856840464076, "adr": "Nansens Vei 7, 3260 Larvik", "area": "Larvik", "bnr": "V-10884854", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CR0DMAW"}, {"navn": "Bergeskogen 15", "grp": "HP", "lat": 59.032927048640694, "lon": 10.074119134323185, "adr": "Bergeskogen 15, 3260 Larvik", "area": "Larvik", "bnr": "V-10885038", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CR3BMAW"}, {"navn": "Hølensgate 18", "grp": "HP", "lat": 59.03597180475682, "lon": 10.061023124134438, "adr": "Hølensgate 18, 3260 Larvik", "area": "Larvik", "bnr": "V-10885239", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CR6QMAW"}, {"navn": "Rekkevik Brygge 9", "grp": "HP", "lat": 59.031728050423325, "lon": 10.06814042871977, "adr": "Rekkevik Brygge 9, 3260 Larvik", "area": "Larvik", "bnr": "V-10885306", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CR7VMAW"}, {"navn": "Bergeskogen 22", "grp": "HP", "lat": 59.03223923021356, "lon": 10.072473815550692, "adr": "Bergeskogen 22, 3260 Larvik", "area": "Larvik", "bnr": "V-10885625", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRCeMAO"}, {"navn": "Oterøyveien 3", "grp": "HP", "lat": 59.036515817854145, "lon": 10.062698803773193, "adr": "Oterøyveien 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10885875", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRGgMAO"}, {"navn": "Rekkevik Brygge 50", "grp": "HP", "lat": 59.032579699041364, "lon": 10.06636872438415, "adr": "Rekkevik Brygge 50, 3260 Larvik", "area": "Larvik", "bnr": "V-10885950", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRHtMAO"}, {"navn": "Kampeløkka 6", "grp": "HP", "lat": 59.03657456586245, "lon": 10.061667276937781, "adr": "Kampeløkka 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10886189", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRLkMAO"}, {"navn": "Wesleyveien 6", "grp": "HP", "lat": 59.03766044534741, "lon": 10.066695102326149, "adr": "Wesleyveien 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10886224", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRMJMA4"}, {"navn": "Hølen Verft 36 B", "grp": "HC", "lat": 59.0350372284498, "lon": 10.063825867393168, "adr": "Hølen Verft 36 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10886275", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRN8MAO"}, {"navn": "Solaveien 16", "grp": "HP", "lat": 59.03415420510189, "lon": 10.057919596199827, "adr": "Solaveien 16, 3260 Larvik", "area": "Larvik", "bnr": "V-10886301", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRNYMA4"}, {"navn": "Wesleyveien 7 A", "grp": "HP", "lat": 59.03765103370819, "lon": 10.067620141375132, "adr": "Wesleyveien 7 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10886527", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRRCMA4"}, {"navn": "Kampeløkka 20", "grp": "HC", "lat": 59.03661263958505, "lon": 10.060307507811972, "adr": "Kampeløkka 20, 3260 Larvik", "area": "Larvik", "bnr": "V-10886647", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRT8MAO"}, {"navn": "Wesleyveien 10", "grp": "HP", "lat": 59.03754456881064, "lon": 10.066478913780243, "adr": "Wesleyveien 10, 3260 Larvik", "area": "Larvik", "bnr": "V-10886894", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRX7MAO"}, {"navn": "Rekkeviks Gate 66 A", "grp": "HP", "lat": 59.032019426611996, "lon": 10.068856853152328, "adr": "Rekkeviks Gate 66 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10887010", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRYzMAO"}, {"navn": "Rekkeviks Gate 9 A", "grp": "HP", "lat": 59.036521707255034, "lon": 10.068428527000142, "adr": "Rekkeviks Gate 9 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10887421", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRfcMAG"}, {"navn": "Wesleyveien 7 B", "grp": "HP", "lat": 59.03755827703647, "lon": 10.06765037505805, "adr": "Wesleyveien 7 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10887468", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRgNMAW"}, {"navn": "Halsegata 18", "grp": "HC", "lat": 59.03753836341066, "lon": 10.068432191015761, "adr": "Halsegata 18, 3260 Larvik", "area": "Larvik", "bnr": "V-10887813", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRlwMAG"}, {"navn": "Vebergs Gate 5", "grp": "HP", "lat": 59.037311164166006, "lon": 10.065264061993751, "adr": "Vebergs Gate 5, 3260 Larvik", "area": "Larvik", "bnr": "V-10887977", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRoaMAG"}, {"navn": "Sauegata 14", "grp": "HP", "lat": 59.03822716942082, "lon": 10.065274974840255, "adr": "Sauegata 14, 3260 Larvik", "area": "Larvik", "bnr": "V-10888324", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRuBMAW"}, {"navn": "Saltverksveien 16 A", "grp": "Kun mobil", "lat": 59.029331044708755, "lon": 10.068780396193326, "adr": "Saltverksveien 16 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10889082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSAtMAO"}, {"navn": "C A Larsens Vei 5", "grp": "Kun mobil", "lat": 59.038439802426, "lon": 10.065630085081121, "adr": "C A Larsens Vei 5, 3260 Larvik", "area": "Larvik", "bnr": "V-10889163", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CSCCMA4"}, {"navn": "Hølensgate 5", "grp": "Kun mobil", "lat": 59.036341034268645, "lon": 10.06418851896917, "adr": "Hølensgate 5, 3260 Larvik", "area": "Larvik", "bnr": "V-10889193", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSCgMAO"}, {"navn": "Kampeløkka 18", "grp": "Kun mobil", "lat": 59.03650653005144, "lon": 10.060433189859658, "adr": "Kampeløkka 18, 3260 Larvik", "area": "Larvik", "bnr": "V-10889427", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSGSMA4"}, {"navn": "Rekkeviks Gate 21", "grp": "Kun mobil", "lat": 59.035575318328604, "lon": 10.06883479201984, "adr": "Rekkeviks Gate 21, 3260 Larvik", "area": "Larvik", "bnr": "V-10889525", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000CSI2MAO"}, {"navn": "Gonveien 30", "grp": "Kun mobil", "lat": 59.03094529434912, "lon": 10.070593675578996, "adr": "Gonveien 30, 3260 Larvik", "area": "Larvik", "bnr": "V-10889590", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSJ5MAO"}, {"navn": "C A Larsens Vei 4 B", "grp": "Kun mobil", "lat": 59.03820104673023, "lon": 10.066267475050743, "adr": "C A Larsens Vei 4 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10889810", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CSMdMAO"}, {"navn": "Halsegata 22", "grp": "Kun mobil", "lat": 59.03722537387495, "lon": 10.068049563393682, "adr": "Halsegata 22, 3260 Larvik", "area": "Larvik", "bnr": "V-10889937", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000CSOgMAO"}, {"navn": "Rekkevik Brygge 9", "grp": "Kun mobil", "lat": 59.031728050423325, "lon": 10.06814042871977, "adr": "Rekkevik Brygge 9, 3260 Larvik", "area": "Larvik", "bnr": "V-10889942", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSOlMAO"}, {"navn": "Saltverksveien 14", "grp": "Kun mobil", "lat": 59.029349254452924, "lon": 10.069077135105378, "adr": "Saltverksveien 14, 3260 Larvik", "area": "Larvik", "bnr": "V-10890163", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSSKMA4"}, {"navn": "Tolstrupveien 7 B", "grp": "Kun mobil", "lat": 59.0309497546237, "lon": 10.073203751203076, "adr": "Tolstrupveien 7 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10890253", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSTmMAO"}, {"navn": "Brekkegata 12", "grp": "Kun mobil", "lat": 59.03396843747858, "lon": 10.073088730253408, "adr": "Brekkegata 12, 3260 Larvik", "area": "Larvik", "bnr": "V-10890863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSfDMAW"}, {"navn": "Bergeskogen 24", "grp": "Kun mobil", "lat": 59.03227807341909, "lon": 10.073314837110837, "adr": "Bergeskogen 24, 3260 Larvik", "area": "Larvik", "bnr": "V-10890985", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSinMAG"}, {"navn": "Nansens Vei 6", "grp": "Kun mobil", "lat": 59.0296743520577, "lon": 10.071038507517333, "adr": "Nansens Vei 6, 3260 Larvik", "area": "Larvik", "bnr": "V-10891209", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSo0MAG"}, {"navn": "Hølensgate 1", "grp": "Kun mobil", "lat": 59.0370308472663, "lon": 10.064401522366296, "adr": "Hølensgate 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10891240", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSoVMAW"}, {"navn": "Hølensgate 14", "grp": "Kun mobil", "lat": 59.03601545523701, "lon": 10.061724967987221, "adr": "Hølensgate 14, 3260 Larvik", "area": "Larvik", "bnr": "V-10891265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSouMAG"}, {"navn": "Halsegata 34", "grp": "Kun mobil", "lat": 59.03718336984203, "lon": 10.067042783042066, "adr": "Halsegata 34, 3260 Larvik", "area": "Larvik", "bnr": "V-10891396", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CSr1MAG"}, {"navn": "Halsegata 64", "grp": "Kun mobil", "lat": 59.03687412475299, "lon": 10.061608552365575, "adr": "Halsegata 64, 3260 Larvik", "area": "Larvik", "bnr": "V-10891644", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CSv1MAG"}, {"navn": "Skipperløkka 3", "grp": "Kun mobil", "lat": 59.03648325639114, "lon": 10.063164804591858, "adr": "Skipperløkka 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10892023", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT18MAG"}, {"navn": "Halsegata 63", "grp": "Kun mobil", "lat": 59.036734084133045, "lon": 10.06094205796299, "adr": "Halsegata 63, 3260 Larvik", "area": "Larvik", "bnr": "V-10892053", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CT1cMAG"}, {"navn": "Traveien 4", "grp": "Kun mobil", "lat": 59.029291977571305, "lon": 10.070793163229602, "adr": "Traveien 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10892106", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT2TMAW"}, {"navn": "Hølensgate 40", "grp": "Kun mobil", "lat": 59.03510338211567, "lon": 10.061782229233136, "adr": "Hølensgate 40, 3260 Larvik", "area": "Larvik", "bnr": "V-10892107", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT2UMAW"}, {"navn": "Kampeløkka 8", "grp": "Kun mobil", "lat": 59.03657513658346, "lon": 10.06159759201664, "adr": "Kampeløkka 8, 3260 Larvik", "area": "Larvik", "bnr": "V-10892158", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CT3JMAW"}, {"navn": "Rekkevikhågan 12", "grp": "Kun mobil", "lat": 59.032575443155736, "lon": 10.071024184996633, "adr": "Rekkevikhågan 12, 3260 Larvik", "area": "Larvik", "bnr": "V-10892574", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTA1MAO"}, {"navn": "Rekkevik Brygge 19", "grp": "Kun mobil", "lat": 59.032046335284114, "lon": 10.06766244608226, "adr": "Rekkevik Brygge 19, 3260 Larvik", "area": "Larvik", "bnr": "V-10892746", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTCnMAO"}, {"navn": "Hølen Verft 38 B", "grp": "Kun mobil", "lat": 59.03492380649434, "lon": 10.063857213128397, "adr": "Hølen Verft 38 B, 3260 Larvik", "area": "Larvik", "bnr": "V-10892779", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTDKMA4"}, {"navn": "C J Andersens Vei 10", "grp": "Kun mobil", "lat": 59.03501783718919, "lon": 10.056864045628867, "adr": "C J Andersens Vei 10, 3260 Larvik", "area": "Larvik", "bnr": "V-10892882", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTEzMAO"}, {"navn": "Skipperløkka 2", "grp": "Kun mobil", "lat": 59.03637383340229, "lon": 10.063475085746974, "adr": "Skipperløkka 2, 3260 Larvik", "area": "Larvik", "bnr": "V-10893089", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTIKMA4"}, {"navn": "Saltverksveien 3", "grp": "Kun mobil", "lat": 59.02971861244348, "lon": 10.07002939714628, "adr": "Saltverksveien 3, 3260 Larvik", "area": "Larvik", "bnr": "V-10893318", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTM1MAO"}, {"navn": "Rekkeviks Gate 70", "grp": "Kun mobil", "lat": 59.03179650938116, "lon": 10.069205368920862, "adr": "Rekkeviks Gate 70, 3260 Larvik", "area": "Larvik", "bnr": "V-10893347", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTMUMA4"}, {"navn": "Gonveien 17", "grp": "Kun mobil", "lat": 59.033687489474815, "lon": 10.070135287065238, "adr": "Gonveien 17, 3260 Larvik", "area": "Larvik", "bnr": "V-10893432", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTNrMAO"}, {"navn": "Halsegata 32", "grp": "Kun mobil", "lat": 59.03719344195621, "lon": 10.06712848234985, "adr": "Halsegata 32, 3260 Larvik", "area": "Larvik", "bnr": "V-10893443", "bol": "H0102", "st": "Ikke hjemme", "sfid": "a4CSg000000CTO2MAO"}, {"navn": "Sauegata 4", "grp": "Kun mobil", "lat": 59.03759925316089, "lon": 10.064743219522244, "adr": "Sauegata 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10893518", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CTPFMA4"}, {"navn": "Hølensgate 22", "grp": "Kun mobil", "lat": 59.03600544142502, "lon": 10.060205169651566, "adr": "Hølensgate 22, 3260 Larvik", "area": "Larvik", "bnr": "V-10893545", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTPgMAO"}, {"navn": "Halsegata 20", "grp": "Kun mobil", "lat": 59.0373319738379, "lon": 10.068192278137245, "adr": "Halsegata 20, 3260 Larvik", "area": "Larvik", "bnr": "V-10893743", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000CTSsMAO"}, {"navn": "Bergeskogen 1", "grp": "Kun mobil", "lat": 59.033970828812606, "lon": 10.072365694615888, "adr": "Bergeskogen 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10894026", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTXRMA4"}, {"navn": "Saltverksveien 24", "grp": "Kun mobil", "lat": 59.02917920940228, "lon": 10.06736973718884, "adr": "Saltverksveien 24, 3260 Larvik", "area": "Larvik", "bnr": "V-10894174", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTZpMAO"}, {"navn": "Halsegata 50", "grp": "Kun mobil", "lat": 59.03690130997611, "lon": 10.063770189349333, "adr": "Halsegata 50, 3260 Larvik", "area": "Larvik", "bnr": "V-10894195", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CTaAMAW"}, {"navn": "Steinsnesgaten 1", "grp": "Kun mobil", "lat": 59.036453390987624, "lon": 10.059243130014929, "adr": "Steinsnesgaten 1, 3260 Larvik", "area": "Larvik", "bnr": "V-10894270", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTbNMAW"}, {"navn": "Aarstens Vei 2", "grp": "Kun mobil", "lat": 59.034073332815, "lon": 10.061001223117731, "adr": "Aarstens Vei 2, 3260 Larvik", "area": "Larvik", "bnr": "V-10894411", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTdeMAG"}, {"navn": "Gonveien 23", "grp": "Kun mobil", "lat": 59.032581630256814, "lon": 10.070275161206247, "adr": "Gonveien 23, 3260 Larvik", "area": "Larvik", "bnr": "V-10894506", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTfBMAW"}, {"navn": "Wesleyveien 4", "grp": "Kun mobil", "lat": 59.03774061151555, "lon": 10.066776003845858, "adr": "Wesleyveien 4, 3260 Larvik", "area": "Larvik", "bnr": "V-10894887", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CTlKMAW"}, {"navn": "Sauegata 20", "grp": "Kun mobil", "lat": 59.038426426195066, "lon": 10.065072020662292, "adr": "Sauegata 20, 3260 Larvik", "area": "Larvik", "bnr": "V-10895028", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CTnbMAG"}, {"navn": "Halsegata 60", "grp": "Kun mobil", "lat": 59.03688680218381, "lon": 10.062253697365286, "adr": "Halsegata 60, 3260 Larvik", "area": "Larvik", "bnr": "V-10895044", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTnrMAG"}, {"navn": "Hølen Verft 34 A", "grp": "Kun mobil", "lat": 59.035198353724944, "lon": 10.063782055141248, "adr": "Hølen Verft 34 A, 3260 Larvik", "area": "Larvik", "bnr": "V-10895099", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTokMAG"}, {"navn": "Møllergaten 7", "grp": "Kun mobil", "lat": 59.03763873537431, "lon": 10.063653561880116, "adr": "Møllergaten 7, 3260 Larvik", "area": "Larvik", "bnr": "V-10895133", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CTpIMAW"}, {"navn": "Saltverksveien 26", "grp": "Kun mobil", "lat": 59.02915370798184, "lon": 10.067957806844397, "adr": "Saltverksveien 26, 3260 Larvik", "area": "Larvik", "bnr": "V-10895203", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTqQMAW"}];
+var AREAS = ["Larvik"];
+var STORE_KEY = "dorkart_William_14.09.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_William";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+  "HP": {raw:"#2f9e57", label:"HP"},
+  "HC": {raw:"#2f6fe0", label:"HC"},
+  "HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+  "Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+  var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+  (__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+  var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+  d._stack = s; d._stackN = s.length;
+  if(s.length > 1){
+    var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+    d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+  } else { d._ox = 0; d._oy = 0; }
+});
+
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+  var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+  var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+  m.on("click", function(){ openSheet(d); });
+  d._m = m;
+});
+
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+  if(!map._loaded) return;
+  DATA.forEach(function(d){
+    if(d._stackN > 1){
+      try{
+        var base = map.latLngToLayerPoint([d.lat, d.lon]);
+        d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+      }catch(e){}
+    }
+  });
+}
+map.on("zoomend", layoutStacks);
+
+function bounds(pred){
+  var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+  return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+  if(!activeGroups.has(d.grp)) return false;
+  if(area !== "alle" && d.area !== area) return false;
+  if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+  return true;
+}
+function refresh(){
+  DATA.forEach(function(d){
+    var m = d._m, on = visible(d);
+    if(on){
+      if(!group.hasLayer(m)) group.addLayer(m);
+      if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+      else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+    } else { if(group.hasLayer(m)) group.removeLayer(m); }
+  });
+  updateCounts();
+}
+function updateCounts(){
+  var rem = 0;
+  Object.keys(GROUPS).forEach(function(k){
+    var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+    var el = document.getElementById("cnt-"+cssKey(k));
+    if(el) el.textContent = n;
+    if(activeGroups.has(k)) rem += n;
+  });
+  document.getElementById("remN").textContent = rem;
+  var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+  var al = document.getElementById("apptline");
+  if(na>0){
+    al.hidden=false;
+    al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+    document.getElementById("apptZoom").onclick=openApptList;
+  } else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+  area = a;
+  tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+  if(btn) btn.classList.add("on");
+  var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+  if(bb) map.fitBounds(bb, {padding:[40,40], maxZoom:16});
+  refresh();
+}
+if(AREAS.length > 1){
+  var mk = function(label, val){
+    var b=document.createElement("button"); b.textContent=label;
+    b.addEventListener("click", function(){ setArea(val, b); });
+    tabs.appendChild(b); return b;
+  };
+  var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+  AREAS.forEach(function(a){ mk(a, a); });
+} else {
+  tabs.style.display = "none";
+}
+
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+  var g = GROUPS[k];
+  var c = document.createElement("div"); c.className = "chip";
+  c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+  c.addEventListener("click", function(){
+    if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+    else { activeGroups.add(k); c.classList.remove("off"); }
+    refresh();
+  });
+  chips.appendChild(c);
+});
+
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+  var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+  arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+  return arr;
+}
+function openApptList(){
+  closeSheet();
+  var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+  if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+  else {
+    body.innerHTML=arr.map(function(it,i){
+      var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+      var t=new Date(it.a.date+"T"+it.a.time).getTime();
+      var past=(!isNaN(t) && t<now) ? " past" : "";
+      return '<button class="appt-item" data-i="'+i+'">'+
+        '<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+        '<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+        '<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+        '<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+    }).join("");
+    Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+      btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+    });
+  }
+  document.getElementById("apptSheet").classList.add("open");
+  scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+
+// Adressesøk
+function renderSearch(q){
+  var box=document.getElementById("searchResults");
+  q=(q||"").trim().toLowerCase();
+  if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+  var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+  hits.sort(function(a,b){
+    var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+    if(ai!==bi) return ai-bi;
+    return a.navn.localeCompare(b.navn,"no");
+  });
+  hits=hits.slice(0,8);
+  if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+  box.hidden=false;
+  box.innerHTML=hits.map(function(d){
+    var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+    var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+    return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+  }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+    btn.addEventListener("click", function(){
+      var bnr=btn.getAttribute("data-bnr"), d=null;
+      for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+      if(d) goToSearchDoor(d);
+    });
+  });
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+  hideSearch();
+  if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+  map.setView([d.lat, d.lon], 18, {animate:true});
+  openSheet(d);
+}
+(function(){
+  var si=document.getElementById("searchInput"); if(!si) return;
+  var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+  si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+  si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+  sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+  document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+  var tb=document.querySelector(".topbar"); if(!tb) return;
+  var el=document.querySelector(".leaflet-top.leaflet-right");
+  if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+  var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+  var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+  var sum="Besøk: "+d.navn;
+  var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+  if(ICS_ENDPOINT){
+    return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+  }
+  var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+  var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+  var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+  var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+  function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+    "SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+    "BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+    "END:VEVENT","END:VCALENDAR"];
+  var ics=L.join("\r\n");
+  try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+  try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+  catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+  var box=document.getElementById("sAppt"), a=appts[d.bnr];
+  if(a){
+    box.className="apptbox has";
+    box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+      '<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+    document.getElementById("aCal").href=icsUri(d,a);
+    document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+    document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+  } else {
+    box.className="apptbox";
+    box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+    document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+  }
+}
+function showApptForm(d,a){
+  var box=document.getElementById("sAppt");
+  var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+  var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+  box.className="apptbox";
+  box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+    '<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+    '<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+  document.getElementById("aSave").onclick=function(){
+    var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+    if(!dd||!tt) return;
+    appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+  };
+  document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+
+var cur = null;
+function openSheet(d){
+  cur = d;
+  document.getElementById("sAddr").textContent = d.navn;
+  document.getElementById("sSub").textContent = d.adr;
+  var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+  var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+  if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+  document.getElementById("sBadges").innerHTML = badges;
+  if(d.sfid){
+    document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+  } else {
+    document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+  }
+  var stackBox = document.getElementById("sStack");
+  if(d._stackN > 1){
+    stackBox.hidden = false;
+    var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+    var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+    stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+      var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+      var isCur = String(sd.bnr) === String(d.bnr);
+      var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+      var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+      var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+      return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+        '<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+        '<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+        '<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+    }).join("");
+    Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+      btn.addEventListener("click", function(ev){
+        if(ev.target.closest("a")) return;
+        var bnr = btn.getAttribute("data-bnr"), nd = null;
+        for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+        if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+      });
+    });
+  } else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+  renderAppt(d);
+  document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+  var db = document.getElementById("sDone");
+  if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+  else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+  sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+  if(!cur) return;
+  if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+  saveDone(); refresh(); closeSheet();
+});
+
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+  if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+  if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+  toast("Henter posisjon …");
+  navigator.geolocation.watchPosition(function(pos){
+    var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+    if(!meDot){
+      meCirc = L.circle(ll, {radius:acc, color:"#1a73e8", weight:1, fillColor:"#1a73e8", fillOpacity:0.12, interactive:false}).addTo(map);
+      meDot = L.circleMarker(ll, {radius:8, color:"#fff", weight:3, fillColor:"#1a73e8", fillOpacity:1, interactive:false}).addTo(map);
+      map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+    } else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+  }, function(err){
+    if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+    else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+  }, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+
+var all = bounds(function(){ return true; });
+if(all) map.fitBounds(all, {padding:[40,40], maxZoom:16});
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
