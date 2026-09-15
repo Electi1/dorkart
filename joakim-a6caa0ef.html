@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Dørkart Joakim 14.09.26</title>
+<title>Dørkart Joakim 15.09.26</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,27 +11,27 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
 <style>
 :root{
-  --hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
-  --electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
-  --bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
-  --shadow:0 6px 24px rgba(10,20,40,.18);
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
 #map{position:absolute; inset:0; z-index:0;}
 .topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
 .brandbar{
-  background:var(--electi); color:#fff;
-  padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  box-shadow:0 2px 12px rgba(0,0,90,.30);
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
 }
 .controls{
-  background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
-  border-bottom:1px solid var(--line);
-  padding:8px 12px;
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
 }
 .brand{display:flex; align-items:center; gap:11px; min-width:0;}
 .brand .logo{height:38px; width:auto; flex:none; display:block;}
@@ -43,16 +43,16 @@ html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); back
 .remaining b{font-size:14px; font-weight:800; margin-right:1px;}
 .areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
 .areatabs button{
-  flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
-  border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
-  border-radius:9px; cursor:pointer;
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
 }
 .areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
 .chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
 .chip{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
-  border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
 }
 .chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
 .chip .n{color:var(--muted); font-weight:600;}
@@ -73,10 +73,10 @@ html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); back
 .search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
 .sheet{
-  position:absolute; left:0; right:0; bottom:0; z-index:1200;
-  background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
-  padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
-  transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
 }
 .sheet.open{transform:translateY(0);}
 .sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
@@ -88,8 +88,8 @@ html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); back
 .sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
 .actions{display:flex; gap:10px; margin-top:16px;}
 .actions a, .actions button{
-  flex:1; text-align:center; padding:14px 8px; border-radius:12px;
-  font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
 }
 .btn-nav{background:var(--electi); color:#fff;}
 .btn-done{background:var(--ink); color:#fff;}
@@ -140,91 +140,91 @@ html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); back
 .appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
 .appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
 .locate{
-  position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
-  width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
-  background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
-  display:flex; align-items:center; justify-content:center; padding:0;
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
 }
 .locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
 .toast{
-  position:absolute; left:50%; transform:translateX(-50%);
-  bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
-  background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
-  padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
-  opacity:0; pointer-events:none; transition:opacity .2s;
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
 }
 .toast.show{opacity:1;}
-  .me-icon{background:transparent!important; border:0!important;}
-  .me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
-  .me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
-  @keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div class="topbar">
-  <div class="brandbar">
-    <div class="brand">
-      <img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
-      <div class="vr"></div>
-      <div class="brandtext">
-        <div class="title">Joakim</div>
-        <div class="date">14.09.26</div>
-      </div>
-    </div>
-    <div class="remaining"><b id="remN">0</b> igjen</div>
-  </div>
-  <div class="controls">
-    <div class="areatabs" id="areatabs"></div>
-    <div class="chips" id="chips"></div>
-    <div class="searchwrap">
-      <input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
-      <button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
-      <div class="searchresults" id="searchResults" hidden></div>
-    </div>
-    <label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
-    <div class="apptline" id="apptline" hidden></div>
-  </div>
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Joakim</div>
+<div class="date">15.09.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen</div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
+<div class="apptline" id="apptline" hidden></div>
+</div>
 </div>
 <button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
 </button>
 <div class="toast" id="toast"></div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet">
-  <div class="grab"></div>
-  <button class="close" id="sheetClose">×</button>
-  <div class="addr" id="sAddr"></div>
-  <div class="sub" id="sSub"></div>
-  <div class="badges" id="sBadges"></div>
-  <div class="meta" id="sMeta"></div>
-  <div class="stackbox" id="sStack" hidden></div>
-  <div class="apptbox" id="sAppt"></div>
-  <div class="actions">
-    <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
-    <button class="btn-done" id="sDone"></button>
-  </div>
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
 </div>
 <div class="sheet apptsheet" id="apptSheet">
-  <div class="grab"></div>
-  <button class="close" id="apptClose">×</button>
-  <div class="apptsheet-title">📅 Avtaler</div>
-  <div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
-  <div class="appt-list" id="apptListBody"></div>
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
 </div>
 <script>
-var DATA = [{"navn": "Løvengvegen 96", "grp": "HP", "lat": 60.0949984179934, "lon": 11.448146342750386, "adr": "Løvengvegen 96, 2150 Årnes", "area": "Årnes", "bnr": "V-10862564", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CL7uMAG"}, {"navn": "Sørbyvegen 13", "grp": "HP", "lat": 60.110022114219916, "lon": 11.53293132428311, "adr": "Sørbyvegen 13, 2150 Årnes", "area": "Årnes", "bnr": "V-10862817", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLBzMAO"}, {"navn": "Sagtunet 11 E", "grp": "HP", "lat": 60.1308762882115, "lon": 11.486838530951163, "adr": "Sagtunet 11 E, 2150 Årnes", "area": "Årnes", "bnr": "V-10862924", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLDiMAO"}, {"navn": "Ødegardsvegen 59", "grp": "HP", "lat": 60.10857205717499, "lon": 11.516503052056226, "adr": "Ødegardsvegen 59, 2150 Årnes", "area": "Årnes", "bnr": "V-10863194", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLI4MAO"}, {"navn": "Sagvegen 16", "grp": "HP", "lat": 60.131372244020554, "lon": 11.48640415775807, "adr": "Sagvegen 16, 2150 Årnes", "area": "Årnes", "bnr": "V-10863529", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLP4MAO"}, {"navn": "Rakeievegen 407", "grp": "HP", "lat": 60.115227310611694, "lon": 11.5463525785708, "adr": "Rakeievegen 407, 2150 Årnes", "area": "Årnes", "bnr": "V-10863739", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLSSMA4"}, {"navn": "Rakeievegen 569", "grp": "HP", "lat": 60.10271309081784, "lon": 11.55813788942039, "adr": "Rakeievegen 569, 2150 Årnes", "area": "Årnes", "bnr": "V-10864274", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLb5MAG"}, {"navn": "Sagtunet 11 J", "grp": "HP", "lat": 60.1308762882115, "lon": 11.486838530951163, "adr": "Sagtunet 11 J, 2150 Årnes", "area": "Årnes", "bnr": "V-10864577", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CLfyMAG"}, {"navn": "Sagtunet 11 H", "grp": "HP", "lat": 60.13075036163274, "lon": 11.48684703190148, "adr": "Sagtunet 11 H, 2150 Årnes", "area": "Årnes", "bnr": "V-10864578", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CLfzMAG"}, {"navn": "Folmovegen 103", "grp": "HP", "lat": 60.1342990638877, "lon": 11.505364455485543, "adr": "Folmovegen 103, 2150 Årnes", "area": "Årnes", "bnr": "V-10865111", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLoaMAG"}, {"navn": "Torstuvegen 86", "grp": "HC", "lat": 60.125293740966114, "lon": 11.535727417715222, "adr": "Torstuvegen 86, 2150 Årnes", "area": "Årnes", "bnr": "V-10865281", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLrKMAW"}, {"navn": "Rakeievegen 466", "grp": "HP", "lat": 60.1116368181103, "lon": 11.556630656631382, "adr": "Rakeievegen 466, 2150 Årnes", "area": "Årnes", "bnr": "V-10865325", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLs2MAG"}, {"navn": "Gruevegen 39", "grp": "HP", "lat": 60.1061130673791, "lon": 11.456823843185154, "adr": "Gruevegen 39, 2150 Årnes", "area": "Årnes", "bnr": "V-10865921", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CM1eMAG"}, {"navn": "Nedre Hagaveg 316", "grp": "HP", "lat": 60.0989756625627, "lon": 11.437385798305097, "adr": "Nedre Hagaveg 316, 2150 Årnes", "area": "Årnes", "bnr": "V-10866142", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CM5DMAW"}, {"navn": "Øvre Hagaveg 61", "grp": "HP", "lat": 60.11562195583214, "lon": 11.464253594589637, "adr": "Øvre Hagaveg 61, 2150 Årnes", "area": "Årnes", "bnr": "V-10866257", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CM74MAG"}, {"navn": "Gruevegen 35", "grp": "HP", "lat": 60.10644331108623, "lon": 11.455942249346299, "adr": "Gruevegen 35, 2150 Årnes", "area": "Årnes", "bnr": "V-10866268", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CM7FMAW"}, {"navn": "Sørbyvegen 4", "grp": "HP", "lat": 60.109075992357205, "lon": 11.531700384675572, "adr": "Sørbyvegen 4, 2150 Årnes", "area": "Årnes", "bnr": "V-10866650", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CMDPMA4"}, {"navn": "Evangvegen 53", "grp": "HP", "lat": 60.1119753290616, "lon": 11.459442023006591, "adr": "Evangvegen 53, 2150 Årnes", "area": "Årnes", "bnr": "V-10867015", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMJIMA4"}, {"navn": "Polarisvegen 31", "grp": "HC", "lat": 60.12056090996252, "lon": 11.34176060653518, "adr": "Polarisvegen 31, 2165 Hvam", "area": "Hvam", "bnr": "V-10867049", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CMJqMAO"}, {"navn": "Nedre Hagaveg 78", "grp": "HP", "lat": 60.115229908737874, "lon": 11.462121426673047, "adr": "Nedre Hagaveg 78, 2150 Årnes", "area": "Årnes", "bnr": "V-10867551", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMRwMAO"}, {"navn": "Skreksrudvegen 294", "grp": "HP", "lat": 60.11048079548506, "lon": 11.549783367207388, "adr": "Skreksrudvegen 294, 2150 Årnes", "area": "Årnes", "bnr": "V-10867739", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMUyMAO"}, {"navn": "Evjebakken 26", "grp": "HP", "lat": 60.11110051380056, "lon": 11.461172860286524, "adr": "Evjebakken 26, 2150 Årnes", "area": "Årnes", "bnr": "V-10867947", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMYKMA4"}, {"navn": "Torstuvegen 153", "grp": "HP", "lat": 60.13131266528654, "lon": 11.533298947560304, "adr": "Torstuvegen 153, 2150 Årnes", "area": "Årnes", "bnr": "V-10868558", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMiBMAW"}, {"navn": "Evjebakken 30", "grp": "HP", "lat": 60.11091180868583, "lon": 11.461030994157653, "adr": "Evjebakken 30, 2150 Årnes", "area": "Årnes", "bnr": "V-10868660", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMjpMAG"}, {"navn": "Evjebakken 20", "grp": "HP", "lat": 60.111598416470564, "lon": 11.461595174843001, "adr": "Evjebakken 20, 2150 Årnes", "area": "Årnes", "bnr": "V-10868669", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMjyMAG"}, {"navn": "Torstuvegen 99", "grp": "HC", "lat": 60.1264290280151, "lon": 11.536897314783806, "adr": "Torstuvegen 99, 2150 Årnes", "area": "Årnes", "bnr": "V-10868671", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMk0MAG"}, {"navn": "Torstuvegen 182", "grp": "HP", "lat": 60.13318122140913, "lon": 11.527462950794765, "adr": "Torstuvegen 182, 2150 Årnes", "area": "Årnes", "bnr": "V-10868692", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMkLMAW"}, {"navn": "Evjebakken 24", "grp": "HP", "lat": 60.11120061375324, "lon": 11.461248722338228, "adr": "Evjebakken 24, 2150 Årnes", "area": "Årnes", "bnr": "V-10868929", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMoAMAW"}, {"navn": "Skreksrudvegen 198", "grp": "HP", "lat": 60.10910182094233, "lon": 11.534119288282502, "adr": "Skreksrudvegen 198, 2150 Årnes", "area": "Årnes", "bnr": "V-10869069", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMqQMAW"}, {"navn": "Sagtunet 11 A", "grp": "HP", "lat": 60.13079217399857, "lon": 11.487012260240055, "adr": "Sagtunet 11 A, 2150 Årnes", "area": "Årnes", "bnr": "V-10869532", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMxtMAG"}, {"navn": "Folmovegen 96", "grp": "HP", "lat": 60.13431442777557, "lon": 11.502700143420999, "adr": "Folmovegen 96, 2150 Årnes", "area": "Årnes", "bnr": "V-10869659", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CMzwMAG"}, {"navn": "Lundbergvegen 89", "grp": "HP", "lat": 60.120685795352685, "lon": 11.50844117692695, "adr": "Lundbergvegen 89, 2150 Årnes", "area": "Årnes", "bnr": "V-10869743", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN1IMAW"}, {"navn": "Sagtunet 11 B", "grp": "HP", "lat": 60.13074003959119, "lon": 11.486918284351875, "adr": "Sagtunet 11 B, 2150 Årnes", "area": "Årnes", "bnr": "V-10869833", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN2kMAG"}, {"navn": "Gruevegen 104", "grp": "HP", "lat": 60.104471139035695, "lon": 11.467850588875073, "adr": "Gruevegen 104, 2150 Årnes", "area": "Årnes", "bnr": "V-10869836", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN2nMAG"}, {"navn": "Evjebakken 28", "grp": "HP", "lat": 60.111015497057664, "lon": 11.461107123216909, "adr": "Evjebakken 28, 2150 Årnes", "area": "Årnes", "bnr": "V-10869888", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN3dMAG"}, {"navn": "Vennevålvegen 60", "grp": "HP", "lat": 60.121398286937946, "lon": 11.540594917087539, "adr": "Vennevålvegen 60, 2150 Årnes", "area": "Årnes", "bnr": "V-10869960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN4nMAG"}, {"navn": "Sagtunet 11 D", "grp": "HP", "lat": 60.13083312430535, "lon": 11.486745232316432, "adr": "Sagtunet 11 D, 2150 Årnes", "area": "Årnes", "bnr": "V-10870289", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNA6MAO"}, {"navn": "Torstuvegen 84", "grp": "HP", "lat": 60.125267323795505, "lon": 11.536224670949323, "adr": "Torstuvegen 84, 2150 Årnes", "area": "Årnes", "bnr": "V-10870831", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNIqMAO"}, {"navn": "Vennevålvegen 45", "grp": "HP", "lat": 60.12065783936425, "lon": 11.543738727943289, "adr": "Vennevålvegen 45, 2150 Årnes", "area": "Årnes", "bnr": "V-10870922", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNKJMA4"}, {"navn": "Rakeievegen 179", "grp": "HP", "lat": 60.125075540907616, "lon": 11.512098026698485, "adr": "Rakeievegen 179, 2150 Årnes", "area": "Årnes", "bnr": "V-10871003", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNLcMAO"}, {"navn": "Øvre Hagaveg 438", "grp": "HP", "lat": 60.0919659881849, "lon": 11.464661942822534, "adr": "Øvre Hagaveg 438, 2150 Årnes", "area": "Årnes", "bnr": "V-10871761", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNXqMAO"}, {"navn": "Lundbergvegen 68", "grp": "HP", "lat": 60.122826471661796, "lon": 11.51273078561762, "adr": "Lundbergvegen 68, 2150 Årnes", "area": "Årnes", "bnr": "V-10871951", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNauMAG"}, {"navn": "Sagvegen 70", "grp": "HP", "lat": 60.13344516067804, "lon": 11.489247648445225, "adr": "Sagvegen 70, 2150 Årnes", "area": "Årnes", "bnr": "V-10872109", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNdSMAW"}, {"navn": "Nedre Hagaveg 355", "grp": "HP", "lat": 60.098221850008066, "lon": 11.429794524002068, "adr": "Nedre Hagaveg 355, 2150 Årnes", "area": "Årnes", "bnr": "V-10872292", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNgPMAW"}, {"navn": "Evangvegen 67", "grp": "HP", "lat": 60.110879293378346, "lon": 11.459349456421918, "adr": "Evangvegen 67, 2150 Årnes", "area": "Årnes", "bnr": "V-10872473", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNjKMAW"}, {"navn": "Evjebakken 9", "grp": "HP", "lat": 60.11116781058176, "lon": 11.460742355623127, "adr": "Evjebakken 9, 2150 Årnes", "area": "Årnes", "bnr": "V-10872607", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNlUMAW"}, {"navn": "Evangvegen 71", "grp": "HP", "lat": 60.11041526259077, "lon": 11.459037691824829, "adr": "Evangvegen 71, 2150 Årnes", "area": "Årnes", "bnr": "V-10873508", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CO01MAG"}, {"navn": "Vennevålvegen 100", "grp": "HC", "lat": 60.124390978366904, "lon": 11.539785002008124, "adr": "Vennevålvegen 100, 2150 Årnes", "area": "Årnes", "bnr": "V-10874805", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COKwMAO"}, {"navn": "Skreksrudvegen 72", "grp": "HP", "lat": 60.11562839878613, "lon": 11.509833570320978, "adr": "Skreksrudvegen 72, 2150 Årnes", "area": "Årnes", "bnr": "V-10875403", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COUaMAO"}, {"navn": "Østamovegen 53", "grp": "HP", "lat": 60.11349711529929, "lon": 11.52901956633824, "adr": "Østamovegen 53, 2150 Årnes", "area": "Årnes", "bnr": "V-10875579", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COXQMA4"}, {"navn": "Evangvegen 13", "grp": "HP", "lat": 60.115857640082766, "lon": 11.463396792898763, "adr": "Evangvegen 13, 2150 Årnes", "area": "Årnes", "bnr": "V-10876310", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COjDMAW"}, {"navn": "Nedre Hagaveg 364", "grp": "HP", "lat": 60.09689989554723, "lon": 11.430419767122638, "adr": "Nedre Hagaveg 364, 2150 Årnes", "area": "Årnes", "bnr": "V-10876394", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COkZMAW"}, {"navn": "Sagtunet 11 G", "grp": "HP", "lat": 60.13074003959119, "lon": 11.486918284351875, "adr": "Sagtunet 11 G, 2150 Årnes", "area": "Årnes", "bnr": "V-10876484", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000COm1MAG"}, {"navn": "Runnimyra 9", "grp": "HC", "lat": 60.136700995920705, "lon": 11.489376672537347, "adr": "Runnimyra 9, 2150 Årnes", "area": "Årnes", "bnr": "V-10877574", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CP3bMAG"}, {"navn": "Vennevålvegen 21", "grp": "HP", "lat": 60.11818492492378, "lon": 11.54606085528051, "adr": "Vennevålvegen 21, 2150 Årnes", "area": "Årnes", "bnr": "V-10878453", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPHmMAO"}, {"navn": "Berget 6", "grp": "HP", "lat": 60.109820486124924, "lon": 11.535681585469034, "adr": "Berget 6, 2150 Årnes", "area": "Årnes", "bnr": "V-10878787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPNAMA4"}, {"navn": "Østamovegen 32", "grp": "HP", "lat": 60.113763087728664, "lon": 11.522908279647115, "adr": "Østamovegen 32, 2150 Årnes", "area": "Årnes", "bnr": "V-10878812", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPNZMA4"}, {"navn": "Sagtunet 11 C", "grp": "HP", "lat": 60.13075036163274, "lon": 11.48684703190148, "adr": "Sagtunet 11 C, 2150 Årnes", "area": "Årnes", "bnr": "V-10879148", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPSzMAO"}, {"navn": "Sagvegen 25", "grp": "HP", "lat": 60.13224914750306, "lon": 11.489456205999117, "adr": "Sagvegen 25, 2150 Årnes", "area": "Årnes", "bnr": "V-10879488", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CPYTMA4"}, {"navn": "Evjebakken 22", "grp": "HP", "lat": 60.11147619059222, "lon": 11.46150146116969, "adr": "Evjebakken 22, 2150 Årnes", "area": "Årnes", "bnr": "V-10879744", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPcbMAG"}, {"navn": "Østamovegen 38", "grp": "HP", "lat": 60.11357895562235, "lon": 11.520945996650761, "adr": "Østamovegen 38, 2150 Årnes", "area": "Årnes", "bnr": "V-10880437", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPnmMAG"}, {"navn": "Nedre Hagaveg 365", "grp": "HC", "lat": 60.09780641655467, "lon": 11.428936402022545, "adr": "Nedre Hagaveg 365, 2150 Årnes", "area": "Årnes", "bnr": "V-10880845", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPuMMAW"}, {"navn": "Sagtunet 11 I", "grp": "HP", "lat": 60.13083312430535, "lon": 11.486745232316432, "adr": "Sagtunet 11 I, 2150 Årnes", "area": "Årnes", "bnr": "V-10881143", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CPzAMAW"}, {"navn": "Pålhukvegen 50", "grp": "HC", "lat": 60.10706367517039, "lon": 11.543839746648707, "adr": "Pålhukvegen 50, 2150 Årnes", "area": "Årnes", "bnr": "V-10881261", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQ14MAG"}, {"navn": "Folmovegen 163", "grp": "HP", "lat": 60.13950589475177, "lon": 11.507639355501174, "adr": "Folmovegen 163, 2150 Årnes", "area": "Årnes", "bnr": "V-10881380", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQ2zMAG"}, {"navn": "Sørbyvegen 9", "grp": "HP", "lat": 60.10970341187263, "lon": 11.531789059519577, "adr": "Sørbyvegen 9, 2150 Årnes", "area": "Årnes", "bnr": "V-10882265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQHGMA4"}, {"navn": "Nedre Hagaveg 311", "grp": "HP", "lat": 60.10064128048741, "lon": 11.43549604169962, "adr": "Nedre Hagaveg 311, 2150 Årnes", "area": "Årnes", "bnr": "V-10883017", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQWaMAO"}, {"navn": "Sagvegen 26", "grp": "HC", "lat": 60.13249911959641, "lon": 11.486384771702571, "adr": "Sagvegen 26, 2150 Årnes", "area": "Årnes", "bnr": "V-10883464", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQdnMAG"}, {"navn": "Sagvegen 54", "grp": "HC", "lat": 60.133657856446895, "lon": 11.487012531570592, "adr": "Sagvegen 54, 2150 Årnes", "area": "Årnes", "bnr": "V-10883477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQe0MAG"}, {"navn": "Rakeievegen 242", "grp": "HP", "lat": 60.12317192794966, "lon": 11.523300098233687, "adr": "Rakeievegen 242, 2150 Årnes", "area": "Årnes", "bnr": "V-10884098", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CQo1MAG"}, {"navn": "Evjebakken 18", "grp": "HP", "lat": 60.111661239955296, "lon": 11.46164665900996, "adr": "Evjebakken 18, 2150 Årnes", "area": "Årnes", "bnr": "V-10884427", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQtKMAW"}, {"navn": "Runnimyra 66", "grp": "HC", "lat": 60.13793026102031, "lon": 11.49937074948697, "adr": "Runnimyra 66, 2150 Årnes", "area": "Årnes", "bnr": "V-10884554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQvNMAW"}, {"navn": "Torstuvegen 218", "grp": "HP", "lat": 60.13505096914673, "lon": 11.526728066769314, "adr": "Torstuvegen 218, 2150 Årnes", "area": "Årnes", "bnr": "V-10884968", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR23MAG"}, {"navn": "Evjebakken 16", "grp": "HP", "lat": 60.111787020611054, "lon": 11.461742438966922, "adr": "Evjebakken 16, 2150 Årnes", "area": "Årnes", "bnr": "V-10885221", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR68MAG"}, {"navn": "Nedre Hagaveg 105", "grp": "HP", "lat": 60.113630471635275, "lon": 11.459061560010184, "adr": "Nedre Hagaveg 105, 2150 Årnes", "area": "Årnes", "bnr": "V-10885802", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRFVMA4"}, {"navn": "Sørbyvegen 47", "grp": "HP", "lat": 60.11210397257695, "lon": 11.53354988188922, "adr": "Sørbyvegen 47, 2150 Årnes", "area": "Årnes", "bnr": "V-10885869", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRGaMAO"}, {"navn": "Evjebakken 7", "grp": "HP", "lat": 60.11123767737789, "lon": 11.460801562044816, "adr": "Evjebakken 7, 2150 Årnes", "area": "Årnes", "bnr": "V-10885942", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRHlMAO"}, {"navn": "Brautergutua 101", "grp": "HC", "lat": 60.097799830311665, "lon": 11.4503450019408, "adr": "Brautergutua 101, 2150 Årnes", "area": "Årnes", "bnr": "V-10886477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRQOMA4"}, {"navn": "Sagtunet 11 F", "grp": "HP", "lat": 60.1307652621313, "lon": 11.48701022835213, "adr": "Sagtunet 11 F, 2150 Årnes", "area": "Årnes", "bnr": "V-10886944", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CRXvMAO"}, {"navn": "Folmovegen 50", "grp": "HC", "lat": 60.132507554337735, "lon": 11.496389368856827, "adr": "Folmovegen 50, 2150 Årnes", "area": "Årnes", "bnr": "V-10887150", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRbFMAW"}, {"navn": "Brautergutua 10", "grp": "HP", "lat": 60.10354785016365, "lon": 11.44307891332144, "adr": "Brautergutua 10, 2150 Årnes", "area": "Årnes", "bnr": "V-10887368", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CRelMAG"}, {"navn": "Gruevegen 108", "grp": "HP", "lat": 60.10446592967538, "lon": 11.46833206356259, "adr": "Gruevegen 108, 2150 Årnes", "area": "Årnes", "bnr": "V-10887851", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRmYMAW"}, {"navn": "Sagvegen 25", "grp": "Kun mobil", "lat": 60.13224914750306, "lon": 11.489456205999117, "adr": "Sagvegen 25, 2150 Årnes", "area": "Årnes", "bnr": "V-10889055", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSASMA4"}, {"navn": "Evangvegen 68", "grp": "Kun mobil", "lat": 60.11089194480803, "lon": 11.460070276219893, "adr": "Evangvegen 68, 2150 Årnes", "area": "Årnes", "bnr": "V-10889159", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSC8MAO"}, {"navn": "Sagvegen 12", "grp": "Kun mobil", "lat": 60.13152762300267, "lon": 11.486884103981113, "adr": "Sagvegen 12, 2150 Årnes", "area": "Årnes", "bnr": "V-10889160", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSC9MAO"}, {"navn": "Folmovegen 122", "grp": "Kun mobil", "lat": 60.136235382160706, "lon": 11.504726479511492, "adr": "Folmovegen 122, 2150 Årnes", "area": "Årnes", "bnr": "V-10889371", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSFYMA4"}, {"navn": "Torstuvegen 91", "grp": "Kun mobil", "lat": 60.127433038068446, "lon": 11.536681125263039, "adr": "Torstuvegen 91, 2150 Årnes", "area": "Årnes", "bnr": "V-10889587", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSJ2MAO"}, {"navn": "Torstukroken 2", "grp": "Kun mobil", "lat": 60.13038051901971, "lon": 11.534313504567727, "adr": "Torstukroken 2, 2150 Årnes", "area": "Årnes", "bnr": "V-10889967", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSPAMA4"}, {"navn": "Runnimyra 35", "grp": "Kun mobil", "lat": 60.13732888267618, "lon": 11.493961250825286, "adr": "Runnimyra 35, 2150 Årnes", "area": "Årnes", "bnr": "V-10890033", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSQEMA4"}, {"navn": "Nedre Hagaveg 313", "grp": "Kun mobil", "lat": 60.10043127503908, "lon": 11.43543141834877, "adr": "Nedre Hagaveg 313, 2150 Årnes", "area": "Årnes", "bnr": "V-10890078", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSQxMAO"}, {"navn": "Rakeievegen 242", "grp": "Kun mobil", "lat": 60.12317192794966, "lon": 11.523300098233687, "adr": "Rakeievegen 242, 2150 Årnes", "area": "Årnes", "bnr": "V-10890228", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSTNMA4"}, {"navn": "Skreksrudvegen 243", "grp": "Kun mobil", "lat": 60.10924004656703, "lon": 11.542927882664653, "adr": "Skreksrudvegen 243, 2150 Årnes", "area": "Årnes", "bnr": "V-10890266", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSTzMAO"}, {"navn": "Lundbergvegen 91", "grp": "Kun mobil", "lat": 60.120575412515535, "lon": 11.50907492453369, "adr": "Lundbergvegen 91, 2150 Årnes", "area": "Årnes", "bnr": "V-10890317", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSUoMAO"}, {"navn": "Sørbyvegen 4", "grp": "Kun mobil", "lat": 60.109075992357205, "lon": 11.531700384675572, "adr": "Sørbyvegen 4, 2150 Årnes", "area": "Årnes", "bnr": "V-10890493", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSXeMAO"}, {"navn": "Åserudvegen 7", "grp": "Kun mobil", "lat": 60.110907874220466, "lon": 11.470160552458994, "adr": "Åserudvegen 7, 2150 Årnes", "area": "Årnes", "bnr": "V-10890597", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSavMAG"}, {"navn": "Seterstøavegen 207", "grp": "Kun mobil", "lat": 60.13536263118163, "lon": 11.485878734497119, "adr": "Seterstøavegen 207, 2150 Årnes", "area": "Årnes", "bnr": "V-10890973", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSibMAG"}, {"navn": "Nedre Hagaveg 207", "grp": "Kun mobil", "lat": 60.10639644093553, "lon": 11.448035440949054, "adr": "Nedre Hagaveg 207, 2150 Årnes", "area": "Årnes", "bnr": "V-10891090", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSkUMAW"}, {"navn": "Torstuvegen 97", "grp": "Kun mobil", "lat": 60.1266648066754, "lon": 11.536829041886795, "adr": "Torstuvegen 97, 2150 Årnes", "area": "Årnes", "bnr": "V-10891110", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSkoMAG"}, {"navn": "Folmovegen 41", "grp": "Kun mobil", "lat": 60.13168014983607, "lon": 11.497153250907804, "adr": "Folmovegen 41, 2150 Årnes", "area": "Årnes", "bnr": "V-10891258", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSonMAG"}, {"navn": "Nedre Hagaveg 165", "grp": "Kun mobil", "lat": 60.109421312729324, "lon": 11.453334564431541, "adr": "Nedre Hagaveg 165, 2150 Årnes", "area": "Årnes", "bnr": "V-10891342", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSq9MAG"}, {"navn": "Åserudvegen 21", "grp": "Kun mobil", "lat": 60.11062032120176, "lon": 11.46756546224488, "adr": "Åserudvegen 21, 2150 Årnes", "area": "Årnes", "bnr": "V-10891825", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSxwMAG"}, {"navn": "Sagvegen 27", "grp": "Kun mobil", "lat": 60.13258219364065, "lon": 11.489468771779828, "adr": "Sagvegen 27, 2150 Årnes", "area": "Årnes", "bnr": "V-10891858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSyTMAW"}, {"navn": "Vennevålvegen 104", "grp": "Kun mobil", "lat": 60.12435061183373, "lon": 11.5394542028691, "adr": "Vennevålvegen 104, 2150 Årnes", "area": "Årnes", "bnr": "V-10892028", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT1DMAW"}, {"navn": "Folmovegen 55", "grp": "Kun mobil", "lat": 60.132501018884305, "lon": 11.498402276097298, "adr": "Folmovegen 55, 2150 Årnes", "area": "Årnes", "bnr": "V-10892477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT8SMAW"}, {"navn": "Brautergutua 119", "grp": "Kun mobil", "lat": 60.09713379183087, "lon": 11.457875338227257, "adr": "Brautergutua 119, 2150 Årnes", "area": "Årnes", "bnr": "V-10892598", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTAPMA4"}, {"navn": "Gruevegen 14", "grp": "Kun mobil", "lat": 60.1104955955888, "lon": 11.456836212147207, "adr": "Gruevegen 14, 2150 Årnes", "area": "Årnes", "bnr": "V-10892743", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTCkMAO"}, {"navn": "Nedre Hagaveg 73", "grp": "Kun mobil", "lat": 60.11673974361942, "lon": 11.459178517191496, "adr": "Nedre Hagaveg 73, 2150 Årnes", "area": "Årnes", "bnr": "V-10893015", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTH8MAO"}, {"navn": "Brautergutua 102", "grp": "Kun mobil", "lat": 60.09845773794869, "lon": 11.455699328424082, "adr": "Brautergutua 102, 2150 Årnes", "area": "Årnes", "bnr": "V-10893098", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTITMA4"}, {"navn": "Sagvegen 38", "grp": "Kun mobil", "lat": 60.133567923333544, "lon": 11.48558299221772, "adr": "Sagvegen 38, 2150 Årnes", "area": "Årnes", "bnr": "V-10893100", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTIVMA4"}, {"navn": "Flatbyvegen 5", "grp": "Kun mobil", "lat": 60.13182440907376, "lon": 11.490211078016758, "adr": "Flatbyvegen 5, 2150 Årnes", "area": "Årnes", "bnr": "V-10893283", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTLSMA4"}, {"navn": "Velvangvegen 46", "grp": "Kun mobil", "lat": 60.10466882326928, "lon": 11.454530031613212, "adr": "Velvangvegen 46, 2150 Årnes", "area": "Årnes", "bnr": "V-10893676", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTRnMAO"}, {"navn": "Løvengvegen 98", "grp": "Kun mobil", "lat": 60.095208168816605, "lon": 11.448379746883386, "adr": "Løvengvegen 98, 2150 Årnes", "area": "Årnes", "bnr": "V-10893856", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTUhMAO"}, {"navn": "Holmenvegen 10", "grp": "Kun mobil", "lat": 60.124886464307785, "lon": 11.541911790028477, "adr": "Holmenvegen 10, 2150 Årnes", "area": "Årnes", "bnr": "V-10893961", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTWOMA4"}, {"navn": "Rakeievegen 260", "grp": "Kun mobil", "lat": 60.1221960240794, "lon": 11.525326735955833, "adr": "Rakeievegen 260, 2150 Årnes", "area": "Årnes", "bnr": "V-10894082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTYLMA4"}, {"navn": "Folmovegen 38", "grp": "Kun mobil", "lat": 60.13188433137454, "lon": 11.495472318281633, "adr": "Folmovegen 38, 2150 Årnes", "area": "Årnes", "bnr": "V-10894088", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTYRMA4"}, {"navn": "Vennevålvegen 101", "grp": "Kun mobil", "lat": 60.1247409913396, "lon": 11.53970935476525, "adr": "Vennevålvegen 101, 2150 Årnes", "area": "Årnes", "bnr": "V-10894121", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTYyMAO"}, {"navn": "Nedre Hagaveg 131", "grp": "Kun mobil", "lat": 60.11146309026301, "lon": 11.457092786561589, "adr": "Nedre Hagaveg 131, 2150 Årnes", "area": "Årnes", "bnr": "V-10894169", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTZkMAO"}, {"navn": "Nedre Hagaveg 69", "grp": "Kun mobil", "lat": 60.11625915523008, "lon": 11.461487138167143, "adr": "Nedre Hagaveg 69, 2150 Årnes", "area": "Årnes", "bnr": "V-10894180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTZvMAO"}, {"navn": "Kvennvegen 16", "grp": "Kun mobil", "lat": 60.12353282424008, "lon": 11.526058081479622, "adr": "Kvennvegen 16, 2150 Årnes", "area": "Årnes", "bnr": "V-10894341", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTcWMAW"}, {"navn": "Skreksrudvegen 206", "grp": "Kun mobil", "lat": 60.109391653797196, "lon": 11.534999644552698, "adr": "Skreksrudvegen 206, 2150 Årnes", "area": "Årnes", "bnr": "V-10894625", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTh6MAG"}, {"navn": "Seterstøavegen 215", "grp": "Kun mobil", "lat": 60.13602915214365, "lon": 11.486885420085553, "adr": "Seterstøavegen 215, 2150 Årnes", "area": "Årnes", "bnr": "V-10894703", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTiMMAW"}, {"navn": "Sagvegen 28", "grp": "Kun mobil", "lat": 60.13259176455459, "lon": 11.486235087502914, "adr": "Sagvegen 28, 2150 Årnes", "area": "Årnes", "bnr": "V-10894732", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTipMAG"}, {"navn": "Vennevålvegen 23", "grp": "Kun mobil", "lat": 60.118394187748436, "lon": 11.546483858531035, "adr": "Vennevålvegen 23, 2150 Årnes", "area": "Årnes", "bnr": "V-10894836", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTkVMAW"}, {"navn": "Ødegardsvegen 41", "grp": "Kun mobil", "lat": 60.107804159086406, "lon": 11.518287190976823, "adr": "Ødegardsvegen 41, 2150 Årnes", "area": "Årnes", "bnr": "V-10894867", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTl0MAG"}, {"navn": "Folmovegen 121", "grp": "Kun mobil", "lat": 60.1358575703645, "lon": 11.505702750574532, "adr": "Folmovegen 121, 2150 Årnes", "area": "Årnes", "bnr": "V-10895019", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTnSMAW"}, {"navn": "Nedre Hagaveg 85", "grp": "Kun mobil", "lat": 60.11502110249304, "lon": 11.461254108743399, "adr": "Nedre Hagaveg 85, 2150 Årnes", "area": "Årnes", "bnr": "V-10895229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTqqMAG"}, {"navn": "Skreksrudvegen 57", "grp": "Kun mobil", "lat": 60.10919220272662, "lon": 11.513160775761028, "adr": "Skreksrudvegen 57, 2150 Årnes", "area": "Årnes", "bnr": "V-10895277", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTrcMAG"}];
-var AREAS = ["Årnes", "Hvam"];
-var STORE_KEY = "dorkart_Joakim_14.09.26";
+var DATA = [{"navn": "Brudalstubben 7", "grp": "HP", "lat": 60.20933296103656, "lon": 11.566355485509192, "adr": "Brudalstubben 7, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10861704", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CKu2MAG"}, {"navn": "Åsvegen 206", "grp": "HP", "lat": 60.216754124019694, "lon": 11.547911398917082, "adr": "Åsvegen 206, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10861760", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CKuwMAG"}, {"navn": "Løvengvegen 96", "grp": "HP", "lat": 60.0949984179934, "lon": 11.448146342750386, "adr": "Løvengvegen 96, 2150 Årnes", "area": "Årnes", "bnr": "V-10862564", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CL7uMAG"}, {"navn": "Liervegen 12", "grp": "HC", "lat": 60.237088234057815, "lon": 11.544496386045672, "adr": "Liervegen 12, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10862611", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CL8fMAG"}, {"navn": "Sørbyvegen 13", "grp": "HP", "lat": 60.110022114219916, "lon": 11.53293132428311, "adr": "Sørbyvegen 13, 2150 Årnes", "area": "Årnes", "bnr": "V-10862817", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLBzMAO"}, {"navn": "Ødegardsvegen 59", "grp": "HP", "lat": 60.10857205717499, "lon": 11.516503052056226, "adr": "Ødegardsvegen 59, 2150 Årnes", "area": "Årnes", "bnr": "V-10863194", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLI4MAO"}, {"navn": "Sagvegen 16", "grp": "HP", "lat": 60.131372244020554, "lon": 11.48640415775807, "adr": "Sagvegen 16, 2150 Årnes", "area": "Årnes", "bnr": "V-10863529", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLP4MAO"}, {"navn": "Rakeievegen 407", "grp": "HP", "lat": 60.115227310611694, "lon": 11.5463525785708, "adr": "Rakeievegen 407, 2150 Årnes", "area": "Årnes", "bnr": "V-10863739", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLSSMA4"}, {"navn": "Rakeievegen 569", "grp": "HP", "lat": 60.10271309081784, "lon": 11.55813788942039, "adr": "Rakeievegen 569, 2150 Årnes", "area": "Årnes", "bnr": "V-10864274", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLb5MAG"}, {"navn": "Togstadvegen 568", "grp": "HC", "lat": 60.2287214033025, "lon": 11.572985224762487, "adr": "Togstadvegen 568, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10864618", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLgdMAG"}, {"navn": "Liagrenda 70", "grp": "HP", "lat": 60.245272843770614, "lon": 11.550448117227376, "adr": "Liagrenda 70, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10864634", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLgtMAG"}, {"navn": "Dystlandhaugen 32", "grp": "HP", "lat": 60.23374685590108, "lon": 11.53884663150922, "adr": "Dystlandhaugen 32, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10864844", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLkHMAW"}, {"navn": "Torstuvegen 86", "grp": "HC", "lat": 60.125293740966114, "lon": 11.535727417715222, "adr": "Torstuvegen 86, 2150 Årnes", "area": "Årnes", "bnr": "V-10865281", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLrKMAW"}, {"navn": "Rakeievegen 466", "grp": "HP", "lat": 60.1116368181103, "lon": 11.556630656631382, "adr": "Rakeievegen 466, 2150 Årnes", "area": "Årnes", "bnr": "V-10865325", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLs2MAG"}, {"navn": "Holsvegen 64", "grp": "HP", "lat": 60.199215856115245, "lon": 11.562074897496545, "adr": "Holsvegen 64, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10865917", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CM1aMAG"}, {"navn": "Liagrenda 35", "grp": "HC", "lat": 60.24398138382026, "lon": 11.55430511341636, "adr": "Liagrenda 35, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10866192", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CM61MAG"}, {"navn": "Sørbyvegen 4", "grp": "HP", "lat": 60.109075992357205, "lon": 11.531700384675572, "adr": "Sørbyvegen 4, 2150 Årnes", "area": "Årnes", "bnr": "V-10866650", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CMDPMA4"}, {"navn": "Liagrenda 161", "grp": "HC", "lat": 60.25272408372859, "lon": 11.55056879079669, "adr": "Liagrenda 161, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10866876", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMH3MAO"}, {"navn": "Åsliholtet 39", "grp": "HP", "lat": 60.208968694965506, "lon": 11.548532738139782, "adr": "Åsliholtet 39, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10866917", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMHiMAO"}, {"navn": "Polarisvegen 31", "grp": "HC", "lat": 60.12056090996252, "lon": 11.34176060653518, "adr": "Polarisvegen 31, 2165 Hvam", "area": "Hvam", "bnr": "V-10867049", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CMJqMAO"}, {"navn": "Nedre Hagaveg 78", "grp": "HP", "lat": 60.115229908737874, "lon": 11.462121426673047, "adr": "Nedre Hagaveg 78, 2150 Årnes", "area": "Årnes", "bnr": "V-10867551", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMRwMAO"}, {"navn": "Togstadvegen 681", "grp": "HP", "lat": 60.23485650135849, "lon": 11.560912662724341, "adr": "Togstadvegen 681, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10867565", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CMSAMA4"}, {"navn": "Skreksrudvegen 294", "grp": "HP", "lat": 60.11048079548506, "lon": 11.549783367207388, "adr": "Skreksrudvegen 294, 2150 Årnes", "area": "Årnes", "bnr": "V-10867739", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMUyMAO"}, {"navn": "Gullbekken 68", "grp": "HP", "lat": 60.20721461677591, "lon": 11.575852334724749, "adr": "Gullbekken 68, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10867858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMWtMAO"}, {"navn": "Kongsvingervegen 2886", "grp": "HP", "lat": 60.18963771660033, "lon": 11.553994515168686, "adr": "Kongsvingervegen 2886, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10868053", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMa2MAG"}, {"navn": "Nordbygrenda 66", "grp": "HP", "lat": 60.24439339778649, "lon": 11.562474510680435, "adr": "Nordbygrenda 66, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10868065", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMaEMAW"}, {"navn": "Kongsvingervegen 2930", "grp": "HP", "lat": 60.192557340688886, "lon": 11.55813627830195, "adr": "Kongsvingervegen 2930, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10868114", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMb1MAG"}, {"navn": "Torstuvegen 153", "grp": "HP", "lat": 60.13131266528654, "lon": 11.533298947560304, "adr": "Torstuvegen 153, 2150 Årnes", "area": "Årnes", "bnr": "V-10868558", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMiBMAW"}, {"navn": "Torstuvegen 99", "grp": "HC", "lat": 60.1264290280151, "lon": 11.536897314783806, "adr": "Torstuvegen 99, 2150 Årnes", "area": "Årnes", "bnr": "V-10868671", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMk0MAG"}, {"navn": "Åsvegen 197", "grp": "HP", "lat": 60.21566403548284, "lon": 11.54929194522475, "adr": "Åsvegen 197, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10868687", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMkGMAW"}, {"navn": "Torstuvegen 182", "grp": "HP", "lat": 60.13318122140913, "lon": 11.527462950794765, "adr": "Torstuvegen 182, 2150 Årnes", "area": "Årnes", "bnr": "V-10868692", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMkLMAW"}, {"navn": "Skreksrudvegen 198", "grp": "HP", "lat": 60.10910182094233, "lon": 11.534119288282502, "adr": "Skreksrudvegen 198, 2150 Årnes", "area": "Årnes", "bnr": "V-10869069", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMqQMAW"}, {"navn": "Togstadvegen 772", "grp": "HP", "lat": 60.23668606234724, "lon": 11.549263288480866, "adr": "Togstadvegen 772, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10869143", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMrcMAG"}, {"navn": "Lundbergvegen 89", "grp": "HP", "lat": 60.120685795352685, "lon": 11.50844117692695, "adr": "Lundbergvegen 89, 2150 Årnes", "area": "Årnes", "bnr": "V-10869743", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN1IMAW"}, {"navn": "Gruevegen 104", "grp": "HP", "lat": 60.104471139035695, "lon": 11.467850588875073, "adr": "Gruevegen 104, 2150 Årnes", "area": "Årnes", "bnr": "V-10869836", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN2nMAG"}, {"navn": "Holsvegen 267", "grp": "HC", "lat": 60.21651819779482, "lon": 11.561513222267774, "adr": "Holsvegen 267, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10869924", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN4DMAW"}, {"navn": "Vennevålvegen 60", "grp": "HP", "lat": 60.121398286937946, "lon": 11.540594917087539, "adr": "Vennevålvegen 60, 2150 Årnes", "area": "Årnes", "bnr": "V-10869960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN4nMAG"}, {"navn": "Liagrenda 176", "grp": "HP", "lat": 60.25385220028156, "lon": 11.548194631445682, "adr": "Liagrenda 176, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10870768", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNHpMAO"}, {"navn": "Torstuvegen 84", "grp": "HP", "lat": 60.125267323795505, "lon": 11.536224670949323, "adr": "Torstuvegen 84, 2150 Årnes", "area": "Årnes", "bnr": "V-10870831", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNIqMAO"}, {"navn": "Vennevålvegen 45", "grp": "HP", "lat": 60.12065783936425, "lon": 11.543738727943289, "adr": "Vennevålvegen 45, 2150 Årnes", "area": "Årnes", "bnr": "V-10870922", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNKJMA4"}, {"navn": "Rakeievegen 179", "grp": "HP", "lat": 60.125075540907616, "lon": 11.512098026698485, "adr": "Rakeievegen 179, 2150 Årnes", "area": "Årnes", "bnr": "V-10871003", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNLcMAO"}, {"navn": "Togstadvegen 765", "grp": "HP", "lat": 60.239258707207284, "lon": 11.548820955495035, "adr": "Togstadvegen 765, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10871522", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNTzMAO"}, {"navn": "Øvre Hagaveg 438", "grp": "HP", "lat": 60.0919659881849, "lon": 11.464661942822534, "adr": "Øvre Hagaveg 438, 2150 Årnes", "area": "Årnes", "bnr": "V-10871761", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNXqMAO"}, {"navn": "Lundbergvegen 68", "grp": "HP", "lat": 60.122826471661796, "lon": 11.51273078561762, "adr": "Lundbergvegen 68, 2150 Årnes", "area": "Årnes", "bnr": "V-10871951", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNauMAG"}, {"navn": "Sagvegen 70", "grp": "HP", "lat": 60.13344516067804, "lon": 11.489247648445225, "adr": "Sagvegen 70, 2150 Årnes", "area": "Årnes", "bnr": "V-10872109", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNdSMAW"}, {"navn": "Holsvegen 268", "grp": "HC", "lat": 60.21644487438689, "lon": 11.56079792052137, "adr": "Holsvegen 268, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10872248", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNfhMAG"}, {"navn": "Nedre Hagaveg 355", "grp": "HP", "lat": 60.098221850008066, "lon": 11.429794524002068, "adr": "Nedre Hagaveg 355, 2150 Årnes", "area": "Årnes", "bnr": "V-10872292", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNgPMAW"}, {"navn": "Togstadvegen 655", "grp": "HP", "lat": 60.23319572710729, "lon": 11.563344756642044, "adr": "Togstadvegen 655, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10872820", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNovMAG"}, {"navn": "Husåsvegen 169", "grp": "HP", "lat": 60.243003938133405, "lon": 11.579010349293037, "adr": "Husåsvegen 169, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10872924", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CNqbMAG"}, {"navn": "Liagrenda 136", "grp": "HP", "lat": 60.250369177706155, "lon": 11.54782807233185, "adr": "Liagrenda 136, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10873237", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNveMAG"}, {"navn": "Evangvegen 71", "grp": "HP", "lat": 60.11041526259077, "lon": 11.459037691824829, "adr": "Evangvegen 71, 2150 Årnes", "area": "Årnes", "bnr": "V-10873508", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CO01MAG"}, {"navn": "Vennevålvegen 100", "grp": "HC", "lat": 60.124390978366904, "lon": 11.539785002008124, "adr": "Vennevålvegen 100, 2150 Årnes", "area": "Årnes", "bnr": "V-10874805", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COKwMAO"}, {"navn": "Skreksrudvegen 72", "grp": "HP", "lat": 60.11562839878613, "lon": 11.509833570320978, "adr": "Skreksrudvegen 72, 2150 Årnes", "area": "Årnes", "bnr": "V-10875403", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COUaMAO"}, {"navn": "Østamovegen 53", "grp": "HP", "lat": 60.11349711529929, "lon": 11.52901956633824, "adr": "Østamovegen 53, 2150 Årnes", "area": "Årnes", "bnr": "V-10875579", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COXQMA4"}, {"navn": "Husåsvegen 297", "grp": "HP", "lat": 60.24987518657065, "lon": 11.592714282132562, "adr": "Husåsvegen 297, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10875969", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COdiMAG"}, {"navn": "Nedre Hagaveg 364", "grp": "HP", "lat": 60.09689989554723, "lon": 11.430419767122638, "adr": "Nedre Hagaveg 364, 2150 Årnes", "area": "Årnes", "bnr": "V-10876394", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COkZMAW"}, {"navn": "Mysterudvegen 18", "grp": "HP", "lat": 60.24014720585165, "lon": 11.554400348763531, "adr": "Mysterudvegen 18, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10876654", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COolMAG"}, {"navn": "Togstadvegen 698", "grp": "HP", "lat": 60.23606697607008, "lon": 11.558215036548296, "adr": "Togstadvegen 698, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10876854", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COrzMAG"}, {"navn": "Togstadvegen 545", "grp": "HC", "lat": 60.23064642076376, "lon": 11.577379476256, "adr": "Togstadvegen 545, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10877327", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COzcMAG"}, {"navn": "Vennevålvegen 21", "grp": "HP", "lat": 60.11818492492378, "lon": 11.54606085528051, "adr": "Vennevålvegen 21, 2150 Årnes", "area": "Årnes", "bnr": "V-10878453", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPHmMAO"}, {"navn": "Berget 6", "grp": "HP", "lat": 60.109820486124924, "lon": 11.535681585469034, "adr": "Berget 6, 2150 Årnes", "area": "Årnes", "bnr": "V-10878787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPNAMA4"}, {"navn": "Østamovegen 32", "grp": "HP", "lat": 60.113763087728664, "lon": 11.522908279647115, "adr": "Østamovegen 32, 2150 Årnes", "area": "Årnes", "bnr": "V-10878812", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPNZMA4"}, {"navn": "Høybykroken 9", "grp": "HP", "lat": 60.2379528241308, "lon": 11.560131650495764, "adr": "Høybykroken 9, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10878943", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPPgMAO"}, {"navn": "Sagvegen 25", "grp": "HP", "lat": 60.13224914750306, "lon": 11.489456205999117, "adr": "Sagvegen 25, 2150 Årnes", "area": "Årnes", "bnr": "V-10879488", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CPYTMA4"}, {"navn": "Østamovegen 38", "grp": "HP", "lat": 60.11357895562235, "lon": 11.520945996650761, "adr": "Østamovegen 38, 2150 Årnes", "area": "Årnes", "bnr": "V-10880437", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPnmMAG"}, {"navn": "Nedre Hagaveg 365", "grp": "HC", "lat": 60.09780641655467, "lon": 11.428936402022545, "adr": "Nedre Hagaveg 365, 2150 Årnes", "area": "Årnes", "bnr": "V-10880845", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPuMMAW"}, {"navn": "Åsliholtet 22", "grp": "HP", "lat": 60.210488694871636, "lon": 11.548682494612924, "adr": "Åsliholtet 22, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10881243", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000CQ0mMAG"}, {"navn": "Pålhukvegen 50", "grp": "HC", "lat": 60.10706367517039, "lon": 11.543839746648707, "adr": "Pålhukvegen 50, 2150 Årnes", "area": "Årnes", "bnr": "V-10881261", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQ14MAG"}, {"navn": "Togstadvegen 865", "grp": "HP", "lat": 60.2376350641815, "lon": 11.535497370117286, "adr": "Togstadvegen 865, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10881607", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQ6eMAG"}, {"navn": "Sørbyvegen 9", "grp": "HP", "lat": 60.10970341187263, "lon": 11.531789059519577, "adr": "Sørbyvegen 9, 2150 Årnes", "area": "Årnes", "bnr": "V-10882265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQHGMA4"}, {"navn": "Mysterudvegen 22", "grp": "HP", "lat": 60.239895396638765, "lon": 11.555347390232177, "adr": "Mysterudvegen 22, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10882348", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQKCMA4"}, {"navn": "Liagrenda 142", "grp": "HP", "lat": 60.25134626045197, "lon": 11.548639656402475, "adr": "Liagrenda 142, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10882395", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQKxMAO"}, {"navn": "Nordbygrenda 35", "grp": "HP", "lat": 60.242763229751326, "lon": 11.565943039007442, "adr": "Nordbygrenda 35, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10882748", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQSFMA4"}, {"navn": "Husåsvegen 319", "grp": "HP", "lat": 60.25150281790695, "lon": 11.596238963724621, "adr": "Husåsvegen 319, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10882979", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQVyMAO"}, {"navn": "Nedre Hagaveg 311", "grp": "HP", "lat": 60.10064128048741, "lon": 11.43549604169962, "adr": "Nedre Hagaveg 311, 2150 Årnes", "area": "Årnes", "bnr": "V-10883017", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQWaMAO"}, {"navn": "Rakeievegen 242", "grp": "HP", "lat": 60.12317192794966, "lon": 11.523300098233687, "adr": "Rakeievegen 242, 2150 Årnes", "area": "Årnes", "bnr": "V-10884098", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CQo1MAG"}, {"navn": "Togstadvegen 677", "grp": "HP", "lat": 60.23454109150672, "lon": 11.560666012675108, "adr": "Togstadvegen 677, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10884542", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQvBMAW"}, {"navn": "Runnimyra 66", "grp": "HC", "lat": 60.13793026102031, "lon": 11.49937074948697, "adr": "Runnimyra 66, 2150 Årnes", "area": "Årnes", "bnr": "V-10884554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQvNMAW"}, {"navn": "Torstuvegen 218", "grp": "HP", "lat": 60.13505096914673, "lon": 11.526728066769314, "adr": "Torstuvegen 218, 2150 Årnes", "area": "Årnes", "bnr": "V-10884968", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR23MAG"}, {"navn": "Nedre Hagaveg 105", "grp": "HP", "lat": 60.113630471635275, "lon": 11.459061560010184, "adr": "Nedre Hagaveg 105, 2150 Årnes", "area": "Årnes", "bnr": "V-10885802", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRFVMA4"}, {"navn": "Holsvegen 80", "grp": "HP", "lat": 60.19982517905947, "lon": 11.561644197611766, "adr": "Holsvegen 80, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10885838", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRG5MAO"}, {"navn": "Sørbyvegen 47", "grp": "HP", "lat": 60.11210397257695, "lon": 11.53354988188922, "adr": "Sørbyvegen 47, 2150 Årnes", "area": "Årnes", "bnr": "V-10885869", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRGaMAO"}, {"navn": "Holsvegen 379", "grp": "HP", "lat": 60.22611302083368, "lon": 11.561072024090882, "adr": "Holsvegen 379, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10887047", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRZaMAO"}, {"navn": "Folmovegen 50", "grp": "HC", "lat": 60.132507554337735, "lon": 11.496389368856827, "adr": "Folmovegen 50, 2150 Årnes", "area": "Årnes", "bnr": "V-10887150", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRbFMAW"}, {"navn": "Husåsvegen 16", "grp": "HC", "lat": 60.23533101686286, "lon": 11.56195435491952, "adr": "Husåsvegen 16, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10887165", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRbUMAW"}, {"navn": "Brautergutua 10", "grp": "HP", "lat": 60.10354785016365, "lon": 11.44307891332144, "adr": "Brautergutua 10, 2150 Årnes", "area": "Årnes", "bnr": "V-10887368", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000CRelMAG"}, {"navn": "Gruevegen 108", "grp": "HP", "lat": 60.10446592967538, "lon": 11.46833206356259, "adr": "Gruevegen 108, 2150 Årnes", "area": "Årnes", "bnr": "V-10887851", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRmYMAW"}, {"navn": "Holsvegen 34", "grp": "HP", "lat": 60.19602141827856, "lon": 11.564066856994327, "adr": "Holsvegen 34, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10888134", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRr7MAG"}, {"navn": "Holsvegen 2", "grp": "HP", "lat": 60.19293431523197, "lon": 11.564038836934142, "adr": "Holsvegen 2, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10888304", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRtrMAG"}, {"navn": "Åsliholtet 54", "grp": "Kun mobil", "lat": 60.20947702753276, "lon": 11.551827431186393, "adr": "Åsliholtet 54, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10888808", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CS6TMAW"}, {"navn": "Veltavegen 138", "grp": "Kun mobil", "lat": 60.23793128372147, "lon": 11.580239304773622, "adr": "Veltavegen 138, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10888826", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CS6lMAG"}, {"navn": "Holsvegen 38", "grp": "Kun mobil", "lat": 60.19640488117781, "lon": 11.564120244526988, "adr": "Holsvegen 38, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10888975", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CS9AMAW"}, {"navn": "Sagvegen 25", "grp": "Kun mobil", "lat": 60.13224914750306, "lon": 11.489456205999117, "adr": "Sagvegen 25, 2150 Årnes", "area": "Årnes", "bnr": "V-10889055", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSASMA4"}, {"navn": "Åsvegen 200", "grp": "Kun mobil", "lat": 60.21682449353539, "lon": 11.542092137614688, "adr": "Åsvegen 200, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10889067", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSAeMAO"}, {"navn": "Sagvegen 12", "grp": "Kun mobil", "lat": 60.13152762300267, "lon": 11.486884103981113, "adr": "Sagvegen 12, 2150 Årnes", "area": "Årnes", "bnr": "V-10889160", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSC9MAO"}, {"navn": "Vesleåsvegen 74", "grp": "Kun mobil", "lat": 60.223440059593734, "lon": 11.575054457192076, "adr": "Vesleåsvegen 74, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10889369", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSFWMA4"}, {"navn": "Folmovegen 122", "grp": "Kun mobil", "lat": 60.136235382160706, "lon": 11.504726479511492, "adr": "Folmovegen 122, 2150 Årnes", "area": "Årnes", "bnr": "V-10889371", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSFYMA4"}, {"navn": "Sluttvegen 174", "grp": "Kun mobil", "lat": 60.25283887785932, "lon": 11.530214012946956, "adr": "Sluttvegen 174, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10889582", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSIxMAO"}, {"navn": "Torstuvegen 91", "grp": "Kun mobil", "lat": 60.127433038068446, "lon": 11.536681125263039, "adr": "Torstuvegen 91, 2150 Årnes", "area": "Årnes", "bnr": "V-10889587", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSJ2MAO"}, {"navn": "Mysterudvegen 59", "grp": "Kun mobil", "lat": 60.24316368981572, "lon": 11.556973619059333, "adr": "Mysterudvegen 59, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10889609", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSJOMA4"}, {"navn": "Togstadvegen 840", "grp": "Kun mobil", "lat": 60.23595435384157, "lon": 11.538869905183029, "adr": "Togstadvegen 840, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10889845", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSNCMA4"}, {"navn": "Liagrenda 48", "grp": "Kun mobil", "lat": 60.24335475752946, "lon": 11.551435535245043, "adr": "Liagrenda 48, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10889953", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSOwMAO"}, {"navn": "Torstukroken 2", "grp": "Kun mobil", "lat": 60.13038051901971, "lon": 11.534313504567727, "adr": "Torstukroken 2, 2150 Årnes", "area": "Årnes", "bnr": "V-10889967", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSPAMA4"}, {"navn": "Runnimyra 35", "grp": "Kun mobil", "lat": 60.13732888267618, "lon": 11.493961250825286, "adr": "Runnimyra 35, 2150 Årnes", "area": "Årnes", "bnr": "V-10890033", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSQEMA4"}, {"navn": "Sluttvegen 60", "grp": "Kun mobil", "lat": 60.24391851856121, "lon": 11.539657692577531, "adr": "Sluttvegen 60, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10890044", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSQPMA4"}, {"navn": "Nedre Hagaveg 313", "grp": "Kun mobil", "lat": 60.10043127503908, "lon": 11.43543141834877, "adr": "Nedre Hagaveg 313, 2150 Årnes", "area": "Årnes", "bnr": "V-10890078", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSQxMAO"}, {"navn": "Rakeievegen 242", "grp": "Kun mobil", "lat": 60.12317192794966, "lon": 11.523300098233687, "adr": "Rakeievegen 242, 2150 Årnes", "area": "Årnes", "bnr": "V-10890228", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSTNMA4"}, {"navn": "Skreksrudvegen 243", "grp": "Kun mobil", "lat": 60.10924004656703, "lon": 11.542927882664653, "adr": "Skreksrudvegen 243, 2150 Årnes", "area": "Årnes", "bnr": "V-10890266", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSTzMAO"}, {"navn": "Lundbergvegen 91", "grp": "Kun mobil", "lat": 60.120575412515535, "lon": 11.50907492453369, "adr": "Lundbergvegen 91, 2150 Årnes", "area": "Årnes", "bnr": "V-10890317", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSUoMAO"}, {"navn": "Togstadvegen 771", "grp": "Kun mobil", "lat": 60.240475432705914, "lon": 11.547066565088523, "adr": "Togstadvegen 771, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10890336", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSV7MAO"}, {"navn": "Liagrenda 60", "grp": "Kun mobil", "lat": 60.24393311826789, "lon": 11.548733820897581, "adr": "Liagrenda 60, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10890467", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSXEMA4"}, {"navn": "Liagrenda 158", "grp": "Kun mobil", "lat": 60.25195227049899, "lon": 11.548518680371378, "adr": "Liagrenda 158, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10890489", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSXaMAO"}, {"navn": "Sørbyvegen 4", "grp": "Kun mobil", "lat": 60.109075992357205, "lon": 11.531700384675572, "adr": "Sørbyvegen 4, 2150 Årnes", "area": "Årnes", "bnr": "V-10890493", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSXeMAO"}, {"navn": "Åserudvegen 7", "grp": "Kun mobil", "lat": 60.110907874220466, "lon": 11.470160552458994, "adr": "Åserudvegen 7, 2150 Årnes", "area": "Årnes", "bnr": "V-10890597", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSavMAG"}, {"navn": "Holsvegen 61", "grp": "Kun mobil", "lat": 60.1976709763755, "lon": 11.565171856292606, "adr": "Holsvegen 61, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10890813", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSePMAW"}, {"navn": "Seterstøavegen 207", "grp": "Kun mobil", "lat": 60.13536263118163, "lon": 11.485878734497119, "adr": "Seterstøavegen 207, 2150 Årnes", "area": "Årnes", "bnr": "V-10890973", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSibMAG"}, {"navn": "Liagrenda 152", "grp": "Kun mobil", "lat": 60.253116512772536, "lon": 11.54505555019195, "adr": "Liagrenda 152, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891013", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSjFMAW"}, {"navn": "Nedre Hagaveg 207", "grp": "Kun mobil", "lat": 60.10639644093553, "lon": 11.448035440949054, "adr": "Nedre Hagaveg 207, 2150 Årnes", "area": "Årnes", "bnr": "V-10891090", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSkUMAW"}, {"navn": "Torstuvegen 97", "grp": "Kun mobil", "lat": 60.1266648066754, "lon": 11.536829041886795, "adr": "Torstuvegen 97, 2150 Årnes", "area": "Årnes", "bnr": "V-10891110", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSkoMAG"}, {"navn": "Togstad Øvre 2", "grp": "Kun mobil", "lat": 60.235109758998696, "lon": 11.562712093286143, "adr": "Togstad Øvre 2, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSnXMAW"}, {"navn": "Folmovegen 41", "grp": "Kun mobil", "lat": 60.13168014983607, "lon": 11.497153250907804, "adr": "Folmovegen 41, 2150 Årnes", "area": "Årnes", "bnr": "V-10891258", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSonMAG"}, {"navn": "Høybykroken 5", "grp": "Kun mobil", "lat": 60.237679094787055, "lon": 11.558939892816163, "adr": "Høybykroken 5, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891275", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSp4MAG"}, {"navn": "Nedre Hagaveg 165", "grp": "Kun mobil", "lat": 60.109421312729324, "lon": 11.453334564431541, "adr": "Nedre Hagaveg 165, 2150 Årnes", "area": "Årnes", "bnr": "V-10891342", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSq9MAG"}, {"navn": "Liagrenda 41", "grp": "Kun mobil", "lat": 60.24280606809888, "lon": 11.552592682741142, "adr": "Liagrenda 41, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891421", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSrQMAW"}, {"navn": "Holsvegen 187", "grp": "Kun mobil", "lat": 60.2096713293162, "lon": 11.56544324115094, "adr": "Holsvegen 187, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891643", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSv0MAG"}, {"navn": "Åserudvegen 21", "grp": "Kun mobil", "lat": 60.11062032120176, "lon": 11.46756546224488, "adr": "Åserudvegen 21, 2150 Årnes", "area": "Årnes", "bnr": "V-10891825", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSxwMAG"}, {"navn": "Sagvegen 27", "grp": "Kun mobil", "lat": 60.13258219364065, "lon": 11.489468771779828, "adr": "Sagvegen 27, 2150 Årnes", "area": "Årnes", "bnr": "V-10891858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSyTMAW"}, {"navn": "Togstadvegen 678", "grp": "Kun mobil", "lat": 60.23313758850929, "lon": 11.556512499139044, "adr": "Togstadvegen 678, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891877", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSymMAG"}, {"navn": "Åsvegen 205", "grp": "Kun mobil", "lat": 60.2159437081992, "lon": 11.55063168834614, "adr": "Åsvegen 205, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891878", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSynMAG"}, {"navn": "Holsvegen 59", "grp": "Kun mobil", "lat": 60.19765263492829, "lon": 11.565608921486092, "adr": "Holsvegen 59, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10891968", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT0FMAW"}, {"navn": "Nordbygrenda 53", "grp": "Kun mobil", "lat": 60.24412767409522, "lon": 11.565346867602283, "adr": "Nordbygrenda 53, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10891985", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT0WMAW"}, {"navn": "Vennevålvegen 104", "grp": "Kun mobil", "lat": 60.12435061183373, "lon": 11.5394542028691, "adr": "Vennevålvegen 104, 2150 Årnes", "area": "Årnes", "bnr": "V-10892028", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT1DMAW"}, {"navn": "Holsvegen 205", "grp": "Kun mobil", "lat": 60.211313093254866, "lon": 11.565650960142218, "adr": "Holsvegen 205, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10892213", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT4CMAW"}, {"navn": "Togstadvegen 613", "grp": "Kun mobil", "lat": 60.23046514735487, "lon": 11.567081457098162, "adr": "Togstadvegen 613, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10892305", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT5gMAG"}, {"navn": "Folmovegen 55", "grp": "Kun mobil", "lat": 60.132501018884305, "lon": 11.498402276097298, "adr": "Folmovegen 55, 2150 Årnes", "area": "Årnes", "bnr": "V-10892477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT8SMAW"}, {"navn": "Brautergutua 119", "grp": "Kun mobil", "lat": 60.09713379183087, "lon": 11.457875338227257, "adr": "Brautergutua 119, 2150 Årnes", "area": "Årnes", "bnr": "V-10892598", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTAPMA4"}, {"navn": "Gruevegen 14", "grp": "Kun mobil", "lat": 60.1104955955888, "lon": 11.456836212147207, "adr": "Gruevegen 14, 2150 Årnes", "area": "Årnes", "bnr": "V-10892743", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTCkMAO"}, {"navn": "Togstadvegen 682", "grp": "Kun mobil", "lat": 60.2334227622021, "lon": 11.55574601679511, "adr": "Togstadvegen 682, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10892778", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTDJMA4"}, {"navn": "Togstadvegen 691", "grp": "Kun mobil", "lat": 60.23587468071891, "lon": 11.559973049844764, "adr": "Togstadvegen 691, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10892885", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTF2MAO"}, {"navn": "Husåsvegen 6", "grp": "Kun mobil", "lat": 60.23436259742992, "lon": 11.56060510816744, "adr": "Husåsvegen 6, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10892916", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTFXMA4"}, {"navn": "Nedre Hagaveg 73", "grp": "Kun mobil", "lat": 60.11673974361942, "lon": 11.459178517191496, "adr": "Nedre Hagaveg 73, 2150 Årnes", "area": "Årnes", "bnr": "V-10893015", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTH8MAO"}, {"navn": "Brautergutua 102", "grp": "Kun mobil", "lat": 60.09845773794869, "lon": 11.455699328424082, "adr": "Brautergutua 102, 2150 Årnes", "area": "Årnes", "bnr": "V-10893098", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTITMA4"}, {"navn": "Sagvegen 38", "grp": "Kun mobil", "lat": 60.133567923333544, "lon": 11.48558299221772, "adr": "Sagvegen 38, 2150 Årnes", "area": "Årnes", "bnr": "V-10893100", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTIVMA4"}, {"navn": "Husåsvegen 213", "grp": "Kun mobil", "lat": 60.245485, "lon": 11.5847, "adr": "Husåsvegen 213, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10893123", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTIsMAO"}, {"navn": "Liagrenda 115", "grp": "Kun mobil", "lat": 60.24951174082993, "lon": 11.550702003074964, "adr": "Liagrenda 115, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10893189", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTJwMAO"}, {"navn": "Flatbyvegen 5", "grp": "Kun mobil", "lat": 60.13182440907376, "lon": 11.490211078016758, "adr": "Flatbyvegen 5, 2150 Årnes", "area": "Årnes", "bnr": "V-10893283", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTLSMA4"}, {"navn": "Velvangvegen 46", "grp": "Kun mobil", "lat": 60.10466882326928, "lon": 11.454530031613212, "adr": "Velvangvegen 46, 2150 Årnes", "area": "Årnes", "bnr": "V-10893676", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTRnMAO"}, {"navn": "Sluttvegen 6", "grp": "Kun mobil", "lat": 60.239861263197724, "lon": 11.54094251369477, "adr": "Sluttvegen 6, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10893725", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTSaMAO"}, {"navn": "Løvengvegen 98", "grp": "Kun mobil", "lat": 60.095208168816605, "lon": 11.448379746883386, "adr": "Løvengvegen 98, 2150 Årnes", "area": "Årnes", "bnr": "V-10893856", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTUhMAO"}, {"navn": "Dystlandhaugen 26", "grp": "Kun mobil", "lat": 60.23538354835005, "lon": 11.53955503530041, "adr": "Dystlandhaugen 26, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10893878", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTV3MAO"}, {"navn": "Holmenvegen 10", "grp": "Kun mobil", "lat": 60.124886464307785, "lon": 11.541911790028477, "adr": "Holmenvegen 10, 2150 Årnes", "area": "Årnes", "bnr": "V-10893961", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTWOMA4"}, {"navn": "Åsvegen 222", "grp": "Kun mobil", "lat": 60.21926085075942, "lon": 11.550244297449202, "adr": "Åsvegen 222, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894041", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTXgMAO"}, {"navn": "Rakeievegen 260", "grp": "Kun mobil", "lat": 60.1221960240794, "lon": 11.525326735955833, "adr": "Rakeievegen 260, 2150 Årnes", "area": "Årnes", "bnr": "V-10894082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTYLMA4"}, {"navn": "Folmovegen 38", "grp": "Kun mobil", "lat": 60.13188433137454, "lon": 11.495472318281633, "adr": "Folmovegen 38, 2150 Årnes", "area": "Årnes", "bnr": "V-10894088", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTYRMA4"}, {"navn": "Vennevålvegen 101", "grp": "Kun mobil", "lat": 60.1247409913396, "lon": 11.53970935476525, "adr": "Vennevålvegen 101, 2150 Årnes", "area": "Årnes", "bnr": "V-10894121", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTYyMAO"}, {"navn": "Nedre Hagaveg 131", "grp": "Kun mobil", "lat": 60.11146309026301, "lon": 11.457092786561589, "adr": "Nedre Hagaveg 131, 2150 Årnes", "area": "Årnes", "bnr": "V-10894169", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTZkMAO"}, {"navn": "Veltavegen 134", "grp": "Kun mobil", "lat": 60.23793584439877, "lon": 11.580743745144893, "adr": "Veltavegen 134, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894175", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTZqMAO"}, {"navn": "Nedre Hagaveg 69", "grp": "Kun mobil", "lat": 60.11625915523008, "lon": 11.461487138167143, "adr": "Nedre Hagaveg 69, 2150 Årnes", "area": "Årnes", "bnr": "V-10894180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTZvMAO"}, {"navn": "Kongsvingervegen 2920", "grp": "Kun mobil", "lat": 60.1909385489899, "lon": 11.558134193607534, "adr": "Kongsvingervegen 2920, 2166 Oppaker", "area": "Oppaker", "bnr": "V-10894282", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTbZMAW"}, {"navn": "Kvennvegen 16", "grp": "Kun mobil", "lat": 60.12353282424008, "lon": 11.526058081479622, "adr": "Kvennvegen 16, 2150 Årnes", "area": "Årnes", "bnr": "V-10894341", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTcWMAW"}, {"navn": "Holsvegen 297", "grp": "Kun mobil", "lat": 60.21939252995361, "lon": 11.561533504705634, "adr": "Holsvegen 297, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894468", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTeZMAW"}, {"navn": "Skreksrudvegen 206", "grp": "Kun mobil", "lat": 60.109391653797196, "lon": 11.534999644552698, "adr": "Skreksrudvegen 206, 2150 Årnes", "area": "Årnes", "bnr": "V-10894625", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTh6MAG"}, {"navn": "Holsvegen 344", "grp": "Kun mobil", "lat": 60.223549995062186, "lon": 11.55702353795887, "adr": "Holsvegen 344, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894702", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTiLMAW"}, {"navn": "Seterstøavegen 215", "grp": "Kun mobil", "lat": 60.13602915214365, "lon": 11.486885420085553, "adr": "Seterstøavegen 215, 2150 Årnes", "area": "Årnes", "bnr": "V-10894703", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTiMMAW"}, {"navn": "Sagvegen 28", "grp": "Kun mobil", "lat": 60.13259176455459, "lon": 11.486235087502914, "adr": "Sagvegen 28, 2150 Årnes", "area": "Årnes", "bnr": "V-10894732", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTipMAG"}, {"navn": "Vennevålvegen 23", "grp": "Kun mobil", "lat": 60.118394187748436, "lon": 11.546483858531035, "adr": "Vennevålvegen 23, 2150 Årnes", "area": "Årnes", "bnr": "V-10894836", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTkVMAW"}, {"navn": "Ødegardsvegen 41", "grp": "Kun mobil", "lat": 60.107804159086406, "lon": 11.518287190976823, "adr": "Ødegardsvegen 41, 2150 Årnes", "area": "Årnes", "bnr": "V-10894867", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTl0MAG"}, {"navn": "Holsvegen 167", "grp": "Kun mobil", "lat": 60.20793358147126, "lon": 11.56541396986935, "adr": "Holsvegen 167, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894931", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTm2MAG"}, {"navn": "Husåsvegen 294", "grp": "Kun mobil", "lat": 60.25185195294413, "lon": 11.59034915814101, "adr": "Husåsvegen 294, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894944", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTmFMAW"}, {"navn": "Åsliholtet 27", "grp": "Kun mobil", "lat": 60.20971550195047, "lon": 11.546849260423388, "adr": "Åsliholtet 27, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10894986", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTmvMAG"}, {"navn": "Folmovegen 121", "grp": "Kun mobil", "lat": 60.1358575703645, "lon": 11.505702750574532, "adr": "Folmovegen 121, 2150 Årnes", "area": "Årnes", "bnr": "V-10895019", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTnSMAW"}, {"navn": "Holsvegen 234", "grp": "Kun mobil", "lat": 60.21312719790118, "lon": 11.563265222781185, "adr": "Holsvegen 234, 2164 Skogbygda", "area": "Skogbygda", "bnr": "V-10895171", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTpuMAG"}, {"navn": "Nedre Hagaveg 85", "grp": "Kun mobil", "lat": 60.11502110249304, "lon": 11.461254108743399, "adr": "Nedre Hagaveg 85, 2150 Årnes", "area": "Årnes", "bnr": "V-10895229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTqqMAG"}, {"navn": "Skreksrudvegen 57", "grp": "Kun mobil", "lat": 60.10919220272662, "lon": 11.513160775761028, "adr": "Skreksrudvegen 57, 2150 Årnes", "area": "Årnes", "bnr": "V-10895277", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTrcMAG"}];
+var AREAS = ["Årnes", "Skogbygda", "Oppaker", "Hvam"];
+var STORE_KEY = "dorkart_Joakim_15.09.26";
 var SF_BASE = "https://cview.lightning.force.com";
 var SF_OBJECT = "Visit__c";
 var APPT_KEY = "dorkart_appt_Joakim";
 var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
 var GROUPS = {
-  "HP": {raw:"#2f9e57", label:"HP"},
-  "HC": {raw:"#2f6fe0", label:"HC"},
-  "HC Vula": {raw:"#e07d2f", label:"HC Vula"},
-  "Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
 };
 
 function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
@@ -247,114 +247,114 @@ L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, nul
 // Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
 var __stacks = {};
 DATA.forEach(function(d){
-  var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
-  (__stacks[key] = __stacks[key] || []).push(d);
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
 });
 DATA.forEach(function(d){
-  var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
-  d._stack = s; d._stackN = s.length;
-  if(s.length > 1){
-    var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
-    d._ox = Math.cos(ang); d._oy = Math.sin(ang);
-  } else { d._ox = 0; d._oy = 0; }
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
 });
 
 var group = L.layerGroup().addTo(map);
 DATA.forEach(function(d){
-  var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
-  var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
-  m.on("click", function(){ openSheet(d); });
-  d._m = m;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
 });
 
 // Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
 var STACK_PX = 15;
 function layoutStacks(){
-  if(!map._loaded) return;
-  DATA.forEach(function(d){
-    if(d._stackN > 1){
-      try{
-        var base = map.latLngToLayerPoint([d.lat, d.lon]);
-        d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
-      }catch(e){}
-    }
-  });
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
 }
 map.on("zoomend", layoutStacks);
 
 function bounds(pred){
-  var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
-  return pts.length ? L.latLngBounds(pts) : null;
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
 }
 function visible(d){
-  if(!activeGroups.has(d.grp)) return false;
-  if(area !== "alle" && d.area !== area) return false;
-  if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
-  return true;
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
 }
 function refresh(){
-  DATA.forEach(function(d){
-    var m = d._m, on = visible(d);
-    if(on){
-      if(!group.hasLayer(m)) group.addLayer(m);
-      if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
-      else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
-    } else { if(group.hasLayer(m)) group.removeLayer(m); }
-  });
-  updateCounts();
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
 }
 function updateCounts(){
-  var rem = 0;
-  Object.keys(GROUPS).forEach(function(k){
-    var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
-    var el = document.getElementById("cnt-"+cssKey(k));
-    if(el) el.textContent = n;
-    if(activeGroups.has(k)) rem += n;
-  });
-  document.getElementById("remN").textContent = rem;
-  var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
-  var al = document.getElementById("apptline");
-  if(na>0){
-    al.hidden=false;
-    al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
-    document.getElementById("apptZoom").onclick=openApptList;
-  } else { al.hidden=true; al.innerHTML=""; }
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
 }
 function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
 
 // Omraadefaner (bare hvis mer enn ett omraade)
 var tabs = document.getElementById("areatabs");
 function setArea(a, btn){
-  area = a;
-  tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
-  if(btn) btn.classList.add("on");
-  var bb = bounds(function(d){ return area==="alle" || d.area===area; });
-  if(bb) map.fitBounds(bb, {padding:[40,40], maxZoom:16});
-  refresh();
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) map.fitBounds(bb, {padding:[40,40], maxZoom:16});
+refresh();
 }
 if(AREAS.length > 1){
-  var mk = function(label, val){
-    var b=document.createElement("button"); b.textContent=label;
-    b.addEventListener("click", function(){ setArea(val, b); });
-    tabs.appendChild(b); return b;
-  };
-  var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
-  AREAS.forEach(function(a){ mk(a, a); });
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
 } else {
-  tabs.style.display = "none";
+tabs.style.display = "none";
 }
 
 var chips = document.getElementById("chips");
 Object.keys(GROUPS).forEach(function(k){
-  var g = GROUPS[k];
-  var c = document.createElement("div"); c.className = "chip";
-  c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
-  c.addEventListener("click", function(){
-    if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
-    else { activeGroups.add(k); c.classList.remove("off"); }
-    refresh();
-  });
-  chips.appendChild(c);
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
 });
 
 document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
@@ -364,193 +364,193 @@ function pad2(n){ return (n<10?"0":"")+n; }
 function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
 function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
 function apptSorted(){
-  var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
-  arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
-  return arr;
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
 }
 function openApptList(){
-  closeSheet();
-  var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
-  if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
-  else {
-    body.innerHTML=arr.map(function(it,i){
-      var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
-      var t=new Date(it.a.date+"T"+it.a.time).getTime();
-      var past=(!isNaN(t) && t<now) ? " past" : "";
-      return '<button class="appt-item" data-i="'+i+'">'+
-        '<span class="appt-dot" style="background:'+g.raw+'"></span>'+
-        '<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
-        '<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
-        '<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
-    }).join("");
-    Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
-      btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
-    });
-  }
-  document.getElementById("apptSheet").classList.add("open");
-  scrim.classList.add("open");
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
 }
 function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
 function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
 
 // Adressesøk
 function renderSearch(q){
-  var box=document.getElementById("searchResults");
-  q=(q||"").trim().toLowerCase();
-  if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
-  var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
-  hits.sort(function(a,b){
-    var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
-    if(ai!==bi) return ai-bi;
-    return a.navn.localeCompare(b.navn,"no");
-  });
-  hits=hits.slice(0,8);
-  if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
-  box.hidden=false;
-  box.innerHTML=hits.map(function(d){
-    var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
-    var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
-    return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
-  }).join("");
-  Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
-    btn.addEventListener("click", function(){
-      var bnr=btn.getAttribute("data-bnr"), d=null;
-      for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
-      if(d) goToSearchDoor(d);
-    });
-  });
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
 }
 function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
 function goToSearchDoor(d){
-  hideSearch();
-  if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
-  map.setView([d.lat, d.lon], 18, {animate:true});
-  openSheet(d);
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
 }
 (function(){
-  var si=document.getElementById("searchInput"); if(!si) return;
-  var sc=document.getElementById("searchClear"), wrap=si.parentNode;
-  si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
-  si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
-  sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
-  document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
 })();
 
 // Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
 function fitTopbar(){
-  var tb=document.querySelector(".topbar"); if(!tb) return;
-  var el=document.querySelector(".leaflet-top.leaflet-right");
-  if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
 }
 window.addEventListener("resize", fitTopbar);
 function icsUri(d,a){
-  var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
-  var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
-  var sum="Besøk: "+d.navn;
-  var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
-  if(ICS_ENDPOINT){
-    return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
-  }
-  var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
-  var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
-  var end=dt+"T"+pad2(eh)+pad2(em)+"00";
-  var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
-  function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
-  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
-    "UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
-    "SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
-    "BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
-    "END:VEVENT","END:VCALENDAR"];
-  var ics=L.join("\r\n");
-  try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
-  try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
-  catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
 }
 function renderAppt(d){
-  var box=document.getElementById("sAppt"), a=appts[d.bnr];
-  if(a){
-    box.className="apptbox has";
-    box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
-      '<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
-    document.getElementById("aCal").href=icsUri(d,a);
-    document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
-    document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
-  } else {
-    box.className="apptbox";
-    box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
-    document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
-  }
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
 }
 function showApptForm(d,a){
-  var box=document.getElementById("sAppt");
-  var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
-  var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
-  box.className="apptbox";
-  box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
-    '<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
-    '<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
-  document.getElementById("aSave").onclick=function(){
-    var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
-    if(!dd||!tt) return;
-    appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
-  };
-  document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
 }
 
 var cur = null;
 function openSheet(d){
-  cur = d;
-  document.getElementById("sAddr").textContent = d.navn;
-  document.getElementById("sSub").textContent = d.adr;
-  var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
-  var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
-  if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
-  document.getElementById("sBadges").innerHTML = badges;
-  if(d.sfid){
-    document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
-  } else {
-    document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
-  }
-  var stackBox = document.getElementById("sStack");
-  if(d._stackN > 1){
-    stackBox.hidden = false;
-    var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
-    var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
-    stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
-      var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
-      var isCur = String(sd.bnr) === String(d.bnr);
-      var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
-      var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
-      var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
-      return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
-        '<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
-        '<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
-        '<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
-    }).join("");
-    Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
-      btn.addEventListener("click", function(ev){
-        if(ev.target.closest("a")) return;
-        var bnr = btn.getAttribute("data-bnr"), nd = null;
-        for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
-        if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
-      });
-    });
-  } else { stackBox.hidden = true; stackBox.innerHTML = ""; }
-  renderAppt(d);
-  document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
-  var db = document.getElementById("sDone");
-  if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
-  else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
-  sheet.classList.add("open"); scrim.classList.add("open");
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
 }
 function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
 document.getElementById("sheetClose").addEventListener("click", closeSheet);
 document.getElementById("apptClose").addEventListener("click", closeApptList);
 scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
 document.getElementById("sDone").addEventListener("click", function(){
-  if(!cur) return;
-  if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
-  saveDone(); refresh(); closeSheet();
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
 });
 
 // Min posisjon (GPS)
@@ -558,20 +558,20 @@ var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
 var toastEl=document.getElementById("toast"), toastT=null;
 function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
 locBtn.addEventListener("click", function(){
-  if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
-  if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
-  toast("Henter posisjon …");
-  navigator.geolocation.watchPosition(function(pos){
-    var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
-    if(!meDot){
-      meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
-      meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
-      map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
-    } else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
-  }, function(err){
-    if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
-    else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
-  }, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
 });
 
 var all = bounds(function(){ return true; });
