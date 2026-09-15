@@ -452,8 +452,8 @@ document.getElementById("locbtn").addEventListener("click", function(){
   navigator.geolocation.watchPosition(function(p){
     var ll = [p.coords.latitude, p.coords.longitude];
     if(!meDot){
-      meCirc = L.circle(ll, { radius:p.coords.accuracy, color:"#1a73e8", weight:1, fillOpacity:.12 }).addTo(map);
-      meDot = L.circleMarker(ll, { radius:7, weight:3, color:"#fff", fillColor:"#1a73e8", fillOpacity:1 }).addTo(map);
+      meCirc = L.circle(ll, { radius:p.coords.accuracy, color:"#ff2d78", weight:1, fillOpacity:.12 }).addTo(map);
+      meDot = L.circleMarker(ll, { radius:7, weight:3, color:"#fff", fillColor:"#ff2d78", fillOpacity:1 }).addTo(map);
       map.setView(ll, 17);
     } else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(p.coords.accuracy); }
   }, function(){ alert("Fant ikke posisjon."); }, { enableHighAccuracy:true, maximumAge:10000 });
