@@ -276,6 +276,7 @@ d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + 
 });
 }
 map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30], paddingBottomRight:[40,40], maxZoom:16}); }
 function bounds(pred){
 var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
 return pts.length ? L.latLngBounds(pts) : null;
@@ -322,7 +323,7 @@ area = a;
 tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
 if(btn) btn.classList.add("on");
 var bb = bounds(function(d){ return area==="alle" || d.area===area; });
-if(bb) map.fitBounds(bb, {padding:[40,40], maxZoom:16});
+if(bb) fitB(bb);
 refresh();
 }
 if(AREAS.length > 1){
@@ -560,7 +561,7 @@ else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
 }, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
 });
 var all = bounds(function(){ return true; });
-if(all) map.fitBounds(all, {padding:[40,40], maxZoom:16});
+if(all) fitB(all);
 refresh();
 layoutStacks(); setTimeout(layoutStacks, 300);
 fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
