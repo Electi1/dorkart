@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Jonathan 16.09.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Jonathan</div>
+<div class="date">16.09.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen</div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn":"Vågaleitet 18","grp":"HP","lat":60.3821238,"lon":5.1189309,"adr":"Vågaleitet 18, 5354 Straume","area":"Straume","bnr":"V-10896547","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpgNMAS"},{"navn":"Foldnesvegen 186","grp":"HP","lat":60.3753645,"lon":5.118338,"adr":"Foldnesvegen 186, 5354 Straume","area":"Straume","bnr":"V-10896550","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpgQMAS"},{"navn":"Gullfjellvegen 14","grp":"HC","lat":60.3809359,"lon":5.1176542,"adr":"Gullfjellvegen 14, 5354 Straume","area":"Straume","bnr":"V-10896571","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpglMAC"},{"navn":"Tressberga 4","grp":"HC","lat":60.3797112,"lon":5.1117372,"adr":"Tressberga 4, 5354 Straume","area":"Straume","bnr":"V-10896580","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpguMAC"},{"navn":"Vågaleitet 2 D","grp":"HP","lat":60.3814587,"lon":5.1153947,"adr":"Vågaleitet 2 D, 5354 Straume","area":"Straume","bnr":"V-10896586","bol":"H0102","st":"Ikke besøkt","sfid":"a4CSg000000Cph0MAC"},{"navn":"Vågevegen 23 A","grp":"HC","lat":60.3779849,"lon":5.1114167,"adr":"Vågevegen 23 A, 5354 Straume","area":"Straume","bnr":"V-10896587","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cph1MAC"},{"navn":"Vågaleitet 11","grp":"HP","lat":60.3815461,"lon":5.1173109,"adr":"Vågaleitet 11, 5354 Straume","area":"Straume","bnr":"V-10896604","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CphIMAS"},{"navn":"Vågaleitet 20","grp":"HP","lat":60.3819283,"lon":5.1190087,"adr":"Vågaleitet 20, 5354 Straume","area":"Straume","bnr":"V-10896605","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CphJMAS"},{"navn":"Foldnesvegen 200","grp":"HP","lat":60.3756837,"lon":5.1166478,"adr":"Foldnesvegen 200, 5354 Straume","area":"Straume","bnr":"V-10896611","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CphPMAS"},{"navn":"Grunnavågsvegen 36","grp":"HP","lat":60.3732496,"lon":5.1216399,"adr":"Grunnavågsvegen 36, 5354 Straume","area":"Straume","bnr":"V-10896633","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CphlMAC"},{"navn":"Mattishaugen 6","grp":"HC","lat":60.3735362,"lon":5.1010185,"adr":"Mattishaugen 6, 5354 Straume","area":"Straume","bnr":"V-10896638","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CphqMAC"},{"navn":"Grunnavågsvegen 98 A","grp":"HP","lat":60.3747612,"lon":5.1166398,"adr":"Grunnavågsvegen 98 A, 5354 Straume","area":"Straume","bnr":"V-10896661","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiDMAS"},{"navn":"Grunnavågsvegen 116","grp":"HP","lat":60.3754907,"lon":5.1149642,"adr":"Grunnavågsvegen 116, 5354 Straume","area":"Straume","bnr":"V-10896670","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiMMAS"},{"navn":"Gamle Foldnesvegen 10 D","grp":"HC","lat":60.3758962,"lon":5.1074084,"adr":"Gamle Foldnesvegen 10 D, 5354 Straume","area":"Straume","bnr":"V-10896673","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000CpiPMAS"},{"navn":"Vågaleitet 24","grp":"HP","lat":60.3818039,"lon":5.1184424,"adr":"Vågaleitet 24, 5354 Straume","area":"Straume","bnr":"V-10896675","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiRMAS"},{"navn":"Gamle Foldnesvegen 64","grp":"HC","lat":60.3726945,"lon":5.102971,"adr":"Gamle Foldnesvegen 64, 5354 Straume","area":"Straume","bnr":"V-10896676","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiSMAS"},{"navn":"Vetelsvegen 28","grp":"HC","lat":60.375822,"lon":5.1032505,"adr":"Vetelsvegen 28, 5354 Straume","area":"Straume","bnr":"V-10896679","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiVMAS"},{"navn":"Gamle Foldnesvegen 18","grp":"HC","lat":60.3754522,"lon":5.1071982,"adr":"Gamle Foldnesvegen 18, 5354 Straume","area":"Straume","bnr":"V-10896681","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiXMAS"},{"navn":"Vågevegen 23 B","grp":"HC","lat":60.3780565,"lon":5.1114082,"adr":"Vågevegen 23 B, 5354 Straume","area":"Straume","bnr":"V-10896700","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpiqMAC"},{"navn":"Vågaleitet 2 E","grp":"HP","lat":60.3816601,"lon":5.1157666,"adr":"Vågaleitet 2 E, 5354 Straume","area":"Straume","bnr":"V-10896734","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpjOMAS"},{"navn":"Foldnesvegen 242","grp":"HC","lat":60.376104,"lon":5.1104247,"adr":"Foldnesvegen 242, 5354 Straume","area":"Straume","bnr":"V-10896736","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpjQMAS"},{"navn":"Larslia 15","grp":"HP","lat":60.374181,"lon":5.1231557,"adr":"Larslia 15, 5354 Straume","area":"Straume","bnr":"V-10896749","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpjdMAC"},{"navn":"Nordrevågsvegen 24 B","grp":"HC","lat":60.3781855,"lon":5.1037177,"adr":"Nordrevågsvegen 24 B, 5354 Straume","area":"Straume","bnr":"V-10896767","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpjvMAC"},{"navn":"Gamle Foldnesvegen 130","grp":"HC","lat":60.3735679,"lon":5.0984206,"adr":"Gamle Foldnesvegen 130, 5354 Straume","area":"Straume","bnr":"V-10896788","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkGMAS"},{"navn":"Larslia 25","grp":"HP","lat":60.3737824,"lon":5.1235735,"adr":"Larslia 25, 5354 Straume","area":"Straume","bnr":"V-10896790","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkIMAS"},{"navn":"Grunnavågsvegen 38","grp":"HP","lat":60.3730804,"lon":5.1210791,"adr":"Grunnavågsvegen 38, 5354 Straume","area":"Straume","bnr":"V-10896794","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkMMAS"},{"navn":"Foldnesvegen 240","grp":"HC","lat":60.3759476,"lon":5.1109155,"adr":"Foldnesvegen 240, 5354 Straume","area":"Straume","bnr":"V-10896798","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkQMAS"},{"navn":"Gamle Foldnesvegen 108","grp":"HC","lat":60.3722639,"lon":5.1002449,"adr":"Gamle Foldnesvegen 108, 5354 Straume","area":"Straume","bnr":"V-10896803","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkVMAS"},{"navn":"Vågaleitet 2 A","grp":"HP","lat":60.3813341,"lon":5.1154077,"adr":"Vågaleitet 2 A, 5354 Straume","area":"Straume","bnr":"V-10896825","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkrMAC"},{"navn":"Grunnavågsvegen 85","grp":"HP","lat":60.3752517,"lon":5.1178613,"adr":"Grunnavågsvegen 85, 5354 Straume","area":"Straume","bnr":"V-10896829","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpkvMAC"},{"navn":"Grunnavågsvegen 96 A","grp":"HP","lat":60.3746302,"lon":5.1163413,"adr":"Grunnavågsvegen 96 A, 5354 Straume","area":"Straume","bnr":"V-10896849","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CplFMAS"},{"navn":"Grunnavågsvegen 86","grp":"HP","lat":60.3743785,"lon":5.1165855,"adr":"Grunnavågsvegen 86, 5354 Straume","area":"Straume","bnr":"V-10896856","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CplMMAS"},{"navn":"Vågevegen 7","grp":"HC","lat":60.3768762,"lon":5.1116217,"adr":"Vågevegen 7, 5354 Straume","area":"Straume","bnr":"V-10896860","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CplQMAS"},{"navn":"Grunnavågsvegen 11","grp":"HP","lat":60.3743525,"lon":5.1215449,"adr":"Grunnavågsvegen 11, 5354 Straume","area":"Straume","bnr":"V-10896864","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CplUMAS"},{"navn":"Gamle Foldnesvegen 77","grp":"HC","lat":60.3728397,"lon":5.1004955,"adr":"Gamle Foldnesvegen 77, 5354 Straume","area":"Straume","bnr":"V-10896884","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CploMAC"},{"navn":"Grunnavågsvegen 102","grp":"HC","lat":60.3748675,"lon":5.1173261,"adr":"Grunnavågsvegen 102, 5354 Straume","area":"Straume","bnr":"V-10896898","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpm2MAC"},{"navn":"Gamle Foldnesvegen 122","grp":"HC","lat":60.3732715,"lon":5.0978187,"adr":"Gamle Foldnesvegen 122, 5354 Straume","area":"Straume","bnr":"V-10896914","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmIMAS"},{"navn":"Grunnavågsvegen 17","grp":"HP","lat":60.3743803,"lon":5.1203434,"adr":"Grunnavågsvegen 17, 5354 Straume","area":"Straume","bnr":"V-10896929","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmXMAS"},{"navn":"Foldnesvegen 198","grp":"HP","lat":60.3756785,"lon":5.1167756,"adr":"Foldnesvegen 198, 5354 Straume","area":"Straume","bnr":"V-10896932","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmaMAC"},{"navn":"Grunnavågsvegen 88","grp":"HP","lat":60.3744495,"lon":5.1159398,"adr":"Grunnavågsvegen 88, 5354 Straume","area":"Straume","bnr":"V-10896934","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmcMAC"},{"navn":"Vetelsvegen 11 A","grp":"HC","lat":60.3770964,"lon":5.1044054,"adr":"Vetelsvegen 11 A, 5354 Straume","area":"Straume","bnr":"V-10896937","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmfMAC"},{"navn":"Grunnavågsvegen 96 B","grp":"HP","lat":60.3745923,"lon":5.1166127,"adr":"Grunnavågsvegen 96 B, 5354 Straume","area":"Straume","bnr":"V-10896944","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmmMAC"},{"navn":"Gamle Foldnesvegen 49","grp":"HC","lat":60.3746649,"lon":5.1039517,"adr":"Gamle Foldnesvegen 49, 5354 Straume","area":"Straume","bnr":"V-10896951","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmtMAC"},{"navn":"Larslia 26","grp":"HP","lat":60.3743942,"lon":5.1239001,"adr":"Larslia 26, 5354 Straume","area":"Straume","bnr":"V-10896957","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpmzMAC"},{"navn":"Grunnavågsvegen 73","grp":"HP","lat":60.3751275,"lon":5.1194556,"adr":"Grunnavågsvegen 73, 5354 Straume","area":"Straume","bnr":"V-10896960","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpn2MAC"},{"navn":"Vågevegen 21 B","grp":"HC","lat":60.3779286,"lon":5.11195,"adr":"Vågevegen 21 B, 5354 Straume","area":"Straume","bnr":"V-10896981","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpnNMAS"},{"navn":"Grunnavågsvegen 81","grp":"HP","lat":60.3747153,"lon":5.1185788,"adr":"Grunnavågsvegen 81, 5354 Straume","area":"Straume","bnr":"V-10896991","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpnXMAS"},{"navn":"Vågevegen 17","grp":"HC","lat":60.3776225,"lon":5.1125494,"adr":"Vågevegen 17, 5354 Straume","area":"Straume","bnr":"V-10897002","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpniMAC"},{"navn":"Josmoget 5","grp":"HC","lat":60.3760465,"lon":5.1060016,"adr":"Josmoget 5, 5354 Straume","area":"Straume","bnr":"V-10897009","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpnpMAC"},{"navn":"Grunnavågsvegen 75 B","grp":"HP","lat":60.375226,"lon":5.1191969,"adr":"Grunnavågsvegen 75 B, 5354 Straume","area":"Straume","bnr":"V-10897020","bol":"U0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpo0MAC"},{"navn":"Josmoget 3","grp":"HC","lat":60.375824,"lon":5.105774,"adr":"Josmoget 3, 5354 Straume","area":"Straume","bnr":"V-10897072","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpoqMAC"},{"navn":"Vågaleitet 2 H","grp":"HP","lat":60.3816085,"lon":5.1159053,"adr":"Vågaleitet 2 H, 5354 Straume","area":"Straume","bnr":"V-10897114","bol":"H0102","st":"Ikke besøkt","sfid":"a4CSg000000CppWMAS"},{"navn":"Mattishaugen 9","grp":"HC","lat":60.3736977,"lon":5.1022337,"adr":"Mattishaugen 9, 5354 Straume","area":"Straume","bnr":"V-10897130","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CppmMAC"},{"navn":"Gullfjellvegen 1","grp":"HC","lat":60.3798528,"lon":5.1144259,"adr":"Gullfjellvegen 1, 5354 Straume","area":"Straume","bnr":"V-10897134","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CppqMAC"},{"navn":"Vågaleitet 4 C","grp":"HP","lat":60.3813769,"lon":5.1167809,"adr":"Vågaleitet 4 C, 5354 Straume","area":"Straume","bnr":"V-10897149","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpq5MAC"},{"navn":"Larslia 28","grp":"HP","lat":60.3746956,"lon":5.1243726,"adr":"Larslia 28, 5354 Straume","area":"Straume","bnr":"V-10897158","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpqEMAS"},{"navn":"Grunnavågsvegen 94","grp":"HP","lat":60.37482,"lon":5.1156978,"adr":"Grunnavågsvegen 94, 5354 Straume","area":"Straume","bnr":"V-10897160","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpqGMAS"},{"navn":"Gamle Foldnesvegen 78","grp":"HC","lat":60.3737576,"lon":5.1042781,"adr":"Gamle Foldnesvegen 78, 5354 Straume","area":"Straume","bnr":"V-10897176","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpqWMAS"},{"navn":"Josmoget 1","grp":"HC","lat":60.3756244,"lon":5.1060157,"adr":"Josmoget 1, 5354 Straume","area":"Straume","bnr":"V-10897177","bol":"H0102","st":"Ikke besøkt","sfid":"a4CSg000000CpqXMAS"},{"navn":"Larslia 31","grp":"HP","lat":60.3733071,"lon":5.1242291,"adr":"Larslia 31, 5354 Straume","area":"Straume","bnr":"V-10897181","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpqbMAC"},{"navn":"Josmoget 11","grp":"HC","lat":60.3763608,"lon":5.104457,"adr":"Josmoget 11, 5354 Straume","area":"Straume","bnr":"V-10897186","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpqgMAC"},{"navn":"Nordrevågsvegen 30","grp":"HC","lat":60.3778241,"lon":5.104391,"adr":"Nordrevågsvegen 30, 5354 Straume","area":"Straume","bnr":"V-10897201","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpqvMAC"},{"navn":"Grunnavågsvegen 44","grp":"HP","lat":60.373387,"lon":5.1204979,"adr":"Grunnavågsvegen 44, 5354 Straume","area":"Straume","bnr":"V-10897215","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpr9MAC"},{"navn":"Gamle Foldnesvegen 43 A","grp":"HC","lat":60.3746514,"lon":5.1047467,"adr":"Gamle Foldnesvegen 43 A, 5354 Straume","area":"Straume","bnr":"V-10897238","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CprWMAS"},{"navn":"Vetelsvegen 53","grp":"HC","lat":60.3759692,"lon":5.1015263,"adr":"Vetelsvegen 53, 5354 Straume","area":"Straume","bnr":"V-10897260","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CprsMAC"},{"navn":"Foldnesvegen 217","grp":"HC","lat":60.376523,"lon":5.114823,"adr":"Foldnesvegen 217, 5354 Straume","area":"Straume","bnr":"V-10897272","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cps4MAC"},{"navn":"Josmoget 9","grp":"HC","lat":60.3763187,"lon":5.1048615,"adr":"Josmoget 9, 5354 Straume","area":"Straume","bnr":"V-10897296","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpsSMAS"},{"navn":"Vågevegen 3 A","grp":"HC","lat":60.376518,"lon":5.1109,"adr":"Vågevegen 3 A, 5354 Straume","area":"Straume","bnr":"V-10897298","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpsUMAS"},{"navn":"Vågevegen 1 C","grp":"HC","lat":60.3766143,"lon":5.1105363,"adr":"Vågevegen 1 C, 5354 Straume","area":"Straume","bnr":"V-10897320","bol":"U0101","st":"Ikke besøkt","sfid":"a4CSg000000CpsqMAC"},{"navn":"Vetelsvegen 17","grp":"HC","lat":60.3772679,"lon":5.102896,"adr":"Vetelsvegen 17, 5354 Straume","area":"Straume","bnr":"V-10897339","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpt9MAC"},{"navn":"Grunnavågsvegen 7","grp":"HC","lat":60.3741233,"lon":5.1220079,"adr":"Grunnavågsvegen 7, 5354 Straume","area":"Straume","bnr":"V-10897340","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CptAMAS"},{"navn":"Larslia 27","grp":"HP","lat":60.3736712,"lon":5.1234596,"adr":"Larslia 27, 5354 Straume","area":"Straume","bnr":"V-10897343","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CptDMAS"},{"navn":"Vetelsvegen 24","grp":"HC","lat":60.3763595,"lon":5.1034949,"adr":"Vetelsvegen 24, 5354 Straume","area":"Straume","bnr":"V-10897350","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CptKMAS"},{"navn":"Gamle Foldnesvegen 55","grp":"HC","lat":60.3738481,"lon":5.1033777,"adr":"Gamle Foldnesvegen 55, 5354 Straume","area":"Straume","bnr":"V-10897367","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CptbMAC"},{"navn":"Grunnavågsvegen 55 A","grp":"HP","lat":60.3742275,"lon":5.1197262,"adr":"Grunnavågsvegen 55 A, 5354 Straume","area":"Straume","bnr":"V-10897381","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CptpMAC"},{"navn":"Grunnavågsvegen 32","grp":"HP","lat":60.3727895,"lon":5.1209685,"adr":"Grunnavågsvegen 32, 5354 Straume","area":"Straume","bnr":"V-10897387","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CptvMAC"},{"navn":"Vågevegen 23 D","grp":"HC","lat":60.3780565,"lon":5.1114082,"adr":"Vågevegen 23 D, 5354 Straume","area":"Straume","bnr":"V-10897393","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000Cpu1MAC"},{"navn":"Gullfjellvegen 22 B","grp":"HC","lat":60.3803651,"lon":5.116838,"adr":"Gullfjellvegen 22 B, 5354 Straume","area":"Straume","bnr":"V-10897397","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpu5MAC"},{"navn":"Vågevegen 21 A","grp":"HC","lat":60.3778569,"lon":5.1119585,"adr":"Vågevegen 21 A, 5354 Straume","area":"Straume","bnr":"V-10897411","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpuJMAS"},{"navn":"Gamle Foldnesvegen 132","grp":"HC","lat":60.3733946,"lon":5.0982399,"adr":"Gamle Foldnesvegen 132, 5354 Straume","area":"Straume","bnr":"V-10897434","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpugMAC"},{"navn":"Vågaleitet 6","grp":"HP","lat":60.3816083,"lon":5.116668,"adr":"Vågaleitet 6, 5354 Straume","area":"Straume","bnr":"V-10897436","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpuiMAC"},{"navn":"Grunnavågsvegen 53","grp":"HP","lat":60.3740072,"lon":5.1201881,"adr":"Grunnavågsvegen 53, 5354 Straume","area":"Straume","bnr":"V-10897437","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpujMAC"},{"navn":"Foldnesvegen 218","grp":"HC","lat":60.3750353,"lon":5.1138384,"adr":"Foldnesvegen 218, 5354 Straume","area":"Straume","bnr":"V-10897444","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpuqMAC"},{"navn":"Gamle Foldnesvegen 47","grp":"HC","lat":60.374952,"lon":5.1038992,"adr":"Gamle Foldnesvegen 47, 5354 Straume","area":"Straume","bnr":"V-10897473","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpvJMAS"},{"navn":"Vågevegen 3 C","grp":"HC","lat":60.3765341,"lon":5.1109889,"adr":"Vågevegen 3 C, 5354 Straume","area":"Straume","bnr":"V-10897493","bol":"U0101","st":"Ikke besøkt","sfid":"a4CSg000000CpvdMAC"},{"navn":"Vågaleitet 13","grp":"HP","lat":60.3817806,"lon":5.1173375,"adr":"Vågaleitet 13, 5354 Straume","area":"Straume","bnr":"V-10897496","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpvgMAC"},{"navn":"Grunnavågsvegen 70","grp":"HP","lat":60.3739386,"lon":5.1181448,"adr":"Grunnavågsvegen 70, 5354 Straume","area":"Straume","bnr":"V-10897509","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpvtMAC"},{"navn":"Mattishaugen 24","grp":"HC","lat":60.3737951,"lon":5.1016219,"adr":"Mattishaugen 24, 5354 Straume","area":"Straume","bnr":"V-10897512","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpvwMAC"},{"navn":"Mattishaugen 8","grp":"HC","lat":60.3738076,"lon":5.1010768,"adr":"Mattishaugen 8, 5354 Straume","area":"Straume","bnr":"V-10897516","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpw0MAC"},{"navn":"Larslia 21","grp":"HP","lat":60.3740396,"lon":5.1237607,"adr":"Larslia 21, 5354 Straume","area":"Straume","bnr":"V-10897517","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpw1MAC"},{"navn":"Foldnesvegen 216 B","grp":"HC","lat":60.3754556,"lon":5.1141011,"adr":"Foldnesvegen 216 B, 5354 Straume","area":"Straume","bnr":"V-10897519","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cpw3MAC"},{"navn":"Vågaleitet 7","grp":"HP","lat":60.3810877,"lon":5.1173111,"adr":"Vågaleitet 7, 5354 Straume","area":"Straume","bnr":"V-10897531","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpwFMAS"},{"navn":"Grunnavågsvegen 110","grp":"Kun mobil","lat":60.3750734,"lon":5.1154497,"adr":"Grunnavågsvegen 110, 5354 Straume","area":"Straume","bnr":"V-10897585","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpyjMAC"},{"navn":"Vågaleitet 4 A","grp":"Kun mobil","lat":60.3814385,"lon":5.1157803,"adr":"Vågaleitet 4 A, 5354 Straume","area":"Straume","bnr":"V-10897591","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpypMAC"},{"navn":"Foldnesvegen 179","grp":"Kun mobil","lat":60.3754247,"lon":5.1197833,"adr":"Foldnesvegen 179, 5354 Straume","area":"Straume","bnr":"V-10897627","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpzPMAS"},{"navn":"Grunnavågsvegen 16","grp":"Kun mobil","lat":60.3725314,"lon":5.1229053,"adr":"Grunnavågsvegen 16, 5354 Straume","area":"Straume","bnr":"V-10897656","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpzsMAC"},{"navn":"Foldnesvegen 169","grp":"Kun mobil","lat":60.3748684,"lon":5.1216651,"adr":"Foldnesvegen 169, 5354 Straume","area":"Straume","bnr":"V-10897658","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CpzuMAC"},{"navn":"Grunnavågsvegen 4","grp":"Kun mobil","lat":60.3734551,"lon":5.1222145,"adr":"Grunnavågsvegen 4, 5354 Straume","area":"Straume","bnr":"V-10897668","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq04MAC"},{"navn":"Foldnesvegen 207 A","grp":"Kun mobil","lat":60.3761367,"lon":5.1201524,"adr":"Foldnesvegen 207 A, 5354 Straume","area":"Straume","bnr":"V-10897701","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq0bMAC"},{"navn":"Vågaleitet 8 C","grp":"Kun mobil","lat":60.3819782,"lon":5.1162638,"adr":"Vågaleitet 8 C, 5354 Straume","area":"Straume","bnr":"V-10897714","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq0oMAC"},{"navn":"Foldnesvegen 207 B","grp":"Kun mobil","lat":60.3761324,"lon":5.1203163,"adr":"Foldnesvegen 207 B, 5354 Straume","area":"Straume","bnr":"V-10897717","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq0rMAC"},{"navn":"Grunnavågsvegen 40","grp":"Kun mobil","lat":60.3729992,"lon":5.1204533,"adr":"Grunnavågsvegen 40, 5354 Straume","area":"Straume","bnr":"V-10897764","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq1cMAC"},{"navn":"Foldnesvegen 154","grp":"Kun mobil","lat":60.3748335,"lon":5.1201623,"adr":"Foldnesvegen 154, 5354 Straume","area":"Straume","bnr":"V-10897806","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq2IMAS"},{"navn":"Grunnavågsvegen 72 A","grp":"Kun mobil","lat":60.3739513,"lon":5.118579,"adr":"Grunnavågsvegen 72 A, 5354 Straume","area":"Straume","bnr":"V-10897818","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq2UMAS"},{"navn":"Foldnesvegen 205","grp":"Kun mobil","lat":60.3761061,"lon":5.1197203,"adr":"Foldnesvegen 205, 5354 Straume","area":"Straume","bnr":"V-10897841","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000Cq2rMAC"}];
+var AREAS = ["Straume"];
+var STORE_KEY = "dorkart_Jonathan_16.09.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Jonathan";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) map.fitBounds(bb, {padding:[40,40], maxZoom:16});
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+
+var all = bounds(function(){ return true; });
+if(all) map.fitBounds(all, {padding:[40,40], maxZoom:16});
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
