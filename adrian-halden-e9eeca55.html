@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Adrian 18.09.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Adrian</div>
+<div class="date">18.09.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen</div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn":"Dyrendalsveien 48","grp":"HP","lat":59.13690965965017,"lon":11.380756109829754,"adr":"Dyrendalsveien 48, 1779 Halden","area":"Strupe","bnr":"V-10861552","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CKraMAG"},{"navn":"Njårds Vei 15 A","grp":"HP","lat":59.1352215063833,"lon":11.371137727664369,"adr":"Njårds Vei 15 A, 1782 Halden","area":"Karrestad","bnr":"V-10861843","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CKwHMAW"},{"navn":"Strupeveien 14","grp":"HP","lat":59.13676844105269,"lon":11.374732418833617,"adr":"Strupeveien 14, 1782 Halden","area":"Strupe","bnr":"V-10861918","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CKxUMAW"},{"navn":"Busterudkleiva 31","grp":"HP","lat":59.135813843727085,"lon":11.379370628784942,"adr":"Busterudkleiva 31, 1782 Halden","area":"Strupe","bnr":"V-10862009","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CKyxMAG"},{"navn":"Strupeveien 44","grp":"HP","lat":59.137430093960624,"lon":11.373432097701766,"adr":"Strupeveien 44, 1782 Halden","area":"Strupe","bnr":"V-10862178","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CL1gMAG"},{"navn":"Njårds Vei 19 A","grp":"HP","lat":59.13532866926946,"lon":11.371173109541244,"adr":"Njårds Vei 19 A, 1782 Halden","area":"Karrestad","bnr":"V-10862196","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CL1yMAG"},{"navn":"Busterudkleiva 39","grp":"HP","lat":59.1369180365283,"lon":11.379662298870299,"adr":"Busterudkleiva 39, 1782 Halden","area":"Strupe","bnr":"V-10862229","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CL2VMAW"},{"navn":"Karrestadveien 36","grp":"HP","lat":59.13622905238737,"lon":11.366880644801375,"adr":"Karrestadveien 36, 1782 Halden","area":"Karrestad","bnr":"V-10863088","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLGMMA4"},{"navn":"Strupeveien 38","grp":"HP","lat":59.136614580989196,"lon":11.372681597763442,"adr":"Strupeveien 38, 1782 Halden","area":"Strupe","bnr":"V-10863695","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLRkMAO"},{"navn":"Odins Vei 14","grp":"HP","lat":59.13229202305844,"lon":11.36748286343759,"adr":"Odins Vei 14, 1781 Halden","area":"Låby","bnr":"V-10863852","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLUHMA4"},{"navn":"Tors Vei 1","grp":"HP","lat":59.13180632490417,"lon":11.36504937623773,"adr":"Tors Vei 1, 1781 Halden","area":"Låby","bnr":"V-10864483","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLeSMAW"},{"navn":"Strupeveien 36","grp":"HP","lat":59.1363122927873,"lon":11.372213138447412,"adr":"Strupeveien 36, 1782 Halden","area":"Strupe","bnr":"V-10865161","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLpOMAW"},{"navn":"Karrestadveien 3","grp":"HP","lat":59.13476927883065,"lon":11.369728936303238,"adr":"Karrestadveien 3, 1782 Halden","area":"Karrestad","bnr":"V-10865183","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLpkMAG"},{"navn":"Strupeveien 22","grp":"HP","lat":59.136305241978135,"lon":11.373974831759213,"adr":"Strupeveien 22, 1782 Halden","area":"Strupe","bnr":"V-10865413","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLtSMAW"},{"navn":"B R A Veien 33","grp":"HP","lat":59.13565033060189,"lon":11.373973186054858,"adr":"B R A Veien 33, 1782 Halden","area":"Strupe","bnr":"V-10865532","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CLvNMAW"},{"navn":"Strupeveien 42","grp":"HP","lat":59.13701862424772,"lon":11.373333680900457,"adr":"Strupeveien 42, 1782 Halden","area":"Strupe","bnr":"V-10866373","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CM8wMAG"},{"navn":"Strupeveien 11","grp":"HP","lat":59.13736767992546,"lon":11.375714488445116,"adr":"Strupeveien 11, 1782 Halden","area":"Strupe","bnr":"V-10866511","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CMBAMA4"},{"navn":"Njårds Vei 17 B","grp":"HP","lat":59.13526505832335,"lon":11.371163465620265,"adr":"Njårds Vei 17 B, 1782 Halden","area":"Karrestad","bnr":"V-10866527","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000CMBQMA4"},{"navn":"Tors Vei 9","grp":"HC","lat":59.13231080599938,"lon":11.366452847276678,"adr":"Tors Vei 9, 1781 Halden","area":"Låby","bnr":"V-10866784","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CMFZMA4"},{"navn":"B R A Veien 41","grp":"HP","lat":59.13588208514514,"lon":11.375055620805192,"adr":"B R A Veien 41, 1782 Halden","area":"Strupe","bnr":"V-10866865","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CMGsMAO"},{"navn":"Njårds Vei 17 A","grp":"HP","lat":59.13526505832335,"lon":11.371163465620265,"adr":"Njårds Vei 17 A, 1782 Halden","area":"Karrestad","bnr":"V-10867260","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CMNFMA4"},{"navn":"Njårds Vei 15 B","grp":"HP","lat":59.1352215063833,"lon":11.371137727664369,"adr":"Njårds Vei 15 B, 1782 Halden","area":"Karrestad","bnr":"V-10867694","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000CMUFMA4"},{"navn":"Busterudkleiva 29 C","grp":"HP","lat":59.135777198348784,"lon":11.380046376466987,"adr":"Busterudkleiva 29 C, 1782 Halden","area":"Strupe","bnr":"V-10867905","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CMXeMAO"},{"navn":"Karrestadveien 45 B","grp":"HP","lat":59.13560691303849,"lon":11.368480960669604,"adr":"Karrestadveien 45 B, 1782 Halden","area":"Karrestad","bnr":"V-10868737","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CMl4MAG"},{"navn":"Njårds Vei 19 B","grp":"HP","lat":59.13532866926946,"lon":11.371173109541244,"adr":"Njårds Vei 19 B, 1782 Halden","area":"Karrestad","bnr":"V-10868887","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000CMnUMAW"},{"navn":"Karrestadveien 5","grp":"HP","lat":59.13479117849665,"lon":11.369858062487022,"adr":"Karrestadveien 5, 1782 Halden","area":"Karrestad","bnr":"V-10869911","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CN40MAG"},{"navn":"Njårds Vei 22","grp":"HP","lat":59.135074933188676,"lon":11.371538401486891,"adr":"Njårds Vei 22, 1782 Halden","area":"Karrestad","bnr":"V-10870934","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNKVMA4"},{"navn":"Karrestadveien 19","grp":"HP","lat":59.13542924840387,"lon":11.370339205958064,"adr":"Karrestadveien 19, 1782 Halden","area":"Karrestad","bnr":"V-10871330","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNQtMAO"},{"navn":"Vidars Vei 16","grp":"HC","lat":59.1341184463044,"lon":11.369503899962659,"adr":"Vidars Vei 16, 1781 Halden","area":"Låby","bnr":"V-10871628","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNVhMAO"},{"navn":"Dyrendalsveien 44","grp":"HP","lat":59.136545463434096,"lon":11.380676623252814,"adr":"Dyrendalsveien 44, 1779 Halden","area":"Strupe","bnr":"V-10871831","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNYyMAO"},{"navn":"Strupeveien 10 D","grp":"HP","lat":59.13699096118794,"lon":11.375239086183013,"adr":"Strupeveien 10 D, 1782 Halden","area":"Strupe","bnr":"V-10872533","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNkIMAW"},{"navn":"Strupeveien 3 A","grp":"HP","lat":59.137119175681846,"lon":11.378148298719774,"adr":"Strupeveien 3 A, 1782 Halden","area":"Strupe","bnr":"V-10872988","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNrdMAG"},{"navn":"Busterudkleiva 35 B","grp":"HP","lat":59.13639832256649,"lon":11.379538813354209,"adr":"Busterudkleiva 35 B, 1782 Halden","area":"Strupe","bnr":"V-10873222","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNvPMAW"},{"navn":"Strupeveien 5","grp":"HC","lat":59.13693105119926,"lon":11.377628261531202,"adr":"Strupeveien 5, 1782 Halden","area":"Strupe","bnr":"V-10873327","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CNx6MAG"},{"navn":"B R A Veien 39","grp":"HP","lat":59.13587790394942,"lon":11.374793104902174,"adr":"B R A Veien 39, 1782 Halden","area":"Strupe","bnr":"V-10873916","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CO6bMAG"},{"navn":"B R A Veien 43","grp":"HP","lat":59.13602053736034,"lon":11.375344921671596,"adr":"B R A Veien 43, 1782 Halden","area":"Strupe","bnr":"V-10874944","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CONBMA4"},{"navn":"Busterudkleiva 48","grp":"HP","lat":59.13599619112355,"lon":11.378538911825382,"adr":"Busterudkleiva 48, 1782 Halden","area":"Strupe","bnr":"V-10875027","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000COOWMA4"},{"navn":"Busterudkleiva 37","grp":"HC","lat":59.136654781981555,"lon":11.379565355438073,"adr":"Busterudkleiva 37, 1782 Halden","area":"Strupe","bnr":"V-10875111","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000COPsMAO"},{"navn":"Njårds Vei 30","grp":"HP","lat":59.134985801065156,"lon":11.371007797825184,"adr":"Njårds Vei 30, 1782 Halden","area":"Karrestad","bnr":"V-10876786","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000COqtMAG"},{"navn":"Tors Vei 20","grp":"HP","lat":59.133254601111936,"lon":11.366920035265261,"adr":"Tors Vei 20, 1781 Halden","area":"Låby","bnr":"V-10877754","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CP6VMAW"},{"navn":"Odins Vei 6","grp":"HP","lat":59.13180826734273,"lon":11.365928734964974,"adr":"Odins Vei 6, 1781 Halden","area":"Låby","bnr":"V-10877764","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CP6fMAG"},{"navn":"Njårds Vei 26","grp":"HP","lat":59.135025562074794,"lon":11.371290248250482,"adr":"Njårds Vei 26, 1782 Halden","area":"Karrestad","bnr":"V-10878112","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPCHMA4"},{"navn":"Karrestadveien 1","grp":"HP","lat":59.134679313430674,"lon":11.369588113483312,"adr":"Karrestadveien 1, 1782 Halden","area":"Karrestad","bnr":"V-10878777","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPN0MAO"},{"navn":"Busterudkleiva 29 B","grp":"HC","lat":59.13567032226179,"lon":11.37979945790174,"adr":"Busterudkleiva 29 B, 1782 Halden","area":"Strupe","bnr":"V-10879585","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPa2MAG"},{"navn":"Strupeveien 12","grp":"HP","lat":59.13713951739547,"lon":11.374583299939168,"adr":"Strupeveien 12, 1782 Halden","area":"Strupe","bnr":"V-10879632","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPanMAG"},{"navn":"Odins Vei 16","grp":"HP","lat":59.1324910728385,"lon":11.367898646758253,"adr":"Odins Vei 16, 1781 Halden","area":"Låby","bnr":"V-10879657","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPbCMAW"},{"navn":"B R A Veien 36","grp":"HP","lat":59.135196642967905,"lon":11.375200431553603,"adr":"B R A Veien 36, 1782 Halden","area":"Strupe","bnr":"V-10879749","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPcgMAG"},{"navn":"B R A Veien 32","grp":"HP","lat":59.13491909831052,"lon":11.374656765646531,"adr":"B R A Veien 32, 1782 Halden","area":"Strupe","bnr":"V-10880861","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CPucMAG"},{"navn":"Strupeveien 10 B","grp":"HP","lat":59.13676723134527,"lon":11.375436867854884,"adr":"Strupeveien 10 B, 1782 Halden","area":"Strupe","bnr":"V-10881490","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQ4lMAG"},{"navn":"Njårds Vei 28","grp":"HP","lat":59.13500151418965,"lon":11.37113125345203,"adr":"Njårds Vei 28, 1782 Halden","area":"Karrestad","bnr":"V-10882697","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQPpMAO"},{"navn":"Tors Vei 13","grp":"HP","lat":59.1326114837118,"lon":11.367207760716143,"adr":"Tors Vei 13, 1781 Halden","area":"Låby","bnr":"V-10882711","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQQ3MAO"},{"navn":"Vidars Vei 8","grp":"HP","lat":59.133842407338534,"lon":11.36858107196957,"adr":"Vidars Vei 8, 1781 Halden","area":"Låby","bnr":"V-10882819","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQTOMA4"},{"navn":"Strupeveien 28","grp":"HP","lat":59.13609517601095,"lon":11.373376391501424,"adr":"Strupeveien 28, 1782 Halden","area":"Strupe","bnr":"V-10882964","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQVjMAO"},{"navn":"Strupeveien 3","grp":"HP","lat":59.13670323191774,"lon":11.378294266454185,"adr":"Strupeveien 3, 1782 Halden","area":"Strupe","bnr":"V-10883012","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQWVMA4"},{"navn":"Strupeveien 14","grp":"HP","lat":59.13676844105269,"lon":11.374732418833617,"adr":"Strupeveien 14, 1782 Halden","area":"Strupe","bnr":"V-10883386","bol":"H0102","st":"Ikke besøkt","sfid":"a4CSg000000CQcXMAW"},{"navn":"Njårds Vei 20","grp":"HP","lat":59.13509929956952,"lon":11.371679937635005,"adr":"Njårds Vei 20, 1782 Halden","area":"Karrestad","bnr":"V-10883593","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQfsMAG"},{"navn":"Tors Vei 5","grp":"HP","lat":59.13202838758843,"lon":11.36568172738962,"adr":"Tors Vei 5, 1781 Halden","area":"Låby","bnr":"V-10884614","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CQwLMAW"},{"navn":"B R A Veien 49","grp":"HC","lat":59.13657112019515,"lon":11.376187247299855,"adr":"B R A Veien 49, 1782 Halden","area":"Strupe","bnr":"V-10885020","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CR2tMAG"},{"navn":"Njårds Vei 18 B","grp":"HP","lat":59.13541792860311,"lon":11.372925684577476,"adr":"Njårds Vei 18 B, 1782 Halden","area":"Karrestad","bnr":"V-10885511","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CRAoMAO"},{"navn":"Karrestadveien 37 A","grp":"HP","lat":59.13522157644365,"lon":11.368870396866637,"adr":"Karrestadveien 37 A, 1782 Halden","area":"Karrestad","bnr":"V-10885918","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CRHNMA4"},{"navn":"Karrestadveien 13","grp":"HP","lat":59.13510687550665,"lon":11.37037985056186,"adr":"Karrestadveien 13, 1782 Halden","area":"Karrestad","bnr":"V-10887162","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CRbRMAW"},{"navn":"Busterudkleiva 35 A","grp":"HP","lat":59.13620752048739,"lon":11.37936123959607,"adr":"Busterudkleiva 35 A, 1782 Halden","area":"Strupe","bnr":"V-10887319","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CRdyMAG"},{"navn":"Strupeveien 9 A","grp":"HP","lat":59.137198891616805,"lon":11.376248243121859,"adr":"Strupeveien 9 A, 1782 Halden","area":"Strupe","bnr":"V-10887349","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CReSMAW"},{"navn":"Busterudkleiva 31","grp":"HC","lat":59.135813843727085,"lon":11.379370628784942,"adr":"Busterudkleiva 31, 1782 Halden","area":"Strupe","bnr":"V-10887707","bol":"H0102","st":"Ikke besøkt","sfid":"a4CSg000000CRkEMAW"},{"navn":"Karrestadveien 29","grp":"HP","lat":59.135193629986624,"lon":11.369466328613377,"adr":"Karrestadveien 29, 1782 Halden","area":"Karrestad","bnr":"V-10888092","bol":"H0201","st":"Ikke besøkt","sfid":"a4CSg000000CRqRMAW"},{"navn":"Tors Vei 15","grp":"Kun mobil","lat":59.1327486801364,"lon":11.367566834894559,"adr":"Tors Vei 15, 1781 Halden","area":"Låby","bnr":"V-10888941","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CS8cMAG"},{"navn":"Karrestadveien 41","grp":"Kun mobil","lat":59.1356602142777,"lon":11.369498575945123,"adr":"Karrestadveien 41, 1782 Halden","area":"Karrestad","bnr":"V-10888980","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CS9FMAW"},{"navn":"Tors Vei 10","grp":"Kun mobil","lat":59.13278668260277,"lon":11.366468211083019,"adr":"Tors Vei 10, 1781 Halden","area":"Låby","bnr":"V-10889010","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CS9jMAG"},{"navn":"Karrestadveien 7","grp":"Kun mobil","lat":59.13495321266573,"lon":11.369988135297277,"adr":"Karrestadveien 7, 1782 Halden","area":"Karrestad","bnr":"V-10889377","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSFeMAO"},{"navn":"Tors Vei 12","grp":"Kun mobil","lat":59.13298084022875,"lon":11.366166967650043,"adr":"Tors Vei 12, 1781 Halden","area":"Låby","bnr":"V-10889463","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSH2MAO"},{"navn":"Karrestadveien 59","grp":"Kun mobil","lat":59.1358071269775,"lon":11.367847970626961,"adr":"Karrestadveien 59, 1782 Halden","area":"Karrestad","bnr":"V-10889676","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSKTMA4"},{"navn":"Vidars Vei 10","grp":"Kun mobil","lat":59.13378745345315,"lon":11.369229303733928,"adr":"Vidars Vei 10, 1781 Halden","area":"Låby","bnr":"V-10890165","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSSMMA4"},{"navn":"Odins Vei 20","grp":"Kun mobil","lat":59.132790467675555,"lon":11.368723409188762,"adr":"Odins Vei 20, 1781 Halden","area":"Låby","bnr":"V-10890208","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CST3MAO"},{"navn":"Strupeveien 2","grp":"Kun mobil","lat":59.13626171344238,"lon":11.378365032212383,"adr":"Strupeveien 2, 1782 Halden","area":"Strupe","bnr":"V-10890250","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSTjMAO"},{"navn":"Njårds Vei 18 A","grp":"Kun mobil","lat":59.1353705114417,"lon":11.373062254475803,"adr":"Njårds Vei 18 A, 1782 Halden","area":"Karrestad","bnr":"V-10890613","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSbBMAW"},{"navn":"Karrestadveien 53","grp":"Kun mobil","lat":59.13531750061093,"lon":11.368093856950951,"adr":"Karrestadveien 53, 1782 Halden","area":"Karrestad","bnr":"V-10890935","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSgNMAW"},{"navn":"Tors Vei 22","grp":"Kun mobil","lat":59.13315838073553,"lon":11.367565408717445,"adr":"Tors Vei 22, 1781 Halden","area":"Låby","bnr":"V-10890953","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSiHMAW"},{"navn":"Odins Vei 24","grp":"Kun mobil","lat":59.13324881743478,"lon":11.369699014634945,"adr":"Odins Vei 24, 1781 Halden","area":"Låby","bnr":"V-10891816","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSxnMAG"},{"navn":"B R A Veien 45","grp":"Kun mobil","lat":59.13615898891289,"lon":11.375634224872298,"adr":"B R A Veien 45, 1782 Halden","area":"Strupe","bnr":"V-10891925","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CSzYMAW"},{"navn":"Busterudkleiva 29 A","grp":"Kun mobil","lat":59.13544814581913,"lon":11.379520063982067,"adr":"Busterudkleiva 29 A, 1782 Halden","area":"Strupe","bnr":"V-10892231","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CT4UMAW"},{"navn":"Dyrendalsveien 42","grp":"Kun mobil","lat":59.136744948724115,"lon":11.380919493497643,"adr":"Dyrendalsveien 42, 1779 Halden","area":"Strupe","bnr":"V-10892338","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CT6DMAW"},{"navn":"Strupeveien 3 B","grp":"Kun mobil","lat":59.13712672404701,"lon":11.377736237614673,"adr":"Strupeveien 3 B, 1782 Halden","area":"Strupe","bnr":"V-10892413","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CT7QMAW"},{"navn":"Augustaborgveien 50 A","grp":"Kun mobil","lat":59.13570310911958,"lon":11.378696891260358,"adr":"Augustaborgveien 50 A, 1782 Halden","area":"Strupe","bnr":"V-10893031","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CTHOMA4"},{"navn":"Vidars Vei 4","grp":"Kun mobil","lat":59.133673586122825,"lon":11.368232034060568,"adr":"Vidars Vei 4, 1781 Halden","area":"Låby","bnr":"V-10893333","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CTMGMA4"},{"navn":"Karrestadveien 71","grp":"Kun mobil","lat":59.13684335003059,"lon":11.36625174054724,"adr":"Karrestadveien 71, 1782 Halden","area":"Karrestad","bnr":"V-10893666","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CTRdMAO"},{"navn":"Strupeveien 4","grp":"Kun mobil","lat":59.136439488201695,"lon":11.37797877460656,"adr":"Strupeveien 4, 1782 Halden","area":"Strupe","bnr":"V-10894185","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CTa0MAG"},{"navn":"B R A Veien 37","grp":"Kun mobil","lat":59.13587787400651,"lon":11.374303613910682,"adr":"B R A Veien 37, 1782 Halden","area":"Strupe","bnr":"V-10894288","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CTbfMAG"},{"navn":"Strupeveien 6 B","grp":"Kun mobil","lat":59.13634668392942,"lon":11.377110474498684,"adr":"Strupeveien 6 B, 1782 Halden","area":"Strupe","bnr":"V-10894459","bol":"H0101","st":"Ikke besøkt","sfid":"a4CSg000000CTeQMAW"}];
+var AREAS = ["Strupe", "Karrestad", "Låby"];
+var STORE_KEY = "dorkart_Adrian_18.09.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Adrian";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+var all = bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
