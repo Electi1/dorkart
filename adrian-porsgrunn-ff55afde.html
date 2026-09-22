@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Adrian 22.09.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Adrian</div>
+<div class="date">22.09.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen</div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Bieners Veg 4", "grp": "HC", "lat": 59.13307871924707, "lon": 9.646969636458701, "adr": "Bieners Veg 4, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10861609", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CKsVMAW"}, {"navn": "Granatvegen 53", "grp": "HP", "lat": 59.10793570754546, "lon": 9.695019938277568, "adr": "Granatvegen 53, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10862624", "bol": "H0301", "st": "Ikke besøkt", "sfid": "a4CSg000000CL8sMAG"}, {"navn": "Gneisvegen 20", "grp": "HC", "lat": 59.10811749033713, "lon": 9.682765921604298, "adr": "Gneisvegen 20, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10862716", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLAMMA4"}, {"navn": "Gråsteinvegen 12", "grp": "HP", "lat": 59.10695955864537, "lon": 9.686060395955735, "adr": "Gråsteinvegen 12, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10863225", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLIZMA4"}, {"navn": "Lynglia 6", "grp": "HP", "lat": 59.11138771450755, "lon": 9.675149959802326, "adr": "Lynglia 6, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10863320", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLK6MAO"}, {"navn": "Lyngvegen 62", "grp": "HP", "lat": 59.111282843700046, "lon": 9.67338154655296, "adr": "Lyngvegen 62, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10863372", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLKwMAO"}, {"navn": "Hegglia 21", "grp": "HC", "lat": 59.108214892311906, "lon": 9.679607391634187, "adr": "Hegglia 21, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10863785", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLTCMA4"}, {"navn": "Thorittunet 17", "grp": "HC", "lat": 59.10680357574732, "lon": 9.69007317996112, "adr": "Thorittunet 17, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10864043", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLXMMA4"}, {"navn": "Lynglia 8", "grp": "HP", "lat": 59.111363314034136, "lon": 9.675248319062572, "adr": "Lynglia 8, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10864789", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLjOMAW"}, {"navn": "Glimmervegen 5 B", "grp": "HP", "lat": 59.10717636431092, "lon": 9.69090132077055, "adr": "Glimmervegen 5 B, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10864796", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLjVMAW"}, {"navn": "Thorittunet 9", "grp": "HP", "lat": 59.107299694105585, "lon": 9.689664092960534, "adr": "Thorittunet 9, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10865541", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CLvWMAW"}, {"navn": "Lyngvegen 45", "grp": "HP", "lat": 59.110206514428, "lon": 9.676573472587128, "adr": "Lyngvegen 45, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10865568", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CLvxMAG"}, {"navn": "Lyngvegen 55", "grp": "HP", "lat": 59.1110846525428, "lon": 9.675228694075853, "adr": "Lyngvegen 55, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10865918", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CM1bMAG"}, {"navn": "Grønlivegen 5", "grp": "HP", "lat": 59.134319944970954, "lon": 9.646591135499229, "adr": "Grønlivegen 5, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10866312", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CM7xMAG"}, {"navn": "Hegglia 14", "grp": "HC", "lat": 59.109048780576934, "lon": 9.680134821064533, "adr": "Hegglia 14, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10866354", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CM8dMAG"}, {"navn": "Glimmervegen 19", "grp": "HP", "lat": 59.1054381766382, "lon": 9.693502773881324, "adr": "Glimmervegen 19, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10866471", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMAWMA4"}, {"navn": "Granatvegen 40", "grp": "HP", "lat": 59.10788758925987, "lon": 9.692260126902491, "adr": "Granatvegen 40, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10866588", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMCPMA4"}, {"navn": "Glimmervegen 27", "grp": "HP", "lat": 59.10594377277214, "lon": 9.6946828044847, "adr": "Glimmervegen 27, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10866959", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMIOMA4"}, {"navn": "Krystallvegen 18", "grp": "HC", "lat": 59.10546882557936, "lon": 9.68943526800523, "adr": "Krystallvegen 18, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867003", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMJ6MAO"}, {"navn": "Krystallvegen 13", "grp": "HP", "lat": 59.10608806412981, "lon": 9.689517539902331, "adr": "Krystallvegen 13, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867032", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMJZMA4"}, {"navn": "Steinringen 39", "grp": "HP", "lat": 59.109550775750265, "lon": 9.683457970442161, "adr": "Steinringen 39, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMSnMAO"}, {"navn": "Gråsteinvegen 26", "grp": "HP", "lat": 59.105500821652214, "lon": 9.68508842709831, "adr": "Gråsteinvegen 26, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867659", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMTgMAO"}, {"navn": "Steinringen 41", "grp": "HP", "lat": 59.10951573694394, "lon": 9.68385278295424, "adr": "Steinringen 41, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867697", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMUIMA4"}, {"navn": "Steinringen 36", "grp": "HC", "lat": 59.109805427680605, "lon": 9.682851870786095, "adr": "Steinringen 36, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867915", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMXoMAO"}, {"navn": "Lynglia 18", "grp": "HP", "lat": 59.11088963730679, "lon": 9.676237508899238, "adr": "Lynglia 18, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10867948", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMYLMA4"}, {"navn": "Jønholtsvingen 8", "grp": "HP", "lat": 59.13623787603623, "lon": 9.645578768419346, "adr": "Jønholtsvingen 8, 3921 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10868175", "bol": "H0201", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CMc0MAG"}, {"navn": "Steinringen 26", "grp": "HC", "lat": 59.108820122499395, "lon": 9.68236081758352, "adr": "Steinringen 26, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10868251", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMdEMAW"}, {"navn": "Lynglia 20", "grp": "HP", "lat": 59.11084160675028, "lon": 9.676303269565752, "adr": "Lynglia 20, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10868308", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMe9MAG"}, {"navn": "Steinringen 30", "grp": "HP", "lat": 59.109259033929376, "lon": 9.682579079782986, "adr": "Steinringen 30, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10868385", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMfOMAW"}, {"navn": "Lyngvegen 60", "grp": "HP", "lat": 59.11141491412138, "lon": 9.673890556687292, "adr": "Lyngvegen 60, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10868967", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMomMAG"}, {"navn": "Lynglia 16", "grp": "HP", "lat": 59.11105244348896, "lon": 9.67601632129981, "adr": "Lynglia 16, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10869374", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMvLMAW"}, {"navn": "Krystallvegen 6", "grp": "HP", "lat": 59.10705011313891, "lon": 9.689309869317672, "adr": "Krystallvegen 6, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10869469", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CMwsMAG"}, {"navn": "Steinringen 38", "grp": "HP", "lat": 59.109829794643574, "lon": 9.683341290420524, "adr": "Steinringen 38, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10869642", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CMzfMAG"}, {"navn": "Lyngvegen 115", "grp": "HP", "lat": 59.108667251190475, "lon": 9.675530384963812, "adr": "Lyngvegen 115, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10869679", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN0GMAW"}, {"navn": "Lyngvegen 37", "grp": "HP", "lat": 59.109763678875204, "lon": 9.677106066506921, "adr": "Lyngvegen 37, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10869885", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CN3aMAG"}, {"navn": "Lyngvegen 83", "grp": "HP", "lat": 59.11123394244675, "lon": 9.672420141035559, "adr": "Lyngvegen 83, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10870132", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CN7ZMAW"}, {"navn": "Thorittunet 13", "grp": "HP", "lat": 59.1071375002967, "lon": 9.689765599239326, "adr": "Thorittunet 13, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10870295", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNACMA4"}, {"navn": "Lyngvegen 32", "grp": "HP", "lat": 59.10945375232138, "lon": 9.67626179030292, "adr": "Lyngvegen 32, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10870361", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNBGMA4"}, {"navn": "Flintvegen 3", "grp": "HC", "lat": 59.11022995983909, "lon": 9.682388834982248, "adr": "Flintvegen 3, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10870598", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNF5MAO"}, {"navn": "Flintvegen 17", "grp": "HP", "lat": 59.10987318057733, "lon": 9.685332820745916, "adr": "Flintvegen 17, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10870644", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNFpMAO"}, {"navn": "Lyngvegen 90", "grp": "HC", "lat": 59.11069679648521, "lon": 9.673824075258505, "adr": "Lyngvegen 90, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10870877", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNJaMAO"}, {"navn": "Gråsteinvegen 18", "grp": "HP", "lat": 59.10636382113653, "lon": 9.684656392153235, "adr": "Gråsteinvegen 18, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10871006", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNLfMAO"}, {"navn": "Hegglia 19", "grp": "HC", "lat": 59.1084396630892, "lon": 9.679559456382401, "adr": "Hegglia 19, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10872040", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNcLMAW"}, {"navn": "Grønlivegen 9", "grp": "HP", "lat": 59.13403921864, "lon": 9.647057648243072, "adr": "Grønlivegen 9, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10872172", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNeTMAW"}, {"navn": "Flintvegen 5", "grp": "HC", "lat": 59.110156101196836, "lon": 9.682771534022987, "adr": "Flintvegen 5, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10872618", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNlfMAG"}, {"navn": "Lyngvegen 69", "grp": "HP", "lat": 59.11192057070853, "lon": 9.671630289916704, "adr": "Lyngvegen 69, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10872773", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNoAMAW"}, {"navn": "Steinringen 2", "grp": "HC", "lat": 59.107452343020775, "lon": 9.686279770165727, "adr": "Steinringen 2, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10872902", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNqFMAW"}, {"navn": "Granatvegen 50", "grp": "HC", "lat": 59.10831163162564, "lon": 9.693578266292244, "adr": "Granatvegen 50, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10873028", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNsHMAW"}, {"navn": "Lyngvegen 31", "grp": "HP", "lat": 59.10932102341611, "lon": 9.67760372691572, "adr": "Lyngvegen 31, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10873046", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNsZMAW"}, {"navn": "Lyngvegen 30", "grp": "HC", "lat": 59.10922825495763, "lon": 9.676449427372876, "adr": "Lyngvegen 30, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10873288", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CNwTMAW"}, {"navn": "Gråsteinvegen 7", "grp": "HP", "lat": 59.10657557020019, "lon": 9.687344788192936, "adr": "Gråsteinvegen 7, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10873447", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CNz2MAG"}, {"navn": "Gråsteinvegen 25", "grp": "HP", "lat": 59.10587631663418, "lon": 9.685410197078006, "adr": "Gråsteinvegen 25, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10873934", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CO6tMAG"}, {"navn": "Lyngvegen 47", "grp": "HP", "lat": 59.11046875010236, "lon": 9.67622939422575, "adr": "Lyngvegen 47, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10874681", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COIwMAO"}, {"navn": "Glimmervegen 10", "grp": "HP", "lat": 59.10657830113571, "lon": 9.691901987401064, "adr": "Glimmervegen 10, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10875003", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COO8MAO"}, {"navn": "Bieners Veg 16", "grp": "HP", "lat": 59.134578159960064, "lon": 9.645232991612763, "adr": "Bieners Veg 16, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10875841", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CObeMAG"}, {"navn": "Bieners Veg 3", "grp": "HP", "lat": 59.133636081470655, "lon": 9.646857829926772, "adr": "Bieners Veg 3, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10875879", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COcGMAW"}, {"navn": "Grønlihamna 8", "grp": "HP", "lat": 59.13289222988835, "lon": 9.64654675199616, "adr": "Grønlihamna 8, 3924 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10875936", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COdBMAW"}, {"navn": "Lyngvegen 27", "grp": "HP", "lat": 59.10904301213457, "lon": 9.67752839456024, "adr": "Lyngvegen 27, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10876086", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COfbMAG"}, {"navn": "Gråsteinvegen 30", "grp": "HP", "lat": 59.105432799019304, "lon": 9.686064815276767, "adr": "Gråsteinvegen 30, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10876445", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COlOMAW"}, {"navn": "Opalvegen 6", "grp": "HC", "lat": 59.10698438765104, "lon": 9.693219709476628, "adr": "Opalvegen 6, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10877020", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000COufMAG"}, {"navn": "Granatvegen 53", "grp": "HP", "lat": 59.10793570754546, "lon": 9.695019938277568, "adr": "Granatvegen 53, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10877236", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000COy9MAG"}, {"navn": "Granatvegen 44", "grp": "HC", "lat": 59.10762009090981, "lon": 9.693581759660193, "adr": "Granatvegen 44, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10877637", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CP4cMAG"}, {"navn": "Lynglia 10", "grp": "HP", "lat": 59.111280254735014, "lon": 9.675591049828359, "adr": "Lynglia 10, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10877918", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CP99MAG"}, {"navn": "Gråsteinvegen 16", "grp": "HP", "lat": 59.10661460015042, "lon": 9.685058265307298, "adr": "Gråsteinvegen 16, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10878201", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPDiMAO"}, {"navn": "Granatvegen 41", "grp": "HP", "lat": 59.10752790343866, "lon": 9.692244145538318, "adr": "Granatvegen 41, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10878870", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPOVMA4"}, {"navn": "Steinringen 21", "grp": "HC", "lat": 59.10868101659202, "lon": 9.683196199612928, "adr": "Steinringen 21, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10879499", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPYeMAO"}, {"navn": "Glimmervegen 21", "grp": "HC", "lat": 59.105481116290335, "lon": 9.693870296217463, "adr": "Glimmervegen 21, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10879615", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPaWMAW"}, {"navn": "Gråsteinvegen 1", "grp": "HC", "lat": 59.10648753357464, "lon": 9.688704927579225, "adr": "Gråsteinvegen 1, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10879986", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPgVMAW"}, {"navn": "Lynglia 12", "grp": "HP", "lat": 59.11124474252434, "lon": 9.675684649504548, "adr": "Lynglia 12, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10880652", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CPrFMAW"}, {"navn": "Lynglia 4", "grp": "HP", "lat": 59.111600474256875, "lon": 9.674578917136182, "adr": "Lynglia 4, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10880887", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CPv2MAG"}, {"navn": "Opalvegen 8", "grp": "HP", "lat": 59.106742398151816, "lon": 9.693127522500314, "adr": "Opalvegen 8, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10881896", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQBJMA4"}, {"navn": "Lyngvegen 53", "grp": "HP", "lat": 59.11092119805065, "lon": 9.675574729779552, "adr": "Lyngvegen 53, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10882803", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQT8MAO"}, {"navn": "Steinringen 19", "grp": "HC", "lat": 59.108472549706605, "lon": 9.68355873877978, "adr": "Steinringen 19, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10883368", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQcFMAW"}, {"navn": "Lyngvegen 38", "grp": "HP", "lat": 59.109752270293214, "lon": 9.675848583629547, "adr": "Lyngvegen 38, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10883515", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQecMAG"}, {"navn": "Lagmannsgata 11", "grp": "HP", "lat": 59.13642507326151, "lon": 9.649461840319466, "adr": "Lagmannsgata 11, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10883952", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CQlfMAG"}, {"navn": "Steinringen 27", "grp": "HC", "lat": 59.10892411586521, "lon": 9.683078805828206, "adr": "Steinringen 27, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10883999", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CQmQMAW"}, {"navn": "Opalvegen 3", "grp": "HP", "lat": 59.107276494590224, "lon": 9.692335111281116, "adr": "Opalvegen 3, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10884320", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQrbMAG"}, {"navn": "Lyngvegen 51", "grp": "HP", "lat": 59.11073107577225, "lon": 9.675867849993756, "adr": "Lyngvegen 51, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10884816", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CQzbMAG"}, {"navn": "Lyngvegen 110", "grp": "HP", "lat": 59.10916803342838, "lon": 9.675941854097609, "adr": "Lyngvegen 110, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10884976", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR2BMAW"}, {"navn": "Raschebakken 17 A", "grp": "HC", "lat": 59.13509530459511, "lon": 9.644176758638793, "adr": "Raschebakken 17 A, 3921 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10885118", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR4TMAW"}, {"navn": "Lyngvegen 25", "grp": "HP", "lat": 59.10877297821504, "lon": 9.67764529643634, "adr": "Lyngvegen 25, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10885255", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR6gMAG"}, {"navn": "Gneisvegen 4", "grp": "HP", "lat": 59.10732625261284, "lon": 9.682942257417846, "adr": "Gneisvegen 4, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10885332", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CR7vMAG"}, {"navn": "Steinringen 71", "grp": "HC", "lat": 59.10802271247499, "lon": 9.687111838659781, "adr": "Steinringen 71, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10885778", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRF7MAO"}, {"navn": "Steinringen 20", "grp": "HP", "lat": 59.108377722510276, "lon": 9.682806018318754, "adr": "Steinringen 20, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10886014", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRIvMAO"}, {"navn": "Raschebakken 17 B", "grp": "HP", "lat": 59.135031838647954, "lon": 9.644297889898105, "adr": "Raschebakken 17 B, 3921 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10886322", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRNtMAO"}, {"navn": "Bieners Veg 10", "grp": "HP", "lat": 59.13363999525308, "lon": 9.646071572659388, "adr": "Bieners Veg 10, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10886532", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRRHMA4"}, {"navn": "Steinringen 25", "grp": "HP", "lat": 59.10895755379357, "lon": 9.683550932121577, "adr": "Steinringen 25, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10886704", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRU3MAO"}, {"navn": "Steinringen 22", "grp": "HC", "lat": 59.10842491701487, "lon": 9.682370425487026, "adr": "Steinringen 22, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10886929", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRXgMAO"}, {"navn": "Furukollen 10", "grp": "HP", "lat": 59.13012180706871, "lon": 9.649220211985972, "adr": "Furukollen 10, 3924 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10887099", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000CRaQMAW"}, {"navn": "Krystallvegen 31", "grp": "HC", "lat": 59.106435588564416, "lon": 9.686643576573381, "adr": "Krystallvegen 31, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10887161", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRbQMAW"}, {"navn": "Steinringen 44", "grp": "HP", "lat": 59.10954369041916, "lon": 9.684802389735436, "adr": "Steinringen 44, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10887177", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRbgMAG"}, {"navn": "Lynglia 14", "grp": "HP", "lat": 59.11110083945896, "lon": 9.675949344643849, "adr": "Lynglia 14, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10887840", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRmNMAW"}, {"navn": "Granatvegen 39", "grp": "HP", "lat": 59.107495268490055, "lon": 9.691728394231427, "adr": "Granatvegen 39, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10888121", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000CRquMAG"}, {"navn": "Bieners Veg 18", "grp": "HP", "lat": 59.13458592430439, "lon": 9.645477780710857, "adr": "Bieners Veg 18, 3922 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10888167", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CRreMAG"}, {"navn": "Flintvegen 13", "grp": "Kun mobil", "lat": 59.11018190452732, "lon": 9.684692883206823, "adr": "Flintvegen 13, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10889014", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CS9nMAG"}, {"navn": "Gneisvegen 9", "grp": "Kun mobil", "lat": 59.10769513000369, "lon": 9.684521072937683, "adr": "Gneisvegen 9, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10889113", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSBOMA4"}, {"navn": "Gneisvegen 16", "grp": "Kun mobil", "lat": 59.107694794174776, "lon": 9.682879743389623, "adr": "Gneisvegen 16, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10889434", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSGZMA4"}, {"navn": "Lyngvegen 85", "grp": "Kun mobil", "lat": 59.111007636317595, "lon": 9.672764959994526, "adr": "Lyngvegen 85, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10889565", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSIgMAO"}, {"navn": "Lyngvegen 96", "grp": "Kun mobil", "lat": 59.11018313080229, "lon": 9.67416323753008, "adr": "Lyngvegen 96, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10889645", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSJyMAO"}, {"navn": "Steinringen 43", "grp": "Kun mobil", "lat": 59.109332316422524, "lon": 9.68401239703671, "adr": "Steinringen 43, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10889926", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSOVMA4"}, {"navn": "Steinringen 40", "grp": "Kun mobil", "lat": 59.10988128326744, "lon": 9.683796326926913, "adr": "Steinringen 40, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10890377", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSVmMAO"}, {"navn": "Steinringen 49", "grp": "Kun mobil", "lat": 59.10896101308982, "lon": 9.684598692541606, "adr": "Steinringen 49, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10890592", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSaqMAG"}, {"navn": "Hegglia 2", "grp": "Kun mobil", "lat": 59.109756593557115, "lon": 9.680179224926803, "adr": "Hegglia 2, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10890727", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSd1MAG"}, {"navn": "Lyngvegen 35", "grp": "Kun mobil", "lat": 59.10956466438552, "lon": 9.677381531203848, "adr": "Lyngvegen 35, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10890908", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSfwMAG"}, {"navn": "Lyngvegen 61", "grp": "Kun mobil", "lat": 59.1116853071077, "lon": 9.673703771947302, "adr": "Lyngvegen 61, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10891333", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CSq0MAG"}, {"navn": "Gneisvegen 10", "grp": "Kun mobil", "lat": 59.10727454960663, "lon": 9.684233318570115, "adr": "Gneisvegen 10, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10891542", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CStNMAW"}, {"navn": "Lyngvegen 94", "grp": "Kun mobil", "lat": 59.1104084435565, "lon": 9.674010501179865, "adr": "Lyngvegen 94, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10892101", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT2OMAW"}, {"navn": "Gneisvegen 1", "grp": "Kun mobil", "lat": 59.10716117322774, "lon": 9.685296156865796, "adr": "Gneisvegen 1, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10892217", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT4GMAW"}, {"navn": "Steinringen 79", "grp": "Kun mobil", "lat": 59.10787376334565, "lon": 9.688104134079945, "adr": "Steinringen 79, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10892456", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CT87MAG"}, {"navn": "Lyngvegen 67", "grp": "Kun mobil", "lat": 59.1117031561651, "lon": 9.671992757841672, "adr": "Lyngvegen 67, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10892665", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTBUMA4"}, {"navn": "Glimmervegen 3 A", "grp": "Kun mobil", "lat": 59.10756212581716, "lon": 9.690978925412487, "adr": "Glimmervegen 3 A, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10892802", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTDhMAO"}, {"navn": "Lyngvegen 89", "grp": "Kun mobil", "lat": 59.110566446053674, "lon": 9.67298332562562, "adr": "Lyngvegen 89, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10893102", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTIXMA4"}, {"navn": "Safirvegen 31", "grp": "Kun mobil", "lat": 59.109007999566145, "lon": 9.687603016491856, "adr": "Safirvegen 31, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10893290", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTLZMA4"}, {"navn": "Lyngvegen 50", "grp": "Kun mobil", "lat": 59.11069407646169, "lon": 9.67434789358739, "adr": "Lyngvegen 50, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10893341", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTMOMA4"}, {"navn": "Flintvegen 15", "grp": "Kun mobil", "lat": 59.1100009258585, "lon": 9.684951205206904, "adr": "Flintvegen 15, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10893665", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTRcMAO"}, {"navn": "Lyngvegen 95", "grp": "Kun mobil", "lat": 59.11011591332042, "lon": 9.673271350900015, "adr": "Lyngvegen 95, 3930 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10893682", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTRtMAO"}, {"navn": "Steinringen 1", "grp": "Kun mobil", "lat": 59.10769027322153, "lon": 9.687140108541668, "adr": "Steinringen 1, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10894590", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTgXMAW"}, {"navn": "Opalvegen 14", "grp": "Kun mobil", "lat": 59.10601493790271, "lon": 9.693130300044295, "adr": "Opalvegen 14, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10894947", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTmIMAW"}, {"navn": "Steinringen 69", "grp": "Kun mobil", "lat": 59.10811528242214, "lon": 9.686589857929926, "adr": "Steinringen 69, 3931 Porsgrunn", "area": "Porsgrunn", "bnr": "V-10895245", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000CTr6MAG"}];
+var AREAS = ["Porsgrunn"];
+var STORE_KEY = "dorkart_Adrian_22.09.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Adrian";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+var all = bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
