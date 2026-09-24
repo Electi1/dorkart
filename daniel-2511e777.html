@@ -596,7 +596,7 @@ if(ROUNDS.length && showRounds){
 var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
 if(!seen) setTimeout(function(){ toast("Runder: ta én runde om gangen. Tapp et nummer for å zoome inn."); }, 1500);
 }
-var all = bounds(function(){ return true; });
+var all = (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
 if(all) fitB(all);
 refresh();
 layoutStacks(); setTimeout(layoutStacks, 300);
