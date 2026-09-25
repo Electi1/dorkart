@@ -161,7 +161,8 @@ opacity:0; pointer-events:none; transition:opacity .2s;
 .togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
 #roundsToggle[hidden]{display:none!important;}
 .rbadge-icon{background:transparent!important; border:0!important;}
-.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
 .badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
 </style>
 </head>
@@ -177,7 +178,7 @@ opacity:0; pointer-events:none; transition:opacity .2s;
 <div class="date">24.09.26</div>
 </div>
 </div>
-<div class="remaining"><b id="remN">0</b> igjen</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
 </div>
 <div class="controls">
 <div class="areatabs" id="areatabs"></div>
@@ -497,7 +498,8 @@ document.getElementById("sAddr").textContent = d.navn;
 document.getElementById("sSub").textContent = d.adr;
 var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
 var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
-if(d.r && typeof ROUNDS!=="undefined" && ROUNDS[d.r-1]) badges += '<span class="badge rnd" style="color:'+ROUNDS[d.r-1].c+'">Runde '+d.r+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
 if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
 document.getElementById("sBadges").innerHTML = badges;
 if(d.sfid){
@@ -566,37 +568,56 @@ if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne s
 else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
 }, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
 });
-// Runder: forslag til dagsrunder (min. antall HP/HC/HC Vula per runde, kun mobil i tillegg)
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
 var ROUNDS = [{"n":1,"c":"#000089","s":29,"m":3,"h":[[[58.500925,8.862554],[58.500984,8.862387],[58.501072,8.862275],[58.501176,8.862235],[58.502196,8.862683],[58.502601,8.86299],[58.503166,8.863769],[58.503224,8.863937],[58.503245,8.864134],[58.503208,8.865413],[58.502752,8.868091],[58.502693,8.868258],[58.502605,8.86837],[58.501825,8.869248],[58.501721,8.869288],[58.501617,8.869248],[58.501529,8.869136],[58.50147,8.868969],[58.501137,8.867584],[58.501172,8.867472],[58.50112,8.867036],[58.500972,8.866646],[58.500888,8.866553],[58.500632,8.865493],[58.500612,8.865295],[58.500668,8.864751],[58.500716,8.864705],[58.500829,8.864353],[58.500989,8.864059],[58.500942,8.863615],[58.50087,8.863512],[58.500848,8.863408],[58.500855,8.863004]]],"b":[[58.503245,8.864134]],"g":["Maris Vei","Nesgata","Kveheiveien"]},{"n":2,"c":"#7b2cbf","s":25,"m":4,"h":[[[58.498585,8.86456],[58.498262,8.864508],[58.498174,8.864397],[58.498115,8.864229],[58.498095,8.864032],[58.498115,8.863834],[58.498292,8.863291],[58.49848,8.86349],[58.498831,8.863038],[58.498968,8.862587],[58.499079,8.862491],[58.498995,8.862032],[58.499193,8.861727],[58.499079,8.861372],[58.499225,8.86087],[58.499737,8.8608],[58.499841,8.860839],[58.499929,8.860951],[58.500855,8.86305],[58.500848,8.863408],[58.50087,8.863512],[58.500942,8.863615],[58.50099,8.864032],[58.500767,8.864533],[58.50046,8.864668],[58.499851,8.864633],[58.499724,8.864312],[58.499694,8.863561],[58.499484,8.863499],[58.499237,8.863917],[58.499128,8.863934],[58.498916,8.86358],[58.498615,8.863782],[58.498651,8.864429]]],"b":[[58.50099,8.864032]],"g":["Nesgata","Bergitte Ruuds Vei","Prestehaugen"]},{"n":3,"c":"#0b7285","s":25,"m":5,"h":[[[58.500026,8.864788],[58.50056,8.866967],[58.500843,8.868879],[58.500822,8.869076],[58.500763,8.869244],[58.500675,8.869355],[58.500572,8.869395],[58.49859,8.868652],[58.497926,8.867544],[58.497867,8.867377],[58.497791,8.866057],[58.49781,8.865882],[58.497907,8.865644],[58.497992,8.865571],[58.498054,8.864791],[58.498163,8.864582],[58.49849,8.864746],[58.498651,8.864429],[58.498615,8.863782],[58.498916,8.86358],[58.499128,8.863934],[58.499237,8.863917],[58.499484,8.863499],[58.499694,8.863561],[58.499724,8.864312],[58.49988,8.864708]]],"b":[[58.500843,8.868879]],"g":["Husefjellveien","Formannsgata","Direktør Hammonds Vei"]},{"n":4,"c":"#a61e4d","s":23,"m":3,"h":[[[58.497909,8.867651],[58.497866,8.868109],[58.497808,8.868277],[58.49772,8.868389],[58.497616,8.868428],[58.497512,8.868389],[58.497424,8.868277],[58.497141,8.867679],[58.496966,8.867205],[58.496409,8.864785],[58.496189,8.862838],[58.49621,8.862641],[58.496269,8.862474],[58.496357,8.862362],[58.496461,8.862322],[58.496777,8.862468],[58.496851,8.862662],[58.49714,8.862654],[58.497343,8.86302],[58.497943,8.863254],[58.498,8.86386],[58.497918,8.864206],[58.497926,8.864289],[58.49806,8.864513],[58.498069,8.864611],[58.497992,8.865571],[58.497907,8.865644],[58.497662,8.866241],[58.49775,8.866604],[58.49783,8.867454]]],"b":[[58.498069,8.864611]],"g":["Nils Hjelmtveits Vei","Hans Bakkes Vei","Andres Haugmoens Vei"]},{"n":5,"c":"#343a40","s":24,"m":4,"h":[[[58.496384,8.862289],[58.495998,8.861934],[58.495939,8.861767],[58.495919,8.86157],[58.495939,8.861372],[58.496186,8.860775],[58.496274,8.860664],[58.497342,8.86011],[58.498676,8.859655],[58.499015,8.859847],[58.499103,8.859959],[58.499162,8.860126],[58.499232,8.860831],[58.499079,8.861372],[58.499193,8.861727],[58.498995,8.862032],[58.499079,8.862491],[58.498968,8.862587],[58.498831,8.863038],[58.49848,8.86349],[58.498199,8.863194],[58.498128,8.863323],[58.497343,8.86302],[58.49714,8.862654],[58.496851,8.862662],[58.496692,8.862243]]],"b":[[58.499232,8.860831]],"g":["Trygve Næss Vei","Dr. Samuelsens Vei","Nedre Lykka"]}];
 var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
-var roundLayer = L.layerGroup();
-var showRounds = true;
-try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; }catch(e){}
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
 function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
 function applyRounds(){
 if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
 else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
 }
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
 if(ROUNDS.length){
 map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
 ROUNDS.forEach(function(r){
-r.h.forEach(function(poly){ L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); });
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
 r.b.forEach(function(pt){
 var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
-bm.on("click", function(){ var bb = roundBounds(r.n); if(bb) fitB(bb); toast("Runde "+r.n+": "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")); });
-bm.addTo(roundLayer);
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
 });
 });
 document.getElementById("roundsToggle").hidden = false;
 var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
-rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); });
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
 }
 applyRounds();
 if(ROUNDS.length && showRounds){
 var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
-if(!seen) setTimeout(function(){ toast("Runder: ta én runde om gangen. Tapp et nummer for å zoome inn."); }, 1500);
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
 }
-var all = (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
 if(all) fitB(all);
 refresh();
 layoutStacks(); setTimeout(layoutStacks, 300);
