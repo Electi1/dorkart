@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salgsstatistikk Elliot 30.09.26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap">
+<style>
+:root{
+  --hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+  --electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+  --bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+  --neg:#c2453c; --wait:#d1811f;
+  --shadow:0 6px 24px rgba(10,20,40,.18);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0; font-family:var(--font); color:var(--ink); background:#f3f5f8;}
+body{padding-bottom:calc(env(safe-area-inset-bottom,0) + 28px);}
+
+.brandbar{
+  background:var(--electi); color:#fff;
+  padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+
+.subbar{
+  background:rgba(255,255,255,.96); border-bottom:1px solid var(--line);
+  padding:9px 13px; font-size:12.5px; color:var(--muted); font-weight:600;
+}
+
+.wrap{max-width:760px; margin:0 auto; padding:16px 13px 0;}
+
+.kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:18px;}
+.kpi{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:13px 12px; min-width:0;}
+.kpi .n{font-family:var(--font-display); font-weight:800; font-size:23px; line-height:1.1; color:var(--electi); white-space:nowrap;}
+.kpi .l{font-size:10.5px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); margin-top:4px;}
+
+h2{font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.2px; color:var(--ink); margin:0 0 9px 2px;}
+.card{background:var(--bg); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:20px;}
+
+table{width:100%; border-collapse:collapse;}
+th{font-size:10.5px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--muted);
+   text-align:left; padding:10px 14px; background:#f7f9fc; border-bottom:1px solid var(--line);}
+th.r, td.r{text-align:right;}
+td{padding:11px 14px; border-bottom:1px solid var(--line); font-size:14.5px; font-variant-numeric:tabular-nums;}
+tbody tr:last-child td{border-bottom:0;}
+tfoot td{background:var(--electi-tint); font-weight:800; color:var(--electi); border-top:2px solid var(--electi); border-bottom:0;}
+.st{display:flex; align-items:center; gap:9px; font-weight:600;}
+.dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.bar{display:block; height:6px; border-radius:3px; background:#eef1f6; margin-top:8px; overflow:hidden;}
+.bar i{display:block; height:100%; border-radius:3px;}
+.zero td{color:var(--muted);}
+.calc{color:var(--muted); font-size:13px;}
+.res{font-family:var(--font-display); font-weight:800; font-size:15.5px; color:var(--electi);}
+
+.note{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:13px 14px;
+      font-size:12.5px; line-height:1.6; color:var(--muted);}
+.note b{color:var(--ink);}
+.foot{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      font-size:11.5px; color:var(--muted); padding:14px 3px 0;}
+
+@media (max-width:560px){
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  td, th{padding-left:12px; padding-right:12px;}
+  .calc{font-size:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="brandbar">
+  <div class="brand">
+    <img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+    <div class="vr"></div>
+    <div class="brandtext">
+      <div class="title">Elliot</div>
+      <div class="date">30.09.26</div>
+    </div>
+  </div>
+  <div class="remaining"><b>98</b> adresser</div>
+</div>
+
+<div class="subbar">Salgsstatistikk · FTTH Vestfold Larvik C 2_nov_26</div>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">98</div><div class="l">Adresser</div></div>
+    <div class="kpi"><div class="n">8,2&nbsp;%</div><div class="l">Takerate</div></div>
+    <div class="kpi"><div class="n">25,0&nbsp;%</div><div class="l">Hitrate</div></div>
+    <div class="kpi"><div class="n">32,7&nbsp;%</div><div class="l">Contactrate</div></div>
+  </div>
+
+  <h2>Registreringer per status</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Status</th><th class="r">Antall</th><th class="r">Andel</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="st"><span class="dot" style="background:var(--mobil)"></span>Ikke besøkt</span>
+              <span class="bar"><i style="width:54.1%; background:var(--mobil)"></i></span></td>
+          <td class="r">53</td><td class="r">54,1&nbsp;%</td>
+        </tr>
+        <tr>
+          <td><span class="st"><span class="dot" style="background:var(--hc)"></span>Ikke hjemme</span>
+              <span class="bar"><i style="width:13.3%; background:var(--hc)"></i></span></td>
+          <td class="r">13</td><td class="r">13,3&nbsp;%</td>
+        </tr>
+        <tr>
+          <td><span class="st"><span class="dot" style="background:var(--neg)"></span>Nei</span>
+              <span class="bar"><i style="width:15.3%; background:var(--neg)"></i></span></td>
+          <td class="r">15</td><td class="r">15,3&nbsp;%</td>
+        </tr>
+        <tr>
+          <td><span class="st"><span class="dot" style="background:var(--wait)"></span>Tenker (fått tilbud)</span>
+              <span class="bar"><i style="width:9.2%; background:var(--wait)"></i></span></td>
+          <td class="r">9</td><td class="r">9,2&nbsp;%</td>
+        </tr>
+        <tr>
+          <td><span class="st"><span class="dot" style="background:var(--hp)"></span>Ja</span>
+              <span class="bar"><i style="width:8.2%; background:var(--hp)"></i></span></td>
+          <td class="r">8</td><td class="r">8,2&nbsp;%</td>
+        </tr>
+        <tr class="zero">
+          <td><span class="st"><span class="dot" style="background:var(--line)"></span>Ikke salgbar</span>
+              <span class="bar"></span></td>
+          <td class="r">0</td><td class="r">0,0&nbsp;%</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>Sum</td><td class="r">98</td><td class="r">100,0&nbsp;%</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <h2>Nøkkeltall</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Nøkkeltall</th><th>Utregning</th><th class="r">Resultat</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Takerate</strong></td><td class="calc">8 Ja / 98 adresser</td><td class="r res">8,2&nbsp;%</td></tr>
+        <tr><td><strong>Hitrate</strong></td><td class="calc">8 Ja / 32 (Ja + Nei + Tenker)</td><td class="r res">25,0&nbsp;%</td></tr>
+        <tr><td><strong>Contactrate</strong></td><td class="calc">32 (Ja + Nei + Tenker + Ikke salgbar) / 98</td><td class="r res">32,7&nbsp;%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Merknader.</b> Tallene er hentet direkte fra Besøk-lista på salgsrunden i Salesforce 30.09.2026,
+    filtrert på selger Elliot Stange. Summen av statusene er 98 og stemmer med antall elementer i lista.
+    Ingen adresser har status Ikke salgbar, Duplikat, Solgt, På vent eller Utgått, så telleren i
+    contactrate består her kun av Ja, Nei og Tenker. 53 av 98 adresser (54,1 %) er fortsatt ikke besøkt,
+    så ratene bygger på et begrenset grunnlag og vil kunne endre seg vesentlig når resten av runden
+    gjennomføres.
+  </div>
+
+  <div class="foot">
+    <span>Electi AS</span>
+    <span>Generert 30.09.2026</span>
+  </div>
+
+</div>
+</body>
+</html>
