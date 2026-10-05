@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Nikolai 05.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Nikolai</div>
+<div class="date">05.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Kjerringvikveien 435", "grp": "HP", "lat": 59.038914778933524, "lon": 10.226269892465956, "adr": "Kjerringvikveien 435, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10899043", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DC4yMAG", "r": 1}, {"navn": "Trekullveien 15", "grp": "HP", "lat": 59.04505296818567, "lon": 10.22225471830669, "adr": "Trekullveien 15, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10899305", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC9CMAW", "r": 2}, {"navn": "Kjerringvikveien 318", "grp": "HP", "lat": 59.04838540054252, "lon": 10.222510774644014, "adr": "Kjerringvikveien 318, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10900160", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCMzMAO", "r": 3}, {"navn": "Seilbåtfjellet 6", "grp": "HP", "lat": 59.04543162809911, "lon": 10.225717675193398, "adr": "Seilbåtfjellet 6, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10902071", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DCroMAG", "r": 3}, {"navn": "Solåsen 2 A", "grp": "HP", "lat": 59.05603703335596, "lon": 10.216849187229956, "adr": "Solåsen 2 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10904734", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDYlMAO", "r": 4}, {"navn": "Fjellvikveien 30", "grp": "HP", "lat": 59.04373922586089, "lon": 10.22136970230004, "adr": "Fjellvikveien 30, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10905420", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDjpMAG", "r": 2}, {"navn": "Kjerringvikveien 284", "grp": "HP", "lat": 59.050797595831575, "lon": 10.22034408363809, "adr": "Kjerringvikveien 284, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10907274", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEDjMAO", "r": 3}, {"navn": "Berganåsen 73", "grp": "HP", "lat": 59.05400328346282, "lon": 10.200505298955967, "adr": "Berganåsen 73, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10907309", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEEIMA4", "r": 5}, {"navn": "Kjerringvikveien 235", "grp": "HP", "lat": 59.053370213818994, "lon": 10.214284400245969, "adr": "Kjerringvikveien 235, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10907444", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEGTMA4", "r": 4}, {"navn": "Klepakerveien 164", "grp": "HP", "lat": 59.06054449167213, "lon": 10.20322024770671, "adr": "Klepakerveien 164, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10907447", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEGWMA4", "r": 5}, {"navn": "Kjerringvikveien 421", "grp": "HP", "lat": 59.0399488264019, "lon": 10.22614638703998, "adr": "Kjerringvikveien 421, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10907895", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DENkMAO", "r": 1}, {"navn": "Trekullveien 18", "grp": "HP", "lat": 59.04561540420015, "lon": 10.222996319462817, "adr": "Trekullveien 18, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10908462", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DEWtMAO", "r": 3}, {"navn": "Trekullveien 14", "grp": "HP", "lat": 59.04522461457042, "lon": 10.223862673321735, "adr": "Trekullveien 14, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10909385", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DElmMAG", "r": 2}, {"navn": "Kjerringvikveien 410 A", "grp": "HP", "lat": 59.04103313639271, "lon": 10.22621637647638, "adr": "Kjerringvikveien 410 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10909414", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEmFMAW", "r": 1}, {"navn": "Kjerringvikveien 265", "grp": "HP", "lat": 59.05210018978333, "lon": 10.219074014394188, "adr": "Kjerringvikveien 265, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10909903", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEu8MAG", "r": 4}, {"navn": "Kjerringvikveien 363", "grp": "HP", "lat": 59.044677675066914, "lon": 10.22471473681142, "adr": "Kjerringvikveien 363, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10909930", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEuZMAW", "r": 2}, {"navn": "Kjerringvikveien 393", "grp": "HP", "lat": 59.043056674789916, "lon": 10.225267094008236, "adr": "Kjerringvikveien 393, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10911461", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DFJGMA4", "r": 2}, {"navn": "Kjerringvikveien 410 B", "grp": "HP", "lat": 59.041002197953304, "lon": 10.226068876458323, "adr": "Kjerringvikveien 410 B, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10911675", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFMiMAO", "r": 1}, {"navn": "Kjerringvikveien 306", "grp": "HP", "lat": 59.04939828448609, "lon": 10.221868626740964, "adr": "Kjerringvikveien 306, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10911695", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFN2MAO", "r": 3}, {"navn": "Svinevika 2", "grp": "HP", "lat": 59.05109871854956, "lon": 10.222511278297208, "adr": "Svinevika 2, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10911927", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFQmMAO", "r": 3}, {"navn": "Kjerringvikveien 147", "grp": "HP", "lat": 59.05780974790992, "lon": 10.212367851072859, "adr": "Kjerringvikveien 147, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10912299", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFWmMAO", "r": 4}, {"navn": "Kjerringvikveien 295", "grp": "HP", "lat": 59.05067729917718, "lon": 10.223007101473804, "adr": "Kjerringvikveien 295, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10912542", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFahMAG", "r": 3}, {"navn": "Kjerringvikveien 365 B", "grp": "HP", "lat": 59.044375696678635, "lon": 10.224355391847364, "adr": "Kjerringvikveien 365 B, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10913772", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFuXMAW", "r": 2}, {"navn": "Seilbåtfjellet 22", "grp": "HP", "lat": 59.04603102961212, "lon": 10.227865588501789, "adr": "Seilbåtfjellet 22, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10913952", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFxRMAW", "r": 3}, {"navn": "Kjerringvikveien 408", "grp": "HP", "lat": 59.0412393945342, "lon": 10.226439835920822, "adr": "Kjerringvikveien 408, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10914160", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DG0nMAG", "r": 1}, {"navn": "Nygårdveien 1 A", "grp": "HP", "lat": 59.04407005815942, "lon": 10.218186544719119, "adr": "Nygårdveien 1 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10914195", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DG1MMAW", "r": 2}, {"navn": "Klepakerveien 174", "grp": "HP", "lat": 59.060128685414675, "lon": 10.203990412618204, "adr": "Klepakerveien 174, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10914823", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGBUMA4", "r": 5}, {"navn": "Kjerringvik 67", "grp": "HP", "lat": 59.0389697018165, "lon": 10.224830610137298, "adr": "Kjerringvik 67, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10916423", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGbIMAW", "r": 1}, {"navn": "Trekullveien 18", "grp": "HP", "lat": 59.04561540420015, "lon": 10.222996319462817, "adr": "Trekullveien 18, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10916480", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DGcDMAW", "r": 3}, {"navn": "Kjerringvikveien 360", "grp": "HP", "lat": 59.045093979226785, "lon": 10.224380940727446, "adr": "Kjerringvikveien 360, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10916610", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DGeJMAW", "r": 2}, {"navn": "Kjerringvikveien 393", "grp": "HP", "lat": 59.043056674789916, "lon": 10.225267094008236, "adr": "Kjerringvikveien 393, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10916753", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CSg000000DGgcMAG", "r": 2}, {"navn": "Klepakerveien 172", "grp": "HP", "lat": 59.06019531014619, "lon": 10.204456595119833, "adr": "Klepakerveien 172, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10917281", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGp8MAG", "r": 5}, {"navn": "Kjerringvikveien 395", "grp": "HP", "lat": 59.04326741565351, "lon": 10.225586582775271, "adr": "Kjerringvikveien 395, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10917647", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGv2MAG", "r": 1}, {"navn": "Kjerringvik 69", "grp": "HP", "lat": 59.03923742044578, "lon": 10.2251085168608, "adr": "Kjerringvik 69, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10917707", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGw0MAG", "r": 1}, {"navn": "Kjerringvikveien 431", "grp": "HP", "lat": 59.03916793975216, "lon": 10.226472353508536, "adr": "Kjerringvikveien 431, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10918089", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DH2AMAW", "r": 1}, {"navn": "Trekullveien 12", "grp": "HP", "lat": 59.04497277150403, "lon": 10.223900780945893, "adr": "Trekullveien 12, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10918467", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DH8GMAW", "r": 2}, {"navn": "Fjellvikveien 9", "grp": "HP", "lat": 59.04206825838213, "lon": 10.223412339860744, "adr": "Fjellvikveien 9, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10919050", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHHfMAO", "r": 1}, {"navn": "Kjerringvikveien 345", "grp": "HP", "lat": 59.046246906565095, "lon": 10.224603234606036, "adr": "Kjerringvikveien 345, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10919519", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHPEMA4", "r": 3}, {"navn": "Kjerringvik 66", "grp": "HP", "lat": 59.03978531745804, "lon": 10.225201209561005, "adr": "Kjerringvik 66, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10920100", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHYbMAO", "r": 1}, {"navn": "Fjellvikveien 40", "grp": "HP", "lat": 59.04360426618033, "lon": 10.220441142826889, "adr": "Fjellvikveien 40, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10920289", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHbeMAG", "r": 2}, {"navn": "Seilbåtfjellet 1", "grp": "HP", "lat": 59.045427426183984, "lon": 10.22521203877714, "adr": "Seilbåtfjellet 1, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10921186", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHq7MAG", "r": 3}, {"navn": "Svinevika 16", "grp": "HP", "lat": 59.05113972345178, "lon": 10.22330595761192, "adr": "Svinevika 16, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10921847", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI0mMAG", "r": 3}, {"navn": "Kjerringvikveien 412", "grp": "HP", "lat": 59.04093867191623, "lon": 10.226328038698536, "adr": "Kjerringvikveien 412, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10922858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIH5MAO", "r": 1}, {"navn": "Fjellvikveien 20", "grp": "HC Vula", "lat": 59.043101679467256, "lon": 10.221735757476406, "adr": "Fjellvikveien 20, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10928833", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKhzMAG", "r": 2}, {"navn": "Holtanveien 8", "grp": "HC Vula", "lat": 59.053811676406994, "lon": 10.210199317360782, "adr": "Holtanveien 8, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10928889", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKitMAG", "r": 4}, {"navn": "Berganåsen 107", "grp": "HC Vula", "lat": 59.054273820739276, "lon": 10.194649611855457, "adr": "Berganåsen 107, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10928957", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKjzMAG", "r": 5}, {"navn": "Kjerringvikveien 218", "grp": "HC Vula", "lat": 59.053300914831965, "lon": 10.21151509502963, "adr": "Kjerringvikveien 218, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10929051", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKlVMAW", "r": 4}, {"navn": "Kjerringvikveien 107", "grp": "HC Vula", "lat": 59.06301695486383, "lon": 10.208065954883528, "adr": "Kjerringvikveien 107, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10929273", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKp5MAG", "r": 5}, {"navn": "Tjøllingveien 972", "grp": "HC Vula", "lat": 59.06739036914652, "lon": 10.191916882776734, "adr": "Tjøllingveien 972, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10929721", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKwJMAW", "r": 5}, {"navn": "Berganåsen 67", "grp": "HC Vula", "lat": 59.05462777852327, "lon": 10.200765949046048, "adr": "Berganåsen 67, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10930201", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL43MAG", "r": 5}, {"navn": "Klepakerveien 176", "grp": "HC Vula", "lat": 59.06106561413346, "lon": 10.205906556448365, "adr": "Klepakerveien 176, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10930393", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL79MAG", "r": 5}, {"navn": "Kjerringvikveien 130", "grp": "HC Vula", "lat": 59.06051070036306, "lon": 10.2068566658671, "adr": "Kjerringvikveien 130, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10931448", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLOAMA4", "r": 5}, {"navn": "Kjerringvikveien 178", "grp": "HC Vula", "lat": 59.05654692790191, "lon": 10.209099405196474, "adr": "Kjerringvikveien 178, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10931676", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLRqMAO", "r": 4}, {"navn": "Kjerringvikveien 427", "grp": "HC Vula", "lat": 59.03958050880478, "lon": 10.2261541829719, "adr": "Kjerringvikveien 427, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10931881", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLV9MAO", "r": 1}, {"navn": "Kjerringvikveien 194", "grp": "HC Vula", "lat": 59.05512936231518, "lon": 10.20874447104919, "adr": "Kjerringvikveien 194, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10932203", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLaLMAW", "r": 4}, {"navn": "Holtanveien 9", "grp": "HC Vula", "lat": 59.05298878100696, "lon": 10.210123303907192, "adr": "Holtanveien 9, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10932413", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLdjMAG", "r": 4}, {"navn": "Kjerringvikveien 227", "grp": "HC Vula", "lat": 59.053596487038874, "lon": 10.21361940641216, "adr": "Kjerringvikveien 227, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10932483", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLerMAG", "r": 4}, {"navn": "Holtanveien 7", "grp": "HC Vula", "lat": 59.052869478909756, "lon": 10.210588091176982, "adr": "Holtanveien 7, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10932502", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLfAMAW", "r": 4}, {"navn": "Kjerringvikveien 171", "grp": "HC Vula", "lat": 59.057086982030285, "lon": 10.210033797196209, "adr": "Kjerringvikveien 171, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10932883", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLlJMAW", "r": 4}, {"navn": "Kjerringvikveien 365 A", "grp": "HC Vula", "lat": 59.04444653753317, "lon": 10.22446249203157, "adr": "Kjerringvikveien 365 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10933178", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLq4MAG", "r": 2}, {"navn": "Kjerringvikveien 37 B", "grp": "HC Vula", "lat": 59.06859242561536, "lon": 10.202001782843627, "adr": "Kjerringvikveien 37 B, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10933198", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLqOMAW", "r": 5}, {"navn": "Fjellvikveien 18", "grp": "HC", "lat": 59.04323575014775, "lon": 10.22209084785693, "adr": "Fjellvikveien 18, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10899024", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC4fMAG", "r": 2}, {"navn": "Trekullveien 19", "grp": "HC", "lat": 59.04553288714867, "lon": 10.221555361216659, "adr": "Trekullveien 19, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10899944", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCJVMA4", "r": 3}, {"navn": "Kjerringvikveien 145", "grp": "HC", "lat": 59.05862602725851, "lon": 10.21391888676818, "adr": "Kjerringvikveien 145, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10900337", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCPqMAO", "r": 4}, {"navn": "Kjerringvikveien 313", "grp": "HC", "lat": 59.0490083423679, "lon": 10.223122116963976, "adr": "Kjerringvikveien 313, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10903284", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDBNMA4", "r": 3}, {"navn": "Fjellvikveien 36", "grp": "HC", "lat": 59.043916089846604, "lon": 10.220996007975458, "adr": "Fjellvikveien 36, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10904149", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDPKMA4", "r": 2}, {"navn": "Trekullveien 16", "grp": "HC", "lat": 59.0453914908377, "lon": 10.223310828950142, "adr": "Trekullveien 16, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10905006", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDd9MAG", "r": 3}, {"navn": "Seilbåtfjellet 6", "grp": "HC", "lat": 59.04543162809911, "lon": 10.225717675193398, "adr": "Seilbåtfjellet 6, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10905313", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDi6MAG", "r": 3}, {"navn": "Kjerringvikveien 385 A", "grp": "HC", "lat": 59.04391827578549, "lon": 10.225238500645847, "adr": "Kjerringvikveien 385 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10905397", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDjSMAW", "r": 2}, {"navn": "Berganåsen 29", "grp": "HC", "lat": 59.05768069283902, "lon": 10.202499343941499, "adr": "Berganåsen 29, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10906487", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE12MAG", "r": 5}, {"navn": "Fjellvikveien 25", "grp": "HC", "lat": 59.04236468809818, "lon": 10.222551423428254, "adr": "Fjellvikveien 25, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10907446", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEGVMA4", "r": 1}, {"navn": "Kjerringvikveien 393", "grp": "HC", "lat": 59.043056674789916, "lon": 10.225267094008236, "adr": "Kjerringvikveien 393, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10909076", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEgnMAG", "r": 1}, {"navn": "Fjellvikveien 7", "grp": "HC", "lat": 59.042198608037175, "lon": 10.223209567876248, "adr": "Fjellvikveien 7, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10910011", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEvsMAG", "r": 1}, {"navn": "Kjerringvikveien 367", "grp": "HC", "lat": 59.044160211897236, "lon": 10.224347727428688, "adr": "Kjerringvikveien 367, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10911241", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFFiMAO", "r": 2}, {"navn": "Fjellvikveien 1 D", "grp": "HC", "lat": 59.042916637724886, "lon": 10.22383290669183, "adr": "Fjellvikveien 1 D, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10912141", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFUEMA4", "r": 1}, {"navn": "Fjellvikveien 1 A", "grp": "HC", "lat": 59.043057497665785, "lon": 10.224134213829572, "adr": "Fjellvikveien 1 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10916131", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGWaMAO", "r": 1}, {"navn": "Kjerringvikveien 113", "grp": "HC", "lat": 59.062297291744926, "lon": 10.207899423628369, "adr": "Kjerringvikveien 113, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10919681", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHRqMAO", "r": 5}, {"navn": "Trekullveien 7", "grp": "HC", "lat": 59.04478264741222, "lon": 10.221394523957978, "adr": "Trekullveien 7, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10919756", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHT3MAO", "r": 2}, {"navn": "Kjerringvikveien 389", "grp": "HC", "lat": 59.04379500724163, "lon": 10.225831953608651, "adr": "Kjerringvikveien 389, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10920799", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHjsMAG", "r": 2}, {"navn": "Fjellvikveien 1 C", "grp": "HC", "lat": 59.04296070793898, "lon": 10.223921620071295, "adr": "Fjellvikveien 1 C, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10922932", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIIHMA4", "r": 1}, {"navn": "Seilbåtfjellet 4", "grp": "Kun mobil", "lat": 59.04515708224379, "lon": 10.225306998648447, "adr": "Seilbåtfjellet 4, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10923306", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIP5MAO", "r": 3}, {"navn": "Kjerringvikveien 346", "grp": "Kun mobil", "lat": 59.04579874713876, "lon": 10.223935379525495, "adr": "Kjerringvikveien 346, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10923342", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIPfMAO", "r": 3}, {"navn": "Kjerringvikveien 39", "grp": "Kun mobil", "lat": 59.06785974880764, "lon": 10.20352850184502, "adr": "Kjerringvikveien 39, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10923388", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIQPMA4", "r": 5}, {"navn": "Kjerringvikveien 366", "grp": "Kun mobil", "lat": 59.04469159080619, "lon": 10.224192325830794, "adr": "Kjerringvikveien 366, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10924001", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIaIMAW", "r": 2}, {"navn": "Nygårdveien 2", "grp": "Kun mobil", "lat": 59.0428779956463, "lon": 10.219737395840276, "adr": "Nygårdveien 2, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10924099", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIbsMAG", "r": 2}, {"navn": "Berganåsen 64", "grp": "Kun mobil", "lat": 59.05493069882159, "lon": 10.199866396683902, "adr": "Berganåsen 64, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10925370", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIwNMAW", "r": 5}, {"navn": "Holtanveien 5", "grp": "Kun mobil", "lat": 59.05278719365547, "lon": 10.210839736592527, "adr": "Holtanveien 5, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10925839", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ3wMAG", "r": 4}, {"navn": "Kjerringvikveien 74", "grp": "Kun mobil", "lat": 59.06505540893169, "lon": 10.203756507502447, "adr": "Kjerringvikveien 74, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926066", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ7bMAG", "r": 5}, {"navn": "Tjøllingveien 970", "grp": "Kun mobil", "lat": 59.067161604150535, "lon": 10.191497335201687, "adr": "Tjøllingveien 970, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926332", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJBtMAO", "r": 5}, {"navn": "Fjellvikveien 3", "grp": "Kun mobil", "lat": 59.04282034086091, "lon": 10.223568044427092, "adr": "Fjellvikveien 3, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926542", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJFHMA4", "r": 1}, {"navn": "Kjerringvikveien 207", "grp": "Kun mobil", "lat": 59.05411091079133, "lon": 10.210856677628685, "adr": "Kjerringvikveien 207, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926665", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJHGMA4", "r": 4}, {"navn": "Håkavika 33", "grp": "Kun mobil", "lat": 59.06177705023183, "lon": 10.21311803257898, "adr": "Håkavika 33, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926810", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJJbMAO", "r": 5}, {"navn": "Kjerringvikveien 379", "grp": "Kun mobil", "lat": 59.04367520655391, "lon": 10.22434790673601, "adr": "Kjerringvikveien 379, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926869", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJKYMA4", "r": 2}, {"navn": "Kjerringvikveien 360", "grp": "Kun mobil", "lat": 59.045093979226785, "lon": 10.224380940727446, "adr": "Kjerringvikveien 360, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926876", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJKfMAO", "r": 2}, {"navn": "Nygårdveien 1 B", "grp": "Kun mobil", "lat": 59.04327982675611, "lon": 10.217693213309559, "adr": "Nygårdveien 1 B, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10926911", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJLEMA4", "r": 2}, {"navn": "Kjerringvikveien 13", "grp": "Kun mobil", "lat": 59.0692439733664, "lon": 10.196617359566691, "adr": "Kjerringvikveien 13, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10927215", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJQ8MAO", "r": 5}, {"navn": "Håkavika 27", "grp": "Kun mobil", "lat": 59.0612208182992, "lon": 10.211802733040768, "adr": "Håkavika 27, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10928069", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJduMAG", "r": 5}, {"navn": "Kjerringvikveien 383 A", "grp": "Kun mobil", "lat": 59.043526027195604, "lon": 10.224832372988002, "adr": "Kjerringvikveien 383 A, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10928187", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJfoMAG", "r": 2}, {"navn": "Kjerringvikveien 377", "grp": "Kun mobil", "lat": 59.043750571345754, "lon": 10.224641663703085, "adr": "Kjerringvikveien 377, 3280 Tjodalyng", "area": "Tjodalyng", "bnr": "V-10928471", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJkOMAW", "r": 2}];
+var AREAS = ["Tjodalyng"];
+var STORE_KEY = "dorkart_Nikolai_05.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Nikolai";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":19,"m":1,"h":[[[59.042266,10.226536],[59.041239,10.226964],[59.039168,10.226996],[59.038811,10.226754],[59.038723,10.22664],[59.038664,10.22647],[59.038643,10.22627],[59.038719,10.22463],[59.038778,10.22446],[59.038866,10.224347],[59.042261,10.222067],[59.042365,10.222027],[59.042469,10.222067],[59.042557,10.222181],[59.043249,10.223764],[59.043308,10.223934],[59.043359,10.224315],[59.043205,10.224701],[59.042616,10.224699],[59.042338,10.224787],[59.042059,10.22534]],[[59.043518,10.225386],[59.043539,10.225587],[59.043518,10.225787],[59.043459,10.225957],[59.043371,10.226071],[59.042803,10.22631],[59.043301,10.225087]]],"b":[[59.043359,10.224315]],"g":["Kjerringvikveien","Fjellvikveien","Kjerringvik"]},{"n":2,"c":"#7b2cbf","s":19,"m":7,"h":[[[59.042607,10.219737],[59.043029,10.217493],[59.043088,10.217323],[59.043176,10.217209],[59.04328,10.217169],[59.043384,10.217209],[59.044174,10.217702],[59.044262,10.217816],[59.045159,10.221456],[59.045154,10.221549],[59.045304,10.222054],[59.045358,10.222559],[59.04532,10.222666],[59.04498,10.223072],[59.045076,10.223325],[59.045489,10.223791],[59.045475,10.224063],[59.045286,10.224751],[59.045235,10.224817],[59.044959,10.224887],[59.04483,10.225276],[59.043899,10.226316],[59.043795,10.226356],[59.043476,10.226152],[59.043567,10.225426],[59.043301,10.225087],[59.043012,10.225796],[59.042865,10.225638],[59.042806,10.225468],[59.042767,10.2247],[59.043205,10.224701],[59.043359,10.224315],[59.043466,10.223212],[59.0433,10.223114],[59.042845,10.222637],[59.042814,10.222416],[59.042678,10.22196]]],"b":[[59.045489,10.223791]],"g":["Kjerringvikveien","Fjellvikveien","Trekullveien"]},{"n":3,"c":"#0b7285","s":16,"m":2,"h":[[[59.04524,10.22177],[59.045282,10.221355],[59.045341,10.221185],[59.045429,10.221071],[59.045533,10.221031],[59.050798,10.21982],[59.050901,10.21986],[59.05099,10.219974],[59.051048,10.220144],[59.051349,10.222311],[59.051411,10.223306],[59.05139,10.223506],[59.051332,10.223676],[59.051244,10.22379],[59.046135,10.22835],[59.046031,10.22839],[59.045927,10.22835],[59.045839,10.228236],[59.044906,10.225508],[59.044886,10.225307],[59.044914,10.225022],[59.044959,10.224887],[59.04525,10.224813],[59.045495,10.224445],[59.045514,10.22382],[59.045083,10.223333],[59.045127,10.222897],[59.04532,10.222666],[59.045448,10.222303]]],"b":[[59.051411,10.223306]],"g":["Kjerringvikveien","Seilbåtfjellet","Trekullveien"]},{"n":4,"c":"#a61e4d","s":13,"m":2,"h":[[[59.056651,10.208615],[59.057279,10.209663],[59.058818,10.213548],[59.058877,10.213718],[59.058897,10.213919],[59.058877,10.214119],[59.058818,10.214289],[59.056141,10.217333],[59.052204,10.219558],[59.0521,10.219598],[59.051996,10.219558],[59.051908,10.219444],[59.051849,10.219275],[59.051829,10.219074],[59.052516,10.21084],[59.052536,10.210639],[59.052797,10.209753],[59.052885,10.209639],[59.055129,10.208221]]],"b":[[59.058897,10.213919]],"g":["Kjerringvikveien","Holtanveien","Solåsen"]},{"n":5,"c":"#343a40","s":13,"m":7,"h":[[[59.053811,10.200876],[59.053753,10.200706],[59.053732,10.200505],[59.054002,10.19465],[59.054023,10.194449],[59.054082,10.194279],[59.05417,10.194166],[59.054274,10.194126],[59.067162,10.190973],[59.067265,10.191013],[59.067354,10.191127],[59.067582,10.191546],[59.069436,10.196247],[59.069495,10.196417],[59.069515,10.196617],[59.068843,10.202202],[59.068784,10.202372],[59.068052,10.203899],[59.061969,10.213489],[59.061881,10.213602],[59.061777,10.213642],[59.061673,10.213602],[59.061585,10.213489],[59.059017,10.209322],[59.058348,10.206636],[59.058299,10.206535],[59.056671,10.205516]]],"b":[[59.069515,10.196617]],"g":["Kjerringvikveien","Berganåsen","Klepakerveien"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
