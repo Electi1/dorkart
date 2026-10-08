@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Markus 08.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Markus</div>
+<div class="date">08.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Vestre Årefjordvei 91", "grp": "HC", "lat": 59.379584911665226, "lon": 10.658508855515658, "adr": "Vestre Årefjordvei 91, 1570 Dilling", "area": "Dilling", "bnr": "V-10899011", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC4SMAW", "r": 3}, {"navn": "Lunneveien 35", "grp": "HP", "lat": 59.37098111449891, "lon": 10.66555781046549, "adr": "Lunneveien 35, 1570 Dilling", "area": "Dilling", "bnr": "V-10899430", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCBDMA4", "r": 5}, {"navn": "Østre Årefjordvei 92", "grp": "HP", "lat": 59.378809422998096, "lon": 10.673165981585717, "adr": "Østre Årefjordvei 92, 1570 Dilling", "area": "Dilling", "bnr": "V-10899502", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCCNMA4", "r": 4}, {"navn": "Bakkeskogen 42", "grp": "HC", "lat": 59.37430950443797, "lon": 10.670008531994213, "adr": "Bakkeskogen 42, 1570 Dilling", "area": "Dilling", "bnr": "V-10899935", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCJMMA4", "r": 4}, {"navn": "Østre Årefjordvei 212", "grp": "HP", "lat": 59.37155298153444, "lon": 10.664524612130766, "adr": "Østre Årefjordvei 212, 1570 Dilling", "area": "Dilling", "bnr": "V-10900135", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCMaMAO", "r": 5}, {"navn": "Sjøveien 27", "grp": "HC", "lat": 59.36915271802539, "lon": 10.662363891459375, "adr": "Sjøveien 27, 1570 Dilling", "area": "Dilling", "bnr": "V-10900308", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCPNMA4", "r": 5}, {"navn": "Sjøveien 2", "grp": "HP", "lat": 59.37153397160564, "lon": 10.663268855306102, "adr": "Sjøveien 2, 1570 Dilling", "area": "Dilling", "bnr": "V-10900842", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCXzMAO", "r": 5}, {"navn": "Åskanten 15", "grp": "HC", "lat": 59.38785895576066, "lon": 10.656254270229823, "adr": "Åskanten 15, 1570 Dilling", "area": "Dilling", "bnr": "V-10903175", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DD9cMAG", "r": 2}, {"navn": "Østre Årefjordvei 108", "grp": "HP", "lat": 59.377377327522716, "lon": 10.669339103951641, "adr": "Østre Årefjordvei 108, 1570 Dilling", "area": "Dilling", "bnr": "V-10903239", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DDAeMAO", "r": 4}, {"navn": "Lunneveien 21", "grp": "HP", "lat": 59.371691997961285, "lon": 10.6653145931582, "adr": "Lunneveien 21, 1570 Dilling", "area": "Dilling", "bnr": "V-10904416", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDTdMAO", "r": 5}, {"navn": "Årefjordstranda 3", "grp": "HC", "lat": 59.373573792670676, "lon": 10.665730688997728, "adr": "Årefjordstranda 3, 1570 Dilling", "area": "Dilling", "bnr": "V-10904769", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDZKMA4", "r": 5}, {"navn": "Østre Årefjordvei 234", "grp": "HP", "lat": 59.37133397948982, "lon": 10.663385777729635, "adr": "Østre Årefjordvei 234, 1570 Dilling", "area": "Dilling", "bnr": "V-10905273", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDhSMAW", "r": 5}, {"navn": "Fuglevikåsen 4", "grp": "HC", "lat": 59.388958678237685, "lon": 10.658773074808902, "adr": "Fuglevikåsen 4, 1570 Dilling", "area": "Dilling", "bnr": "V-10905836", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDqXMAW", "r": 2}, {"navn": "Fuglevikåsen 20", "grp": "HC", "lat": 59.38746746989838, "lon": 10.658365675670519, "adr": "Fuglevikåsen 20, 1570 Dilling", "area": "Dilling", "bnr": "V-10905900", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDrZMAW", "r": 2}, {"navn": "Østre Årefjordvei 179", "grp": "HC", "lat": 59.37646080914489, "lon": 10.665432223935442, "adr": "Østre Årefjordvei 179, 1570 Dilling", "area": "Dilling", "bnr": "V-10906082", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDuVMAW", "r": 4}, {"navn": "Eikelunden 18", "grp": "HC", "lat": 59.38729726688731, "lon": 10.659883922424733, "adr": "Eikelunden 18, 1570 Dilling", "area": "Dilling", "bnr": "V-10906356", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDyvMAG", "r": 3}, {"navn": "Østre Årefjordvei 62", "grp": "HP", "lat": 59.38200669384929, "lon": 10.67220913367224, "adr": "Østre Årefjordvei 62, 1570 Dilling", "area": "Dilling", "bnr": "V-10906571", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE2OMAW", "r": 4}, {"navn": "Lunneveien 41", "grp": "HP", "lat": 59.3706303024593, "lon": 10.664824342064515, "adr": "Lunneveien 41, 1570 Dilling", "area": "Dilling", "bnr": "V-10906959", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE8eMAG", "r": 5}, {"navn": "Fuglevikåsen 21", "grp": "HC", "lat": 59.38775470070114, "lon": 10.658097983813796, "adr": "Fuglevikåsen 21, 1570 Dilling", "area": "Dilling", "bnr": "V-10907222", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DECtMAO", "r": 2}, {"navn": "Storengveien 16", "grp": "HC", "lat": 59.39048102538337, "lon": 10.659627541515109, "adr": "Storengveien 16, 1570 Dilling", "area": "Dilling", "bnr": "V-10907295", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEE4MAO", "r": 1}, {"navn": "Eikelunden 24", "grp": "HC", "lat": 59.38756561671, "lon": 10.659970993745631, "adr": "Eikelunden 24, 1570 Dilling", "area": "Dilling", "bnr": "V-10907950", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEOdMAO", "r": 2}, {"navn": "Eikelunden 32", "grp": "HC", "lat": 59.38790861819377, "lon": 10.659767667965925, "adr": "Eikelunden 32, 1570 Dilling", "area": "Dilling", "bnr": "V-10909298", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEkNMAW", "r": 2}, {"navn": "Årefjordstranda 17", "grp": "HP", "lat": 59.372162295908076, "lon": 10.66421655501139, "adr": "Årefjordstranda 17, 1570 Dilling", "area": "Dilling", "bnr": "V-10909671", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEqOMAW", "r": 5}, {"navn": "Jaktåsen 72", "grp": "HC", "lat": 59.38149918943877, "lon": 10.65926778958778, "adr": "Jaktåsen 72, 1570 Dilling", "area": "Dilling", "bnr": "V-10910273", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF06MAG", "r": 3}, {"navn": "Sjøveien 8", "grp": "HP", "lat": 59.37081970023193, "lon": 10.663073736684135, "adr": "Sjøveien 8, 1570 Dilling", "area": "Dilling", "bnr": "V-10911225", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFFSMA4", "r": 5}, {"navn": "Østre Årefjordvei 60", "grp": "HC", "lat": 59.38213907106386, "lon": 10.671481533589906, "adr": "Østre Årefjordvei 60, 1570 Dilling", "area": "Dilling", "bnr": "V-10912124", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFTxMAO", "r": 4}, {"navn": "Eikelunden 8", "grp": "HC", "lat": 59.38704582273741, "lon": 10.658750047252237, "adr": "Eikelunden 8, 1570 Dilling", "area": "Dilling", "bnr": "V-10912497", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFZyMAO", "r": 3}, {"navn": "Østre Årefjordvei 197", "grp": "HP", "lat": 59.37495307984469, "lon": 10.665124207160963, "adr": "Østre Årefjordvei 197, 1570 Dilling", "area": "Dilling", "bnr": "V-10912921", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFgoMAG", "r": 4}, {"navn": "Østre Årefjordvei 70", "grp": "HP", "lat": 59.38076837075714, "lon": 10.67176614996366, "adr": "Østre Årefjordvei 70, 1570 Dilling", "area": "Dilling", "bnr": "V-10913564", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFrBMAW", "r": 4}, {"navn": "Østre Årefjordvei 210", "grp": "HC", "lat": 59.37178295579183, "lon": 10.664029018276258, "adr": "Østre Årefjordvei 210, 1570 Dilling", "area": "Dilling", "bnr": "V-10914462", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DG5fMAG", "r": 5}, {"navn": "Østre Årefjordvei 154", "grp": "HC", "lat": 59.3761726455071, "lon": 10.666896633228783, "adr": "Østre Årefjordvei 154, 1570 Dilling", "area": "Dilling", "bnr": "V-10914604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DG7xMAG", "r": 4}, {"navn": "Bakkeskogen 39", "grp": "HC", "lat": 59.37492287493045, "lon": 10.668401793346877, "adr": "Bakkeskogen 39, 1570 Dilling", "area": "Dilling", "bnr": "V-10915537", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGN0MAO", "r": 4}, {"navn": "Østre Årefjordvei 187", "grp": "HC", "lat": 59.37650988081249, "lon": 10.665950363376258, "adr": "Østre Årefjordvei 187, 1570 Dilling", "area": "Dilling", "bnr": "V-10915545", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGN8MAO", "r": 4}, {"navn": "Bakkeskogen 56", "grp": "HP", "lat": 59.37348458473893, "lon": 10.669897576776014, "adr": "Bakkeskogen 56, 1570 Dilling", "area": "Dilling", "bnr": "V-10916044", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGVBMA4", "r": 5}, {"navn": "Østre Årefjordvei 185", "grp": "HC", "lat": 59.3759502767231, "lon": 10.665741620959958, "adr": "Østre Årefjordvei 185, 1570 Dilling", "area": "Dilling", "bnr": "V-10916483", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGcGMAW", "r": 4}, {"navn": "Bakkeskogen 35", "grp": "HP", "lat": 59.37531687773916, "lon": 10.669899647945632, "adr": "Bakkeskogen 35, 1570 Dilling", "area": "Dilling", "bnr": "V-10916874", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGiZMAW", "r": 4}, {"navn": "Østre Årefjordvei 106", "grp": "HP", "lat": 59.37746103398702, "lon": 10.669816720744013, "adr": "Østre Årefjordvei 106, 1570 Dilling", "area": "Dilling", "bnr": "V-10917842", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGyBMAW", "r": 4}, {"navn": "Eikelunden 42", "grp": "HC", "lat": 59.38825775067911, "lon": 10.659717826454589, "adr": "Eikelunden 42, 1570 Dilling", "area": "Dilling", "bnr": "V-10918729", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHCUMA4", "r": 2}, {"navn": "Åsfaret 4", "grp": "HC", "lat": 59.38984143046448, "lon": 10.657231424635834, "adr": "Åsfaret 4, 1570 Dilling", "area": "Dilling", "bnr": "V-10918873", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHEoMAO", "r": 1}, {"navn": "Lunneveien 15 B", "grp": "HP", "lat": 59.37205995642228, "lon": 10.667025703984578, "adr": "Lunneveien 15 B, 1570 Dilling", "area": "Dilling", "bnr": "V-10919275", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHLIMA4", "r": 5}, {"navn": "Østre Årefjordvei 204", "grp": "HC", "lat": 59.37247217927502, "lon": 10.663371109396827, "adr": "Østre Årefjordvei 204, 1570 Dilling", "area": "Dilling", "bnr": "V-10919695", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHS4MAO", "r": 5}, {"navn": "Kolleveien 10", "grp": "HC", "lat": 59.39030072819793, "lon": 10.656427987355084, "adr": "Kolleveien 10, 1570 Dilling", "area": "Dilling", "bnr": "V-10920166", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHZfMAO", "r": 1}, {"navn": "Åskanten 24", "grp": "HC", "lat": 59.38770678346522, "lon": 10.65748642093185, "adr": "Åskanten 24, 1570 Dilling", "area": "Dilling", "bnr": "V-10920842", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHkZMAW", "r": 2}, {"navn": "Jaktåsen 90", "grp": "HC", "lat": 59.383013416321134, "lon": 10.658924536767831, "adr": "Jaktåsen 90, 1570 Dilling", "area": "Dilling", "bnr": "V-10921920", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI1xMAG", "r": 3}, {"navn": "Åskanten 26", "grp": "HC", "lat": 59.38739045139197, "lon": 10.657358290244101, "adr": "Åskanten 26, 1570 Dilling", "area": "Dilling", "bnr": "V-10922284", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI7pMAG", "r": 3}, {"navn": "Østre Årefjordvei 106", "grp": "HP", "lat": 59.37746103398702, "lon": 10.669816720744013, "adr": "Østre Årefjordvei 106, 1570 Dilling", "area": "Dilling", "bnr": "V-10923168", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DIM5MAO", "r": 4}, {"navn": "Alfhild Sundts Vei 10", "grp": "Kun mobil", "lat": 59.385028903927335, "lon": 10.655605642970949, "adr": "Alfhild Sundts Vei 10, 1570 Dilling", "area": "Dilling", "bnr": "V-10923360", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIPxMAO", "r": 3}, {"navn": "Årefjordtangen 34", "grp": "Kun mobil", "lat": 59.37501484870664, "lon": 10.654835917843906, "adr": "Årefjordtangen 34, 1570 Dilling", "area": "Dilling", "bnr": "V-10923839", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIXgMAO", "r": 3}, {"navn": "Østre Årefjordvei 76", "grp": "Kun mobil", "lat": 59.38024678174555, "lon": 10.672096070522391, "adr": "Østre Årefjordvei 76, 1570 Dilling", "area": "Dilling", "bnr": "V-10924120", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIcDMAW", "r": 4}, {"navn": "Østre Årefjordvei 193", "grp": "Kun mobil", "lat": 59.37538450109411, "lon": 10.665523782366726, "adr": "Østre Årefjordvei 193, 1570 Dilling", "area": "Dilling", "bnr": "V-10924502", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIiNMAW", "r": 4}, {"navn": "Bakkeskogen 46", "grp": "Kun mobil", "lat": 59.37389141400242, "lon": 10.670392788941184, "adr": "Bakkeskogen 46, 1570 Dilling", "area": "Dilling", "bnr": "V-10924595", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIjsMAG", "r": 4}, {"navn": "Østre Årefjordvei 140", "grp": "Kun mobil", "lat": 59.37692712529883, "lon": 10.667037512122413, "adr": "Østre Årefjordvei 140, 1570 Dilling", "area": "Dilling", "bnr": "V-10924912", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIozMAG", "r": 4}, {"navn": "Østre Årefjordvei 108", "grp": "Kun mobil", "lat": 59.377377327522716, "lon": 10.669339103951641, "adr": "Østre Årefjordvei 108, 1570 Dilling", "area": "Dilling", "bnr": "V-10925333", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIvmMAG", "r": 4}, {"navn": "Østre Årefjordvei 206", "grp": "Kun mobil", "lat": 59.372290789442495, "lon": 10.663297109340457, "adr": "Østre Årefjordvei 206, 1570 Dilling", "area": "Dilling", "bnr": "V-10925403", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIwuMAG", "r": 5}, {"navn": "Lunneveien 15 A", "grp": "Kun mobil", "lat": 59.372110467957306, "lon": 10.667149619486281, "adr": "Lunneveien 15 A, 1570 Dilling", "area": "Dilling", "bnr": "V-10925504", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIyXMAW", "r": 5}, {"navn": "Lunneveien 40", "grp": "Kun mobil", "lat": 59.36992513747479, "lon": 10.665604594060518, "adr": "Lunneveien 40, 1570 Dilling", "area": "Dilling", "bnr": "V-10925538", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIz5MAG", "r": 5}, {"navn": "Jaktåsen 32", "grp": "Kun mobil", "lat": 59.38070711267133, "lon": 10.65713773850947, "adr": "Jaktåsen 32, 1570 Dilling", "area": "Dilling", "bnr": "V-10925729", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ2AMAW", "r": 3}, {"navn": "Sjøveien 14", "grp": "Kun mobil", "lat": 59.37023998528088, "lon": 10.66303304026935, "adr": "Sjøveien 14, 1570 Dilling", "area": "Dilling", "bnr": "V-10925912", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ57MAG", "r": 5}, {"navn": "Østre Årefjordvei 208 B", "grp": "Kun mobil", "lat": 59.372148870213685, "lon": 10.665409147280439, "adr": "Østre Årefjordvei 208 B, 1570 Dilling", "area": "Dilling", "bnr": "V-10926119", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ8SMAW", "r": 5}, {"navn": "Østre Årefjordvei 208 A", "grp": "Kun mobil", "lat": 59.37199598524709, "lon": 10.664790950516597, "adr": "Østre Årefjordvei 208 A, 1570 Dilling", "area": "Dilling", "bnr": "V-10926584", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJFxMAO", "r": 5}, {"navn": "Vestre Årefjordvei 125", "grp": "Kun mobil", "lat": 59.37466329916713, "lon": 10.656350062930349, "adr": "Vestre Årefjordvei 125, 1570 Dilling", "area": "Dilling", "bnr": "V-10926765", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJIsMAO", "r": 3}, {"navn": "Årefjordstranda 7", "grp": "Kun mobil", "lat": 59.37312789606108, "lon": 10.66548002379456, "adr": "Årefjordstranda 7, 1570 Dilling", "area": "Dilling", "bnr": "V-10927024", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJN3MAO", "r": 5}, {"navn": "Finnebingen 17", "grp": "Kun mobil", "lat": 59.38467220313636, "lon": 10.657524912155496, "adr": "Finnebingen 17, 1570 Dilling", "area": "Dilling", "bnr": "V-10927075", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJNsMAO", "r": 3}, {"navn": "Bakkeskogen 7", "grp": "Kun mobil", "lat": 59.37764572589719, "lon": 10.671105497520248, "adr": "Bakkeskogen 7, 1570 Dilling", "area": "Dilling", "bnr": "V-10927090", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJO7MAO", "r": 4}, {"navn": "Årefjordstranda 10", "grp": "Kun mobil", "lat": 59.373386642212346, "lon": 10.666740563922712, "adr": "Årefjordstranda 10, 1570 Dilling", "area": "Dilling", "bnr": "V-10927410", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJTHMA4", "r": 5}, {"navn": "Østre Årefjordvei 151", "grp": "Kun mobil", "lat": 59.37661924752656, "lon": 10.663574194080201, "adr": "Østre Årefjordvei 151, 1570 Dilling", "area": "Dilling", "bnr": "V-10927423", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJTUMA4", "r": 4}, {"navn": "Lunneveien 13", "grp": "Kun mobil", "lat": 59.372367986566, "lon": 10.666678265929727, "adr": "Lunneveien 13, 1570 Dilling", "area": "Dilling", "bnr": "V-10927431", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJTcMAO", "r": 5}, {"navn": "Lunneveien 3", "grp": "Kun mobil", "lat": 59.373395116426444, "lon": 10.66713170441131, "adr": "Lunneveien 3, 1570 Dilling", "area": "Dilling", "bnr": "V-10927623", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJWiMAO", "r": 5}, {"navn": "Hasleveien 100", "grp": "Kun mobil", "lat": 59.38148393113496, "lon": 10.672280216260493, "adr": "Hasleveien 100, 1570 Dilling", "area": "Dilling", "bnr": "V-10927645", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJX4MAO", "r": 4}, {"navn": "Jaktåsen 22", "grp": "Kun mobil", "lat": 59.37969863184837, "lon": 10.657334978475802, "adr": "Jaktåsen 22, 1570 Dilling", "area": "Dilling", "bnr": "V-10927655", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJXEMA4", "r": 3}, {"navn": "Bakkeskogen 35", "grp": "Kun mobil", "lat": 59.37531687773916, "lon": 10.669899647945632, "adr": "Bakkeskogen 35, 1570 Dilling", "area": "Dilling", "bnr": "V-10927934", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DJbjMAG", "r": 4}, {"navn": "Jaktåsen 12", "grp": "Kun mobil", "lat": 59.37884811255892, "lon": 10.657117444468792, "adr": "Jaktåsen 12, 1570 Dilling", "area": "Dilling", "bnr": "V-10928130", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJetMAG", "r": 3}, {"navn": "Østre Årefjordvei 167", "grp": "Kun mobil", "lat": 59.37505085615885, "lon": 10.663303770442326, "adr": "Østre Årefjordvei 167, 1570 Dilling", "area": "Dilling", "bnr": "V-10928184", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJflMAG", "r": 4}, {"navn": "Eikelunden 54", "grp": "HC Vula", "lat": 59.388616971520584, "lon": 10.660075223658746, "adr": "Eikelunden 54, 1570 Dilling", "area": "Dilling", "bnr": "V-10929079", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKlxMAG", "r": 2}, {"navn": "Bakkeskogen 14", "grp": "HC Vula", "lat": 59.3775731992041, "lon": 10.671858832164082, "adr": "Bakkeskogen 14, 1570 Dilling", "area": "Dilling", "bnr": "V-10929193", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKnnMAG", "r": 4}, {"navn": "Fuglevikåsen 16", "grp": "HC Vula", "lat": 59.38748349062766, "lon": 10.658871792891654, "adr": "Fuglevikåsen 16, 1570 Dilling", "area": "Dilling", "bnr": "V-10929218", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKoCMAW", "r": 2}, {"navn": "Kolleveien 4", "grp": "HC Vula", "lat": 59.3904940482653, "lon": 10.65711888986368, "adr": "Kolleveien 4, 1570 Dilling", "area": "Dilling", "bnr": "V-10929221", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKoFMAW", "r": 1}, {"navn": "Eikelunden 28", "grp": "HC Vula", "lat": 59.38771147000538, "lon": 10.659590757700924, "adr": "Eikelunden 28, 1570 Dilling", "area": "Dilling", "bnr": "V-10929304", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKpaMAG", "r": 2}, {"navn": "Finnebingen 30", "grp": "HC Vula", "lat": 59.384107285826055, "lon": 10.656036061279599, "adr": "Finnebingen 30, 1570 Dilling", "area": "Dilling", "bnr": "V-10929309", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKpfMAG", "r": 3}, {"navn": "Storengveien 32", "grp": "HC Vula", "lat": 59.38975916438962, "lon": 10.659393273792531, "adr": "Storengveien 32, 1570 Dilling", "area": "Dilling", "bnr": "V-10929323", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKptMAG", "r": 1}, {"navn": "Eikelunden 14", "grp": "HC Vula", "lat": 59.38714885268594, "lon": 10.659476980552833, "adr": "Eikelunden 14, 1570 Dilling", "area": "Dilling", "bnr": "V-10929532", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKtGMAW", "r": 3}, {"navn": "Storengveien 20", "grp": "HC Vula", "lat": 59.39032293038071, "lon": 10.658992933694435, "adr": "Storengveien 20, 1570 Dilling", "area": "Dilling", "bnr": "V-10929795", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKxVMAW", "r": 1}, {"navn": "Fuglevikåsen 10", "grp": "HC Vula", "lat": 59.388571652092736, "lon": 10.659048219198423, "adr": "Fuglevikåsen 10, 1570 Dilling", "area": "Dilling", "bnr": "V-10929818", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKxsMAG", "r": 2}, {"navn": "Østre Årefjordvei 156", "grp": "HC Vula", "lat": 59.375839397689056, "lon": 10.666968286772144, "adr": "Østre Årefjordvei 156, 1570 Dilling", "area": "Dilling", "bnr": "V-10929834", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKy8MAG", "r": 4}, {"navn": "Evjetangen 31", "grp": "HC", "lat": 59.36913184373508, "lon": 10.67522701621443, "adr": "Evjetangen 31, 1570 Dilling", "area": "Dilling", "bnr": "V-10929943", "bol": "NH012", "st": "Ikke besøkt", "sfid": "a4CSg000000DKztMAG", "r": 5}, {"navn": "Østre Årefjordvei 191", "grp": "HC Vula", "lat": 59.375727220601654, "lon": 10.665202639893023, "adr": "Østre Årefjordvei 191, 1570 Dilling", "area": "Dilling", "bnr": "V-10929974", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL0OMAW", "r": 4}, {"navn": "Åsfaret 3", "grp": "HC Vula", "lat": 59.389457231947226, "lon": 10.657001367639614, "adr": "Åsfaret 3, 1570 Dilling", "area": "Dilling", "bnr": "V-10929990", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL0eMAG", "r": 1}, {"navn": "Husebyskogen 54", "grp": "HC Vula", "lat": 59.39366978085023, "lon": 10.650620618009674, "adr": "Husebyskogen 54, 1570 Dilling", "area": "Dilling", "bnr": "V-10930083", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL29MAG", "r": 1}, {"navn": "Fuglevikåsen 11", "grp": "HC Vula", "lat": 59.38861852205065, "lon": 10.657763359855897, "adr": "Fuglevikåsen 11, 1570 Dilling", "area": "Dilling", "bnr": "V-10930096", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL2MMAW", "r": 2}, {"navn": "Fuglevikveien 67", "grp": "HC Vula", "lat": 59.38794760704114, "lon": 10.652663102023185, "adr": "Fuglevikveien 67, 1570 Dilling", "area": "Dilling", "bnr": "V-10930185", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL3nMAG", "r": 2}, {"navn": "Åskanten 21", "grp": "HC Vula", "lat": 59.38721403859934, "lon": 10.656821458586656, "adr": "Åskanten 21, 1570 Dilling", "area": "Dilling", "bnr": "V-10930308", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL5mMAG", "r": 3}, {"navn": "Østre Årefjordvei 90", "grp": "HC Vula", "lat": 59.37910291228694, "lon": 10.673043135421421, "adr": "Østre Årefjordvei 90, 1570 Dilling", "area": "Dilling", "bnr": "V-10930361", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL6dMAG", "r": 4}, {"navn": "Åskanten 8", "grp": "HC Vula", "lat": 59.388735063734785, "lon": 10.656578741471257, "adr": "Åskanten 8, 1570 Dilling", "area": "Dilling", "bnr": "V-10930591", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLALMA4", "r": 1}, {"navn": "Årefjordtangen 12", "grp": "HC Vula", "lat": 59.37767372271669, "lon": 10.655030591430338, "adr": "Årefjordtangen 12, 1570 Dilling", "area": "Dilling", "bnr": "V-10930761", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLD5MAO", "r": 3}, {"navn": "Årefjordstranda 1", "grp": "HC Vula", "lat": 59.373618681101156, "lon": 10.665028877275011, "adr": "Årefjordstranda 1, 1570 Dilling", "area": "Dilling", "bnr": "V-10930775", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLDJMA4", "r": 5}, {"navn": "Jaktåsen 30", "grp": "HC Vula", "lat": 59.38085744635084, "lon": 10.658100973623615, "adr": "Jaktåsen 30, 1570 Dilling", "area": "Dilling", "bnr": "V-10930799", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLDhMAO", "r": 3}, {"navn": "Åskanten 18", "grp": "HC Vula", "lat": 59.388211120022795, "lon": 10.657521607775818, "adr": "Åskanten 18, 1570 Dilling", "area": "Dilling", "bnr": "V-10930872", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLEsMAO", "r": 2}, {"navn": "Fuglevikveien 58", "grp": "HC Vula", "lat": 59.38841284157495, "lon": 10.653941195307256, "adr": "Fuglevikveien 58, 1570 Dilling", "area": "Dilling", "bnr": "V-10930944", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLG2MAO", "r": 1}, {"navn": "Åsfaret 8", "grp": "HC Vula", "lat": 59.390028175342444, "lon": 10.65801532797239, "adr": "Åsfaret 8, 1570 Dilling", "area": "Dilling", "bnr": "V-10931104", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLIcMAO", "r": 1}, {"navn": "Eikelunden 44", "grp": "HC Vula", "lat": 59.388311087011765, "lon": 10.659549637138971, "adr": "Eikelunden 44, 1570 Dilling", "area": "Dilling", "bnr": "V-10931127", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLIzMAO", "r": 2}, {"navn": "Eikelunden 10", "grp": "HC Vula", "lat": 59.38726147866493, "lon": 10.65874297603681, "adr": "Eikelunden 10, 1570 Dilling", "area": "Dilling", "bnr": "V-10931180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLJqMAO", "r": 3}, {"navn": "Husebyskogen 64", "grp": "HC Vula", "lat": 59.39474828095905, "lon": 10.65056739930038, "adr": "Husebyskogen 64, 1570 Dilling", "area": "Dilling", "bnr": "V-10931191", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLK1MAO", "r": 1}, {"navn": "Fugleviklunden 9", "grp": "HC Vula", "lat": 59.38859421428097, "lon": 10.655291763863447, "adr": "Fugleviklunden 9, 1570 Dilling", "area": "Dilling", "bnr": "V-10931338", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLMOMA4", "r": 1}, {"navn": "Storengveien 6", "grp": "HC Vula", "lat": 59.39064351479563, "lon": 10.659492851522733, "adr": "Storengveien 6, 1570 Dilling", "area": "Dilling", "bnr": "V-10931552", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLPqMAO", "r": 1}, {"navn": "Østre Årefjordvei 115", "grp": "HC Vula", "lat": 59.377501222385696, "lon": 10.66730684163178, "adr": "Østre Årefjordvei 115, 1570 Dilling", "area": "Dilling", "bnr": "V-10931572", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLQAMA4", "r": 4}, {"navn": "Jaktåsen 82", "grp": "HC Vula", "lat": 59.382333963869726, "lon": 10.659875453160286, "adr": "Jaktåsen 82, 1570 Dilling", "area": "Dilling", "bnr": "V-10931634", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLRAMA4", "r": 3}, {"navn": "Lunneveien 31", "grp": "HC Vula", "lat": 59.37125498324401, "lon": 10.665493801010829, "adr": "Lunneveien 31, 1570 Dilling", "area": "Dilling", "bnr": "V-10931682", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLRwMAO", "r": 5}, {"navn": "Bakkeskogen 36", "grp": "HC Vula", "lat": 59.374853005111405, "lon": 10.670352070133351, "adr": "Bakkeskogen 36, 1570 Dilling", "area": "Dilling", "bnr": "V-10931712", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLSQMA4", "r": 4}, {"navn": "Østre Årefjordvei 165", "grp": "HC Vula", "lat": 59.37538198948269, "lon": 10.662834191317646, "adr": "Østre Årefjordvei 165, 1570 Dilling", "area": "Dilling", "bnr": "V-10931787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLTdMAO", "r": 4}, {"navn": "Østre Årefjordvei 150", "grp": "HC Vula", "lat": 59.376273391751276, "lon": 10.66744723017959, "adr": "Østre Årefjordvei 150, 1570 Dilling", "area": "Dilling", "bnr": "V-10932103", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLYjMAO", "r": 4}, {"navn": "Fuglevikveien 60", "grp": "HC Vula", "lat": 59.388111630992235, "lon": 10.654107881621545, "adr": "Fuglevikveien 60, 1570 Dilling", "area": "Dilling", "bnr": "V-10932129", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLZ9MAO", "r": 1}, {"navn": "Storengveien 30", "grp": "HC Vula", "lat": 59.389858575495374, "lon": 10.659345306896004, "adr": "Storengveien 30, 1570 Dilling", "area": "Dilling", "bnr": "V-10932137", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLZHMA4", "r": 1}, {"navn": "Åskanten 34", "grp": "HC Vula", "lat": 59.38708907662138, "lon": 10.657466829503985, "adr": "Åskanten 34, 1570 Dilling", "area": "Dilling", "bnr": "V-10932225", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLahMAG", "r": 3}, {"navn": "Fuglevikåsen 8", "grp": "HC Vula", "lat": 59.38861847217947, "lon": 10.658686020143298, "adr": "Fuglevikåsen 8, 1570 Dilling", "area": "Dilling", "bnr": "V-10932360", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLcsMAG", "r": 2}, {"navn": "Bakkeskogen 34", "grp": "HC Vula", "lat": 59.37521027777465, "lon": 10.670508688066667, "adr": "Bakkeskogen 34, 1570 Dilling", "area": "Dilling", "bnr": "V-10932541", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLfnMAG", "r": 4}, {"navn": "Kolleveien 6", "grp": "HC Vula", "lat": 59.390448138570825, "lon": 10.656773273091876, "adr": "Kolleveien 6, 1570 Dilling", "area": "Dilling", "bnr": "V-10932576", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLgMMAW", "r": 1}, {"navn": "Østre Årefjordvei 228", "grp": "HC Vula", "lat": 59.37049334701889, "lon": 10.663802186070564, "adr": "Østre Årefjordvei 228, 1570 Dilling", "area": "Dilling", "bnr": "V-10932622", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLh6MAG", "r": 5}, {"navn": "Fuglevikåsen 17", "grp": "HC Vula", "lat": 59.388174128773635, "lon": 10.658312154384856, "adr": "Fuglevikåsen 17, 1570 Dilling", "area": "Dilling", "bnr": "V-10932668", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLhqMAG", "r": 2}, {"navn": "Storengveien 22", "grp": "HC Vula", "lat": 59.390231553354525, "lon": 10.659044816664233, "adr": "Storengveien 22, 1570 Dilling", "area": "Dilling", "bnr": "V-10932908", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLliMAG", "r": 1}, {"navn": "Bakkeskogen 5", "grp": "HC Vula", "lat": 59.37768530283541, "lon": 10.670399826209099, "adr": "Bakkeskogen 5, 1570 Dilling", "area": "Dilling", "bnr": "V-10933079", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLoTMAW", "r": 4}, {"navn": "Eikelunden 34", "grp": "HC Vula", "lat": 59.38798096157484, "lon": 10.659588084144682, "adr": "Eikelunden 34, 1570 Dilling", "area": "Dilling", "bnr": "V-10933109", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLoxMAG", "r": 2}, {"navn": "Åskanten 4 B", "grp": "HC Vula", "lat": 59.388942134690765, "lon": 10.657176960481005, "adr": "Åskanten 4 B, 1570 Dilling", "area": "Dilling", "bnr": "V-10933219", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLqjMAG", "r": 1}];
+var AREAS = ["Dilling"];
+var STORE_KEY = "dorkart_Markus_08.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Markus";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":19,"m":0,"h":[[[59.387861,10.65431],[59.38784,10.654108],[59.387861,10.653905],[59.38792,10.653734],[59.388008,10.653619],[59.388309,10.653452],[59.388413,10.653412],[59.388517,10.653452],[59.390493,10.656054],[59.390699,10.656571],[59.390765,10.657119],[59.390915,10.659493],[59.390894,10.659695],[59.390835,10.659867],[59.390585,10.660116],[59.390481,10.660157],[59.389655,10.659882],[59.389567,10.659767],[59.389343,10.659159],[59.389496,10.658409],[59.389447,10.658142],[59.389278,10.657962],[59.389019,10.657973],[59.38861,10.657146],[59.388484,10.656781],[59.388324,10.656144],[59.38833,10.656074],[59.388239,10.655807]],[[59.393566,10.651109],[59.393478,10.650995],[59.393419,10.650823],[59.393398,10.650621],[59.393419,10.650418],[59.393478,10.650246],[59.393566,10.650132],[59.394748,10.650038],[59.394852,10.650079],[59.39494,10.650193],[59.394999,10.650365],[59.39502,10.650567],[59.394999,10.65077],[59.39494,10.650942],[59.394852,10.651056],[59.39367,10.65115]]],"b":[[59.390915,10.659493],[59.39502,10.650567]],"g":["Storengveien","Åsfaret","Kolleveien"]},{"n":2,"c":"#7b2cbf","s":19,"m":0,"h":[[[59.387483,10.654957],[59.38803,10.655202],[59.38833,10.656074],[59.388276,10.656634],[59.388499,10.657104],[59.38863,10.657153],[59.389019,10.657973],[59.38911,10.657969],[59.38923,10.658773],[59.389209,10.658976],[59.388868,10.660278],[59.388809,10.660449],[59.388721,10.660564],[59.388617,10.660604],[59.387566,10.6605],[59.387394,10.660372],[59.387466,10.659528],[59.387445,10.659416],[59.387317,10.659175],[59.3874,10.658628],[59.387208,10.658229],[59.387227,10.657998],[59.387286,10.657904],[59.387505,10.65784],[59.387615,10.656792],[59.3874,10.655945]],[[59.3876,10.65357],[59.387697,10.652461],[59.387756,10.652289],[59.387844,10.652174],[59.387948,10.652134],[59.388051,10.652174],[59.38814,10.652289],[59.388198,10.652461],[59.388308,10.653125],[59.38816,10.653329]]],"b":[[59.38923,10.658773]],"g":["Fuglevikåsen","Eikelunden","Åskanten"]},{"n":3,"c":"#0b7285","s":14,"m":7,"h":[[[59.387297,10.660413],[59.382334,10.660405],[59.374559,10.656839],[59.374471,10.656724],[59.374413,10.656553],[59.374392,10.65635],[59.374413,10.656148],[59.374764,10.654633],[59.374823,10.654462],[59.374911,10.654347],[59.375015,10.654307],[59.385029,10.655077],[59.387318,10.656333],[59.387406,10.656447],[59.387593,10.657008],[59.387505,10.65784],[59.387286,10.657904],[59.387153,10.658116],[59.3874,10.658628],[59.387317,10.659175],[59.387445,10.659416],[59.387466,10.659528],[59.387394,10.660376]]],"b":[[59.387593,10.657008]],"g":["Jaktåsen","Eikelunden","Åskanten"]},{"n":4,"c":"#a61e4d","s":25,"m":10,"h":[[[59.3748,10.663101],[59.374859,10.66293],[59.37519,10.66246],[59.375278,10.662345],[59.375382,10.662305],[59.376723,10.663085],[59.382331,10.671107],[59.38239,10.671279],[59.38241,10.671482],[59.382257,10.672412],[59.382199,10.672583],[59.382111,10.672698],[59.382007,10.672738],[59.378809,10.673695],[59.373788,10.670882],[59.3737,10.670767],[59.373641,10.670595],[59.373625,10.670341],[59.373915,10.669432],[59.37395,10.668452],[59.37403,10.668355],[59.374357,10.666859],[59.374416,10.666745],[59.374328,10.665986]]],"b":[[59.38241,10.671482]],"g":["Østre Årefjordvei","Bakkeskogen","Hasleveien"]},{"n":5,"c":"#343a40","s":18,"m":10,"h":[[[59.373588,10.670386],[59.373485,10.670427],[59.373381,10.670386],[59.369733,10.665979],[59.368902,10.662566],[59.368881,10.662364],[59.368902,10.662161],[59.368961,10.66199],[59.369049,10.661875],[59.369153,10.661835],[59.372576,10.662882],[59.373811,10.664655],[59.373869,10.664826],[59.37389,10.665029],[59.373756,10.669898]],[[59.369236,10.674738],[59.369324,10.674853],[59.369383,10.675025],[59.369403,10.675227],[59.369383,10.675429],[59.369324,10.675601],[59.369236,10.675716],[59.369132,10.675756],[59.369028,10.675716],[59.36894,10.675601],[59.368881,10.675429],[59.36886,10.675227],[59.368881,10.675025],[59.36894,10.674853],[59.369028,10.674738],[59.369132,10.674698]]],"b":[[59.37389,10.665029],[59.369403,10.675227]],"g":["Lunneveien","Østre Årefjordvei","Årefjordstranda"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
