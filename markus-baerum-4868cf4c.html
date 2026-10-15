@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Markus 15.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Markus</div>
+<div class="date">15.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Krokvolden 9 A", "grp": "HP", "lat": 59.90824586815023, "lon": 10.590965554030092, "adr": "Krokvolden 9 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10899174", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC75MAG", "r": 2}, {"navn": "Skogveien 122 B", "grp": "HP", "lat": 59.90794961497288, "lon": 10.5852899098067, "adr": "Skogveien 122 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10899657", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DCEsMAO", "r": 4}, {"navn": "Skogveien 115 A", "grp": "HP", "lat": 59.907627275525975, "lon": 10.588192869145413, "adr": "Skogveien 115 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10899874", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCINMA4", "r": 3}, {"navn": "Krokvolden 9 B", "grp": "HP", "lat": 59.90830035754671, "lon": 10.590841197036786, "adr": "Krokvolden 9 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900070", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DCLXMA4", "r": 2}, {"navn": "Skogveien 128 C", "grp": "HP", "lat": 59.90891835691094, "lon": 10.585615067009929, "adr": "Skogveien 128 C, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900086", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCLnMAO", "r": 4}, {"navn": "Krokvolden 8 B", "grp": "HP", "lat": 59.907972432102724, "lon": 10.590478594629552, "adr": "Krokvolden 8 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900118", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCMJMA4", "r": 2}, {"navn": "Skogveien 74 A", "grp": "HP", "lat": 59.90979269204008, "lon": 10.594955970635942, "adr": "Skogveien 74 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900163", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCN2MAO", "r": 1}, {"navn": "Skogveien 87 D", "grp": "HP", "lat": 59.90975109238802, "lon": 10.593791574576867, "adr": "Skogveien 87 D, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900164", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCN3MAO", "r": 1}, {"navn": "Skogveien 72 B", "grp": "HP", "lat": 59.9100194022471, "lon": 10.59596294249945, "adr": "Skogveien 72 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900694", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCVbMAO", "r": 1}, {"navn": "Gamle Drammensvei 77", "grp": "HP", "lat": 59.90730659383248, "lon": 10.591920202575968, "adr": "Gamle Drammensvei 77, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10901254", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCedMAG", "r": 2}, {"navn": "Skogveien 113", "grp": "HP", "lat": 59.907341845885355, "lon": 10.587880610579617, "adr": "Skogveien 113, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10901357", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCgIMAW", "r": 3}, {"navn": "Skogveien 138 A", "grp": "HP", "lat": 59.909830407989894, "lon": 10.586397134902692, "adr": "Skogveien 138 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10901657", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCl8MAG", "r": 5}, {"navn": "Skogveien 136", "grp": "HP", "lat": 59.909522306422154, "lon": 10.586550533708875, "adr": "Skogveien 136, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10901999", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCqeMAG", "r": 5}, {"navn": "Skogveien 105", "grp": "HP", "lat": 59.90763702496178, "lon": 10.589917152270173, "adr": "Skogveien 105, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10902255", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DCumMAG", "r": 3}, {"navn": "Krokvolden 12 B", "grp": "HP", "lat": 59.90846256875684, "lon": 10.589604344946355, "adr": "Krokvolden 12 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10902723", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DD2KMAW", "r": 2}, {"navn": "Skogveien 78", "grp": "HP", "lat": 59.90941282755499, "lon": 10.595027162607648, "adr": "Skogveien 78, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10902757", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DD2sMAG", "r": 1}, {"navn": "Krokvolden 18", "grp": "HP", "lat": 59.90841630702427, "lon": 10.587704816857972, "adr": "Krokvolden 18, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10902841", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DD4EMAW", "r": 4}, {"navn": "Skogveien 131", "grp": "HP", "lat": 59.910078655101614, "lon": 10.58890190237213, "adr": "Skogveien 131, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10903351", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDCSMA4", "r": 5}, {"navn": "Skogveien 115 B", "grp": "HP", "lat": 59.90755220169581, "lon": 10.588385983941318, "adr": "Skogveien 115 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10903477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDEUMA4", "r": 3}, {"navn": "Krokvolden 20 B", "grp": "HP", "lat": 59.908779761423375, "lon": 10.587802643779103, "adr": "Krokvolden 20 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10903585", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDGEMA4", "r": 4}, {"navn": "Skogveien 123", "grp": "HP", "lat": 59.90848853717453, "lon": 10.5870019121354, "adr": "Skogveien 123, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10903783", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDJQMA4", "r": 4}, {"navn": "Krokvolden 10 A", "grp": "HP", "lat": 59.90822357449826, "lon": 10.59020806830787, "adr": "Krokvolden 10 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10904031", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDNQMA4", "r": 2}, {"navn": "Skallumhagen 26", "grp": "HP", "lat": 59.9109413501022, "lon": 10.591911827377382, "adr": "Skallumhagen 26, 1368 Stabekk", "area": "Stabekk", "bnr": "V-10904266", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDRDMA4", "r": 1}, {"navn": "Skogveien 105", "grp": "HP", "lat": 59.90763702496178, "lon": 10.589917152270173, "adr": "Skogveien 105, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10904325", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CSg000000DDSAMA4", "r": 3}, {"navn": "Skogveien 129", "grp": "HP", "lat": 59.90952944796369, "lon": 10.587300169364887, "adr": "Skogveien 129, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10904444", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDU5MAO", "r": 5}, {"navn": "Skogveien 72 G", "grp": "HP", "lat": 59.910002847442904, "lon": 10.595327293346996, "adr": "Skogveien 72 G, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10904692", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDY5MAO", "r": 1}, {"navn": "Gamle Drammensvei 65 D", "grp": "HP", "lat": 59.90802087373077, "lon": 10.593086339856683, "adr": "Gamle Drammensvei 65 D, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10904747", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDYyMAO", "r": 2}, {"navn": "Skogveien 87 E", "grp": "HP", "lat": 59.90983901138625, "lon": 10.593650935797845, "adr": "Skogveien 87 E, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10904752", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDZ3MAO", "r": 1}, {"navn": "Skogveien 93", "grp": "HP", "lat": 59.90935371705552, "lon": 10.593602638739538, "adr": "Skogveien 93, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10905326", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDiJMAW", "r": 1}, {"navn": "Skogveien 87 C", "grp": "HP", "lat": 59.90982788764984, "lon": 10.59405098456113, "adr": "Skogveien 87 C, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10905878", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDrDMAW", "r": 1}, {"navn": "Skogveien 105", "grp": "HP", "lat": 59.90763702496178, "lon": 10.589917152270173, "adr": "Skogveien 105, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10906133", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDvKMAW", "r": 3}, {"navn": "Skogveien 99", "grp": "HP", "lat": 59.908799876600206, "lon": 10.592612223199756, "adr": "Skogveien 99, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10906654", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DE3jMAG", "r": 2}, {"navn": "Krokvolden 26", "grp": "HP", "lat": 59.90895596762797, "lon": 10.587564278233971, "adr": "Krokvolden 26, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10906738", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE55MAG", "r": 4}, {"navn": "Skogveien 72 D", "grp": "HP", "lat": 59.90975082486638, "lon": 10.596411433977636, "adr": "Skogveien 72 D, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10906808", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE6DMAW", "r": 1}, {"navn": "Skogveien 79 A", "grp": "HP", "lat": 59.911122400883485, "lon": 10.595804862154475, "adr": "Skogveien 79 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10906849", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DE6sMAG", "r": 1}, {"navn": "Skogveien 72 G", "grp": "HP", "lat": 59.910002847442904, "lon": 10.595327293346996, "adr": "Skogveien 72 G, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10907173", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEC6MAO", "r": 1}, {"navn": "Skogveien 114 B", "grp": "HP", "lat": 59.906656097098896, "lon": 10.587697660308832, "adr": "Skogveien 114 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10907509", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEHWMA4", "r": 3}, {"navn": "Skogveien 127 B", "grp": "HP", "lat": 59.90920995078651, "lon": 10.586982697770473, "adr": "Skogveien 127 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10908221", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DET0MAO", "r": 5}, {"navn": "Krokvolden 28 B", "grp": "HP", "lat": 59.90950875164945, "lon": 10.587900047560591, "adr": "Krokvolden 28 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10908321", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEUcMAO", "r": 4}, {"navn": "Krokvolden 9 A", "grp": "HP", "lat": 59.90824586815023, "lon": 10.590965554030092, "adr": "Krokvolden 9 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10908532", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DEY1MAO", "r": 2}, {"navn": "Skogveien 124 C", "grp": "HP", "lat": 59.90840797895638, "lon": 10.58630780924054, "adr": "Skogveien 124 C, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10909239", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEjQMAW", "r": 4}, {"navn": "Skogveien 106 B", "grp": "HP", "lat": 59.90707181534053, "lon": 10.589718463140846, "adr": "Skogveien 106 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10909266", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEjrMAG", "r": 3}, {"navn": "Skogveien 79 B", "grp": "HP", "lat": 59.91101448334391, "lon": 10.59603932465832, "adr": "Skogveien 79 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10909454", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEmtMAG", "r": 1}, {"navn": "Skogveien 89 A", "grp": "HP", "lat": 59.909598162401224, "lon": 10.593440890088452, "adr": "Skogveien 89 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10909471", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEnAMAW", "r": 1}, {"navn": "Skogveien 117 B", "grp": "HP", "lat": 59.90782197066833, "lon": 10.58768716652314, "adr": "Skogveien 117 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10909751", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DErgMAG", "r": 3}, {"navn": "Krokvolden 11", "grp": "HP", "lat": 59.90870815082107, "lon": 10.590390398312044, "adr": "Krokvolden 11, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10910450", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF2xMAG", "r": 2}, {"navn": "Skogveien 124 B", "grp": "HP", "lat": 59.90852510768887, "lon": 10.586127420500594, "adr": "Skogveien 124 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10910826", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DF91MAG", "r": 4}, {"navn": "Krokvolden 22", "grp": "HP", "lat": 59.908853087898095, "lon": 10.588499989336503, "adr": "Krokvolden 22, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10911059", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DFCmMAO", "r": 4}, {"navn": "Skogveien 96 A", "grp": "HP", "lat": 59.90801957313897, "lon": 10.59237635637146, "adr": "Skogveien 96 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10911452", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFJ7MAO", "r": 2}, {"navn": "Skogveien 107 A", "grp": "HP", "lat": 59.90746978176947, "lon": 10.589188517421583, "adr": "Skogveien 107 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10911775", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFOKMA4", "r": 3}, {"navn": "Skogveien 101", "grp": "HP", "lat": 59.908671939373505, "lon": 10.591976631311368, "adr": "Skogveien 101, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10911794", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFOdMAO", "r": 2}, {"navn": "Krokvolden 14", "grp": "HP", "lat": 59.9086934676205, "lon": 10.588926907921824, "adr": "Krokvolden 14, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10911978", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFRbMAO", "r": 4}, {"navn": "Skogveien 94", "grp": "HP", "lat": 59.90829412217714, "lon": 10.592621974662393, "adr": "Skogveien 94, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10912098", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DFTXMA4", "r": 2}, {"navn": "Skogveien 102", "grp": "HP", "lat": 59.9074899988042, "lon": 10.590639701575295, "adr": "Skogveien 102, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10912140", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFUDMA4", "r": 2}, {"navn": "Skogveien 66 A", "grp": "HP", "lat": 59.91100696440795, "lon": 10.59880916008426, "adr": "Skogveien 66 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10912558", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DFaxMAG", "r": 1}, {"navn": "Skogveien 111", "grp": "HP", "lat": 59.907068109514334, "lon": 10.58801416787257, "adr": "Skogveien 111, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10913883", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFwKMAW", "r": 3}, {"navn": "Skogveien 128 E", "grp": "HP", "lat": 59.90903502272929, "lon": 10.58562241898164, "adr": "Skogveien 128 E, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10913936", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFxBMAW", "r": 4}, {"navn": "Skogveien 136 B", "grp": "HP", "lat": 59.90963780791609, "lon": 10.586132218450754, "adr": "Skogveien 136 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10914089", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFzeMAG", "r": 5}, {"navn": "Gamle Drammensvei 75", "grp": "HP", "lat": 59.90745595926218, "lon": 10.59226889671854, "adr": "Gamle Drammensvei 75, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10914094", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFzjMAG", "r": 2}, {"navn": "Skogveien 114 B", "grp": "HP", "lat": 59.906656097098896, "lon": 10.587697660308832, "adr": "Skogveien 114 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10914456", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DG5ZMAW", "r": 3}, {"navn": "Skogveien 144 B", "grp": "HP", "lat": 59.910249051037944, "lon": 10.587207553182667, "adr": "Skogveien 144 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10914467", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DG5kMAG", "r": 5}, {"navn": "Skogveien 98 B", "grp": "HP", "lat": 59.907838853314324, "lon": 10.591872368952526, "adr": "Skogveien 98 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10914495", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DG6CMAW", "r": 2}, {"navn": "Skogveien 196", "grp": "HP", "lat": 59.910963652922995, "lon": 10.588574005074083, "adr": "Skogveien 196, 1356 Bekkestua", "area": "Stabekk", "bnr": "V-10914514", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DG6VMAW", "r": 5}, {"navn": "Skogveien 116", "grp": "HP", "lat": 59.90677130083593, "lon": 10.587304404638553, "adr": "Skogveien 116, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10914974", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGDvMAO", "r": 3}, {"navn": "Skogveien 77", "grp": "HP", "lat": 59.91083135043848, "lon": 10.597293120537861, "adr": "Skogveien 77, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10915327", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DGJcMAO", "r": 1}, {"navn": "Krokvolden 14", "grp": "HP", "lat": 59.9086934676205, "lon": 10.588926907921824, "adr": "Krokvolden 14, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10915337", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DGJmMAO", "r": 4}, {"navn": "Krokvolden 17", "grp": "HP", "lat": 59.90934180284467, "lon": 10.588786216191268, "adr": "Krokvolden 17, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10915460", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGLlMAO", "r": 4}, {"navn": "Skogveien 107 B", "grp": "HP", "lat": 59.90735274251053, "lon": 10.589286637969895, "adr": "Skogveien 107 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10915815", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGRUMA4", "r": 3}, {"navn": "Skogveien 109", "grp": "HP", "lat": 59.907297687993925, "lon": 10.588638475716003, "adr": "Skogveien 109, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10916096", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGW1MAO", "r": 3}, {"navn": "Skogveien 72 E", "grp": "HP", "lat": 59.90962517486404, "lon": 10.596181863045336, "adr": "Skogveien 72 E, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10916127", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGWWMA4", "r": 1}, {"navn": "Egers Vei 18 A", "grp": "HP", "lat": 59.909666787354396, "lon": 10.589542102715894, "adr": "Egers Vei 18 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10916295", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGZEMA4", "r": 5}, {"navn": "Krokvolden 20 A", "grp": "HP", "lat": 59.90869790157178, "lon": 10.587888147050442, "adr": "Krokvolden 20 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10916363", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGaKMAW", "r": 4}, {"navn": "Gamle Drammensvei 77", "grp": "HP", "lat": 59.90730659383248, "lon": 10.591920202575968, "adr": "Gamle Drammensvei 77, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10917256", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DGojMAG", "r": 2}, {"navn": "Skogveien 93", "grp": "HP", "lat": 59.90935371705552, "lon": 10.593602638739538, "adr": "Skogveien 93, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10917672", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGvRMAW", "r": 1}, {"navn": "Gamle Drammensvei 85", "grp": "HP", "lat": 59.906979767373066, "lon": 10.591318039853048, "adr": "Gamle Drammensvei 85, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10918116", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DH2bMAG", "r": 2}, {"navn": "Skogveien 80", "grp": "HP", "lat": 59.909299569124784, "lon": 10.595257782800182, "adr": "Skogveien 80, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10918737", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHCcMAO", "r": 1}, {"navn": "Egers Vei 21", "grp": "HP", "lat": 59.91021907947265, "lon": 10.590439425107395, "adr": "Egers Vei 21, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10918823", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHE0MAO", "r": 5}, {"navn": "Krokvolden 15", "grp": "HP", "lat": 59.90907627298654, "lon": 10.58913297010622, "adr": "Krokvolden 15, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10918908", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHFNMA4", "r": 4}, {"navn": "Skogveien 109", "grp": "HP", "lat": 59.907297687993925, "lon": 10.588638475716003, "adr": "Skogveien 109, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10919058", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DHHnMAO", "r": 3}, {"navn": "Skogveien 72 C", "grp": "HP", "lat": 59.9097797539939, "lon": 10.596321619176722, "adr": "Skogveien 72 C, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10919197", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHK2MAO", "r": 1}, {"navn": "Skogveien 130 B", "grp": "HP", "lat": 59.90888789661571, "lon": 10.586280634743146, "adr": "Skogveien 130 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10919517", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHPCMA4", "r": 5}, {"navn": "Skogveien 118", "grp": "HP", "lat": 59.90715815783719, "lon": 10.586875830356904, "adr": "Skogveien 118, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10919915", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHVcMAO", "r": 3}, {"navn": "Skogveien 96 B", "grp": "HP", "lat": 59.908102946979284, "lon": 10.592165762962395, "adr": "Skogveien 96 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10920024", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DHXNMA4", "r": 2}, {"navn": "Skogveien 77", "grp": "HP", "lat": 59.91083135043848, "lon": 10.597293120537861, "adr": "Skogveien 77, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10920409", "bol": "H0301", "st": "Ikke besøkt", "sfid": "a4CSg000000DHdaMAG", "r": 1}, {"navn": "Skogveien 122 B", "grp": "HP", "lat": 59.90794961497288, "lon": 10.5852899098067, "adr": "Skogveien 122 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10920624", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHh3MAG", "r": 4}, {"navn": "Skogveien 194", "grp": "HP", "lat": 59.91082569596015, "lon": 10.588395730330529, "adr": "Skogveien 194, 1356 Bekkestua", "area": "Stabekk", "bnr": "V-10920705", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHiMMAW", "r": 5}, {"navn": "Skogveien 138 B", "grp": "HP", "lat": 59.90967567565882, "lon": 10.586717011066714, "adr": "Skogveien 138 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10920770", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DHjPMAW", "r": 5}, {"navn": "Krokvolden 26", "grp": "HP", "lat": 59.90895596762797, "lon": 10.587564278233971, "adr": "Krokvolden 26, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10920872", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DHl3MAG", "r": 4}, {"navn": "Skogveien 98", "grp": "HP", "lat": 59.90791643077942, "lon": 10.59169547393754, "adr": "Skogveien 98, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10921499", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DHvAMAW", "r": 2}, {"navn": "Krokvolden 22", "grp": "HP", "lat": 59.908853087898095, "lon": 10.588499989336503, "adr": "Krokvolden 22, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922072", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI4PMAW", "r": 4}, {"navn": "Skogveien 124 B", "grp": "HP", "lat": 59.90852510768887, "lon": 10.586127420500594, "adr": "Skogveien 124 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922087", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI4eMAG", "r": 4}, {"navn": "Skogveien 70 B", "grp": "HP", "lat": 59.91011221997109, "lon": 10.596233858958776, "adr": "Skogveien 70 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922426", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIA7MAO", "r": 1}, {"navn": "Skogveien 96 B", "grp": "HP", "lat": 59.908102946979284, "lon": 10.592165762962395, "adr": "Skogveien 96 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922473", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIAsMAO", "r": 2}, {"navn": "Skogveien 97", "grp": "HP", "lat": 59.908935958472746, "lon": 10.592870886669303, "adr": "Skogveien 97, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922547", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIC4MAO", "r": 2}, {"navn": "Skogveien 146 B", "grp": "HP", "lat": 59.91053460477227, "lon": 10.587584220072118, "adr": "Skogveien 146 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922611", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DID6MAO", "r": 5}, {"navn": "Skogveien 142", "grp": "HP", "lat": 59.910281997493655, "lon": 10.586783502596528, "adr": "Skogveien 142, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10922728", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIEzMAO", "r": 5}, {"navn": "Skogveien 110 B", "grp": "HP", "lat": 59.90678789081901, "lon": 10.588685645479844, "adr": "Skogveien 110 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10923021", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DIJiMAO", "r": 3}, {"navn": "Skogveien 152", "grp": "HC", "lat": 59.910416760188106, "lon": 10.588569334028856, "adr": "Skogveien 152, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10900172", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCNBMA4", "r": 5}, {"navn": "Skogveien 79 A", "grp": "HC", "lat": 59.911122400883485, "lon": 10.595804862154475, "adr": "Skogveien 79 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10923171", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIM8MAO", "r": 1}, {"navn": "Skogveien 130 A", "grp": "Kun mobil", "lat": 59.90884224833907, "lon": 10.586267727375812, "adr": "Skogveien 130 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10924056", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIbBMAW", "r": 4}, {"navn": "Skogveien 89 A", "grp": "Kun mobil", "lat": 59.909598162401224, "lon": 10.593440890088452, "adr": "Skogveien 89 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10924605", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DIk2MAG", "r": 1}, {"navn": "Skogveien 156 B", "grp": "Kun mobil", "lat": 59.91086446396693, "lon": 10.589501004315467, "adr": "Skogveien 156 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10925506", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIyZMAW", "r": 5}, {"navn": "Skogveien 81 A", "grp": "Kun mobil", "lat": 59.910469828684754, "lon": 10.596220626379221, "adr": "Skogveien 81 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10926116", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ8PMAW", "r": 1}, {"navn": "Skogveien 108", "grp": "Kun mobil", "lat": 59.906891107078444, "lon": 10.588989198308557, "adr": "Skogveien 108, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10926282", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DJB5MAO", "r": 3}, {"navn": "Krokvolden 30", "grp": "Kun mobil", "lat": 59.909838685217665, "lon": 10.587872885577742, "adr": "Krokvolden 30, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10926564", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DJFdMAO", "r": 4}, {"navn": "Skogveien 186", "grp": "Kun mobil", "lat": 59.910486049746524, "lon": 10.587066858177481, "adr": "Skogveien 186, 1356 Bekkestua", "area": "Stabekk", "bnr": "V-10926717", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJI6MAO", "r": 5}, {"navn": "Skogveien 89 B", "grp": "Kun mobil", "lat": 59.90943376410558, "lon": 10.592850028408671, "adr": "Skogveien 89 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10926805", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJJWMA4", "r": 1}, {"navn": "Skogveien 85 A", "grp": "Kun mobil", "lat": 59.910106026176436, "lon": 10.594742096069774, "adr": "Skogveien 85 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10927225", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJQIMA4", "r": 1}, {"navn": "Skogveien 117 A", "grp": "Kun mobil", "lat": 59.907924515026785, "lon": 10.588121232724818, "adr": "Skogveien 117 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10927531", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJVEMA4", "r": 3}, {"navn": "Skogveien 158 B", "grp": "Kun mobil", "lat": 59.91110030886074, "lon": 10.589381728437116, "adr": "Skogveien 158 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10927771", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJZ6MAO", "r": 5}, {"navn": "Skogveien 95 B", "grp": "Kun mobil", "lat": 59.909218368832924, "lon": 10.59313477543772, "adr": "Skogveien 95 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10927796", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJZVMA4", "r": 1}, {"navn": "Skogveien 140 A", "grp": "Kun mobil", "lat": 59.9098601623753, "lon": 10.587133550426056, "adr": "Skogveien 140 A, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10927867", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJaeMAG", "r": 5}, {"navn": "Skogveien 134 B", "grp": "Kun mobil", "lat": 59.90944301984254, "lon": 10.585675853913374, "adr": "Skogveien 134 B, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10928018", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJd5MAG", "r": 5}, {"navn": "Skogveien 75", "grp": "Kun mobil", "lat": 59.91111562165213, "lon": 10.598143741607915, "adr": "Skogveien 75, 1369 Stabekk", "area": "Stabekk", "bnr": "V-10928461", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DJkEMAW", "r": 1}];
+var AREAS = ["Stabekk"];
+var STORE_KEY = "dorkart_Markus_15.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Markus";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":23,"m":6,"h":[[[59.910272,10.591767],[59.910941,10.591374],[59.911045,10.591415],[59.911133,10.591532],[59.911192,10.591706],[59.911394,10.595805],[59.911387,10.598144],[59.911366,10.598349],[59.911258,10.599015],[59.911199,10.599189],[59.911111,10.599306],[59.911007,10.599347],[59.910903,10.599306],[59.910815,10.599189],[59.909433,10.596562],[59.909108,10.595638],[59.909049,10.595463],[59.909028,10.595258],[59.908961,10.59349],[59.909182,10.592549],[59.90933,10.592353],[59.910037,10.591914],[59.910132,10.592036]]],"b":[[59.911394,10.595805]],"g":["Skogveien","Skallumhagen"]},{"n":2,"c":"#7b2cbf","s":22,"m":0,"h":[[[59.908359,10.589108],[59.908437,10.589077],[59.908739,10.589482],[59.908959,10.590185],[59.90918,10.592574],[59.908985,10.593389],[59.908021,10.593624],[59.907917,10.593583],[59.907264,10.592649],[59.906788,10.591698],[59.906729,10.591524],[59.906708,10.591318],[59.906729,10.591112],[59.906788,10.590938],[59.90739,10.590139],[59.907718,10.590402],[59.907959,10.589837],[59.908003,10.589486]]],"b":[[59.90918,10.592574]],"g":["Skogveien","Krokvolden","Gamle Drammensvei"]},{"n":3,"c":"#0b7285","s":18,"m":2,"h":[[[59.90721,10.590305],[59.906968,10.590215],[59.90688,10.590099],[59.906537,10.588891],[59.906385,10.587698],[59.906405,10.587492],[59.906579,10.586924],[59.907054,10.586379],[59.907158,10.586338],[59.907262,10.586379],[59.908014,10.587307],[59.908127,10.587711],[59.908196,10.588121],[59.908059,10.589053],[59.907992,10.589148],[59.90801,10.589356],[59.907918,10.589932],[59.907718,10.590402],[59.90733,10.590092]]],"b":[[59.908196,10.588121]],"g":["Skogveien"]},{"n":4,"c":"#a61e4d","s":20,"m":2,"h":[[[59.907929,10.586688],[59.907678,10.58529],[59.907699,10.585084],[59.907758,10.58491],[59.907846,10.584793],[59.90795,10.584752],[59.909139,10.585126],[59.90925,10.585308],[59.909221,10.586178],[59.908971,10.58596],[59.908888,10.585945],[59.90882,10.586927],[59.908883,10.586931],[59.909257,10.587572],[59.909668,10.58762],[59.90973,10.58749],[59.910037,10.587524],[59.910089,10.587667],[59.91011,10.587873],[59.910089,10.588079],[59.909956,10.58839],[59.90972,10.588606],[59.909711,10.588813],[59.909396,10.589348],[59.90918,10.58963],[59.909076,10.58967],[59.908767,10.589519],[59.908427,10.589063],[59.908119,10.58767],[59.908123,10.58722],[59.908025,10.586847]]],"b":[[59.91011,10.587873]],"g":["Krokvolden","Skogveien"]},{"n":5,"c":"#343a40","s":16,"m":5,"h":[[[59.909251,10.585275],[59.909443,10.585138],[59.909547,10.585179],[59.910678,10.586687],[59.911214,10.588368],[59.911372,10.589382],[59.911351,10.589587],[59.911292,10.589762],[59.910323,10.590936],[59.910219,10.590977],[59.910115,10.590936],[59.910027,10.59082],[59.909475,10.589922],[59.909349,10.589467],[59.909711,10.588813],[59.90972,10.588606],[59.910123,10.588237],[59.910209,10.587938],[59.910037,10.587524],[59.90973,10.58749],[59.909668,10.58762],[59.909257,10.587572],[59.908883,10.586931],[59.90882,10.586927],[59.908888,10.585945],[59.908971,10.58596],[59.909221,10.586178]]],"b":[[59.911372,10.589382]],"g":["Skogveien","Egers Vei"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
