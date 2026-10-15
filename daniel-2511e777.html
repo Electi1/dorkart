@@ -293,11 +293,12 @@ if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_S
 });
 }
 var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
-var compassBtn = document.getElementById("compass"), rotAnim = null;
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
 function animateBearing(target, ms){
 if(!map._rotate) return;
 var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
 if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
 if(!d){ map.setBearing(target); return; }
 function step(ts){
 if(t0 === null) t0 = ts;
@@ -306,6 +307,8 @@ map.setBearing(k < 1 ? b0 + d * ease : target);
 rotAnim = k < 1 ? requestAnimationFrame(step) : null;
 }
 rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
 }
 function updateCompass(){
 if(!compassBtn) return;
