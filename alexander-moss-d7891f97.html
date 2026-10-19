@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Alexander 19.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Alexander</div>
+<div class="date">19.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Elgveien 7 A", "grp": "HP", "lat": 59.44773413757218, "lon": 10.686491544331885, "adr": "Elgveien 7 A, 1534 Moss", "area": "Moss", "bnr": "V-10899751", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DCGOMA4", "r": 2}, {"navn": "Knappestøperen 1", "grp": "HP", "lat": 59.448425161674386, "lon": 10.693548156853465, "adr": "Knappestøperen 1, 1535 Moss", "area": "Moss", "bnr": "V-10900387", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DCQeMAO", "r": 3}, {"navn": "Osloveien 184", "grp": "HP", "lat": 59.46655242642723, "lon": 10.689540988883426, "adr": "Osloveien 184, 1538 Moss", "area": "Moss", "bnr": "V-10900396", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DCQnMAO", "r": 4}, {"navn": "Nålveien 27", "grp": "HP", "lat": 59.46010698516861, "lon": 10.694937161307667, "adr": "Nålveien 27, 1537 Moss", "area": "Moss", "bnr": "V-10900399", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCQqMAO", "r": 4}, {"navn": "Nålveien 4", "grp": "HP", "lat": 59.45814945766042, "lon": 10.6942039601534, "adr": "Nålveien 4, 1537 Moss", "area": "Moss", "bnr": "V-10900585", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCTqMAO", "r": 4}, {"navn": "Stubbeløkkveien 72 B", "grp": "HP", "lat": 59.47011504065757, "lon": 10.699414078482704, "adr": "Stubbeløkkveien 72 B, 1538 Moss", "area": "Moss", "bnr": "V-10901266", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DCepMAG", "r": 5}, {"navn": "Elgveien 8", "grp": "HP", "lat": 59.447148993878734, "lon": 10.684993112027966, "adr": "Elgveien 8, 1534 Moss", "area": "Moss", "bnr": "V-10901416", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DChFMAW", "r": 2}, {"navn": "Anitras Vei 17", "grp": "HP", "lat": 59.45117291887967, "lon": 10.693325697489, "adr": "Anitras Vei 17, 1535 Moss", "area": "Moss", "bnr": "V-10901835", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DCo0MAG", "r": 3}, {"navn": "Slyngveien 67", "grp": "HP", "lat": 59.44778005460369, "lon": 10.683419364300862, "adr": "Slyngveien 67, 1534 Moss", "area": "Moss", "bnr": "V-10902359", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DCwSMAW", "r": 2}, {"navn": "Slyngveien 64", "grp": "HP", "lat": 59.44892922522927, "lon": 10.684852367641302, "adr": "Slyngveien 64, 1534 Moss", "area": "Moss", "bnr": "V-10903484", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDEbMAO", "r": 2}, {"navn": "Elgveien 28", "grp": "HP", "lat": 59.44923348545151, "lon": 10.686331598849382, "adr": "Elgveien 28, 1534 Moss", "area": "Moss", "bnr": "V-10903972", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDMTMA4", "r": 2}, {"navn": "Tråklestinget 21", "grp": "HP", "lat": 59.45936492076873, "lon": 10.691900356789098, "adr": "Tråklestinget 21, 1537 Moss", "area": "Moss", "bnr": "V-10904100", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDOXMA4", "r": 4}, {"navn": "Charlottes Vei 38 A", "grp": "HP", "lat": 59.48520122267232, "lon": 10.694486401828877, "adr": "Charlottes Vei 38 A, 1539 Moss", "area": "Moss", "bnr": "V-10904309", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDRuMAO", "r": 5}, {"navn": "Elgveien 73", "grp": "HP", "lat": 59.45237935665837, "lon": 10.682677728982746, "adr": "Elgveien 73, 1534 Moss", "area": "Moss", "bnr": "V-10904434", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDTvMAO", "r": 1}, {"navn": "Charlottes Vei 36 A", "grp": "HP", "lat": 59.485130568072634, "lon": 10.694608589890379, "adr": "Charlottes Vei 36 A, 1539 Moss", "area": "Moss", "bnr": "V-10904630", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDX5MAO", "r": 5}, {"navn": "Elgveien 145", "grp": "HP", "lat": 59.450610561947336, "lon": 10.684161601779879, "adr": "Elgveien 145, 1534 Moss", "area": "Moss", "bnr": "V-10905141", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDfKMAW", "r": 1}, {"navn": "Osloveien 185", "grp": "HP", "lat": 59.46698387588598, "lon": 10.691028153675529, "adr": "Osloveien 185, 1538 Moss", "area": "Moss", "bnr": "V-10905172", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDfpMAG", "r": 4}, {"navn": "Osloveien 72", "grp": "HP", "lat": 59.45049030841505, "lon": 10.68737715230814, "adr": "Osloveien 72, 1534 Moss", "area": "Moss", "bnr": "V-10905476", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDkjMAG", "r": 2}, {"navn": "Knappestøperen 27", "grp": "HP", "lat": 59.446859539295616, "lon": 10.690711214475828, "adr": "Knappestøperen 27, 1535 Moss", "area": "Moss", "bnr": "V-10905505", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDlCMAW", "r": 2}, {"navn": "Elgveien 44", "grp": "HP", "lat": 59.450667971601376, "lon": 10.685838534572524, "adr": "Elgveien 44, 1534 Moss", "area": "Moss", "bnr": "V-10906007", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDtIMAW", "r": 1}, {"navn": "Innslaget 17", "grp": "HP", "lat": 59.45985698072283, "lon": 10.690107487649344, "adr": "Innslaget 17, 1536 Moss", "area": "Moss", "bnr": "V-10906629", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DE3KMAW", "r": 4}, {"navn": "Stubbeløkkveien 39", "grp": "HP", "lat": 59.47139271848698, "lon": 10.694731079557505, "adr": "Stubbeløkkveien 39, 1538 Moss", "area": "Moss", "bnr": "V-10906990", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE99MAG", "r": 5}, {"navn": "Kamboveien 5 B", "grp": "HP", "lat": 59.47221398940951, "lon": 10.692973504451576, "adr": "Kamboveien 5 B, 1538 Moss", "area": "Moss", "bnr": "V-10907125", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DEBKMA4", "r": 5}, {"navn": "Osloveien 52", "grp": "HP", "lat": 59.447391102772215, "lon": 10.6864162555995, "adr": "Osloveien 52, 1534 Moss", "area": "Moss", "bnr": "V-10907902", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DENrMAO", "r": 2}, {"navn": "Anitras Vei 1", "grp": "HP", "lat": 59.45109459655171, "lon": 10.69520933636771, "adr": "Anitras Vei 1, 1535 Moss", "area": "Moss", "bnr": "V-10907913", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DEO2MAO", "r": 3}, {"navn": "Anitras Vei 4", "grp": "HP", "lat": 59.45084093210113, "lon": 10.69482178453678, "adr": "Anitras Vei 4, 1535 Moss", "area": "Moss", "bnr": "V-10908395", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DEVoMAO", "r": 3}, {"navn": "Innslaget 7", "grp": "HP", "lat": 59.4609772751781, "lon": 10.690851608257057, "adr": "Innslaget 7, 1536 Moss", "area": "Moss", "bnr": "V-10909601", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DEpGMAW", "r": 4}, {"navn": "Ingrids Vei 12", "grp": "HP", "lat": 59.45133826401025, "lon": 10.694746466425492, "adr": "Ingrids Vei 12, 1535 Moss", "area": "Moss", "bnr": "V-10910448", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF2vMAG", "r": 3}, {"navn": "Nålveien 18", "grp": "HP", "lat": 59.45890456511394, "lon": 10.694356439815833, "adr": "Nålveien 18, 1537 Moss", "area": "Moss", "bnr": "V-10910532", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF4HMAW", "r": 4}, {"navn": "Elgveien 14", "grp": "HP", "lat": 59.44775505032529, "lon": 10.685358402685923, "adr": "Elgveien 14, 1534 Moss", "area": "Moss", "bnr": "V-10911526", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DFKJMA4", "r": 2}, {"navn": "Osloveien 331", "grp": "HP", "lat": 59.48493303941356, "lon": 10.698388529984575, "adr": "Osloveien 331, 1539 Moss", "area": "Moss", "bnr": "V-10911712", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFNJMA4", "r": 5}, {"navn": "Nålveien 14", "grp": "HP", "lat": 59.45842565811439, "lon": 10.694376582824523, "adr": "Nålveien 14, 1537 Moss", "area": "Moss", "bnr": "V-10912865", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFfuMAG", "r": 4}, {"navn": "Osloveien 217", "grp": "HP", "lat": 59.470624438533356, "lon": 10.690804112953659, "adr": "Osloveien 217, 1538 Moss", "area": "Moss", "bnr": "V-10913275", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFmWMAW", "r": 5}, {"navn": "Osloveien 47", "grp": "HP", "lat": 59.446820143832355, "lon": 10.686811150079208, "adr": "Osloveien 47, 1534 Moss", "area": "Moss", "bnr": "V-10913710", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DFtXMAW", "r": 2}, {"navn": "Sømmen 9", "grp": "HP", "lat": 59.45982505225088, "lon": 10.693686048367129, "adr": "Sømmen 9, 1537 Moss", "area": "Moss", "bnr": "V-10914087", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFzcMAG", "r": 4}, {"navn": "Osloveien 55", "grp": "HP", "lat": 59.44755719370667, "lon": 10.687465216356713, "adr": "Osloveien 55, 1534 Moss", "area": "Moss", "bnr": "V-10914252", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DG2HMAW", "r": 2}, {"navn": "Tråklestinget 2", "grp": "HP", "lat": 59.458377858380516, "lon": 10.690439469206497, "adr": "Tråklestinget 2, 1537 Moss", "area": "Moss", "bnr": "V-10914498", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DG6FMAW", "r": 4}, {"navn": "Innslaget 8", "grp": "HP", "lat": 59.460909321783454, "lon": 10.691382881908245, "adr": "Innslaget 8, 1536 Moss", "area": "Moss", "bnr": "V-10915015", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGEaMAO", "r": 4}, {"navn": "Sømmen 11", "grp": "HP", "lat": 59.459998470590925, "lon": 10.69360832744117, "adr": "Sømmen 11, 1537 Moss", "area": "Moss", "bnr": "V-10915022", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGEhMAO", "r": 4}, {"navn": "Osloveien 207", "grp": "HP", "lat": 59.468854476087564, "lon": 10.690150880145485, "adr": "Osloveien 207, 1538 Moss", "area": "Moss", "bnr": "V-10915156", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DGGrMAO", "r": 4}, {"navn": "Kamboveien 28", "grp": "HP", "lat": 59.47045690771354, "lon": 10.69333745539742, "adr": "Kamboveien 28, 1538 Moss", "area": "Moss", "bnr": "V-10915627", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGOSMA4", "r": 5}, {"navn": "Mor Åses Vei 8", "grp": "HP", "lat": 59.44978934880723, "lon": 10.694738280212997, "adr": "Mor Åses Vei 8, 1535 Moss", "area": "Moss", "bnr": "V-10915659", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGOyMAO", "r": 3}, {"navn": "Skoleåsen 2", "grp": "HP", "lat": 59.46989098483737, "lon": 10.691261678939812, "adr": "Skoleåsen 2, 1538 Moss", "area": "Moss", "bnr": "V-10916543", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGdEMAW", "r": 5}, {"navn": "Stubbeløkkveien 74 B", "grp": "HP", "lat": 59.4698205595275, "lon": 10.699355665296627, "adr": "Stubbeløkkveien 74 B, 1538 Moss", "area": "Moss", "bnr": "V-10916778", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGh1MAG", "r": 5}, {"navn": "Helgas Vei 5", "grp": "HP", "lat": 59.45006751340359, "lon": 10.694067458489778, "adr": "Helgas Vei 5, 1535 Moss", "area": "Moss", "bnr": "V-10916805", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGhSMAW", "r": 3}, {"navn": "Slyngveien 76 B", "grp": "HP", "lat": 59.447338519662175, "lon": 10.684226437768615, "adr": "Slyngveien 76 B, 1534 Moss", "area": "Moss", "bnr": "V-10916971", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGk8MAG", "r": 2}, {"navn": "Knappestøperen 28", "grp": "HP", "lat": 59.44647846571294, "lon": 10.691076707264182, "adr": "Knappestøperen 28, 1535 Moss", "area": "Moss", "bnr": "V-10917171", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGnMMAW", "r": 2}, {"navn": "Mor Åses Vei 36", "grp": "HP", "lat": 59.45212529567942, "lon": 10.696072430613665, "adr": "Mor Åses Vei 36, 1535 Moss", "area": "Moss", "bnr": "V-10917687", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGvgMAG", "r": 3}, {"navn": "Mor Åses Vei 38", "grp": "HP", "lat": 59.452291491693686, "lon": 10.696415940107123, "adr": "Mor Åses Vei 38, 1535 Moss", "area": "Moss", "bnr": "V-10917849", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGyIMAW", "r": 3}, {"navn": "Osloveien 76", "grp": "HP", "lat": 59.45101176781618, "lon": 10.687037571062717, "adr": "Osloveien 76, 1534 Moss", "area": "Moss", "bnr": "V-10918119", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DH2eMAG", "r": 2}, {"navn": "Ingrids Vei 6", "grp": "HP", "lat": 59.45164007863901, "lon": 10.695395411734143, "adr": "Ingrids Vei 6, 1535 Moss", "area": "Moss", "bnr": "V-10918872", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHEnMAO", "r": 3}, {"navn": "Innslaget 14", "grp": "HP", "lat": 59.460072287107316, "lon": 10.69068288858823, "adr": "Innslaget 14, 1536 Moss", "area": "Moss", "bnr": "V-10918973", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHGQMA4", "r": 4}, {"navn": "Elgveien 69", "grp": "HP", "lat": 59.45265343293102, "lon": 10.682625898300584, "adr": "Elgveien 69, 1534 Moss", "area": "Moss", "bnr": "V-10919334", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHMFMA4", "r": 1}, {"navn": "Bøygen 10", "grp": "HP", "lat": 59.446673542418694, "lon": 10.692589237684917, "adr": "Bøygen 10, 1535 Moss", "area": "Moss", "bnr": "V-10919371", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DHMqMAO", "r": 2}, {"navn": "Patterødveien 25", "grp": "HP", "lat": 59.4483743263831, "lon": 10.704086864035762, "adr": "Patterødveien 25, 1599 Moss", "area": "Moss", "bnr": "V-10919702", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHSBMA4", "r": 3}, {"navn": "Elgveien 65", "grp": "HP", "lat": 59.45386633235326, "lon": 10.683686652774087, "adr": "Elgveien 65, 1534 Moss", "area": "Moss", "bnr": "V-10920019", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHXIMA4", "r": 1}, {"navn": "Mor Åses Vei 17", "grp": "HP", "lat": 59.45047300988363, "lon": 10.696042600310378, "adr": "Mor Åses Vei 17, 1535 Moss", "area": "Moss", "bnr": "V-10921277", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHraMAG", "r": 3}, {"navn": "Veverbakken 133", "grp": "HP", "lat": 59.46619270640361, "lon": 10.696768529914769, "adr": "Veverbakken 133, 1536 Moss", "area": "Moss", "bnr": "V-10921904", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI1hMAG", "r": 4}, {"navn": "Ingrids Vei 15", "grp": "HP", "lat": 59.45185956674333, "lon": 10.69440085753146, "adr": "Ingrids Vei 15, 1535 Moss", "area": "Moss", "bnr": "V-10922157", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI5mMAG", "r": 3}, {"navn": "Elgveien 12", "grp": "HP", "lat": 59.44786241496926, "lon": 10.685042715814449, "adr": "Elgveien 12, 1534 Moss", "area": "Moss", "bnr": "V-10922306", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DI8BMAW", "r": 2}, {"navn": "Skoleåsen 5", "grp": "HP", "lat": 59.47042018743638, "lon": 10.69201181000744, "adr": "Skoleåsen 5, 1538 Moss", "area": "Moss", "bnr": "V-10922550", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIC7MAO", "r": 5}, {"navn": "Helgas Vei 7", "grp": "HP", "lat": 59.4500162905091, "lon": 10.694449255570188, "adr": "Helgas Vei 7, 1535 Moss", "area": "Moss", "bnr": "V-10922660", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIDtMAO", "r": 3}, {"navn": "Charlottes Vei 15", "grp": "HC Vula", "lat": 59.485307677832, "lon": 10.693535348851498, "adr": "Charlottes Vei 15, 1539 Moss", "area": "Moss", "bnr": "V-10928807", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKhZMAW", "r": 5}, {"navn": "Tiurveien 16 A", "grp": "HC Vula", "lat": 59.44896439147492, "lon": 10.679541087585301, "adr": "Tiurveien 16 A, 1534 Moss", "area": "Moss", "bnr": "V-10928836", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKi2MAG", "r": 1}, {"navn": "Luenbakken 26", "grp": "HC Vula", "lat": 59.46607483181889, "lon": 10.692352256954141, "adr": "Luenbakken 26, 1538 Moss", "area": "Moss", "bnr": "V-10928940", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKjiMAG", "r": 4}, {"navn": "Verksløkka 6", "grp": "HC Vula", "lat": 59.44566048560469, "lon": 10.677123150731939, "adr": "Verksløkka 6, 1534 Moss", "area": "Moss", "bnr": "V-10929004", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKkkMAG", "r": 1}, {"navn": "Slyngveien 68", "grp": "HC Vula", "lat": 59.4485656317803, "lon": 10.685187066713292, "adr": "Slyngveien 68, 1534 Moss", "area": "Moss", "bnr": "V-10929032", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKlCMAW", "r": 2}, {"navn": "Osloveien 182 A", "grp": "HC Vula", "lat": 59.46621444055543, "lon": 10.689153961492655, "adr": "Osloveien 182 A, 1538 Moss", "area": "Moss", "bnr": "V-10929044", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKlOMAW", "r": 4}, {"navn": "Osloveien 201", "grp": "HC Vula", "lat": 59.467779476930346, "lon": 10.690626673552845, "adr": "Osloveien 201, 1538 Moss", "area": "Moss", "bnr": "V-10929054", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKlYMAW", "r": 4}, {"navn": "Tråklestinget 12", "grp": "HC Vula", "lat": 59.459054631567646, "lon": 10.690058609007373, "adr": "Tråklestinget 12, 1537 Moss", "area": "Moss", "bnr": "V-10929147", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKn3MAG", "r": 4}, {"navn": "Patterødveien 32", "grp": "HC Vula", "lat": 59.449405845997866, "lon": 10.702127822683172, "adr": "Patterødveien 32, 1599 Moss", "area": "Moss", "bnr": "V-10929169", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKnPMAW", "r": 3}, {"navn": "Jutulveien 15", "grp": "HC Vula", "lat": 59.44842508386348, "lon": 10.682851690206956, "adr": "Jutulveien 15, 1534 Moss", "area": "Moss", "bnr": "V-10929246", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKoeMAG", "r": 2}, {"navn": "Elgveien 2", "grp": "HC Vula", "lat": 59.44645317488111, "lon": 10.684623370195016, "adr": "Elgveien 2, 1534 Moss", "area": "Moss", "bnr": "V-10929265", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKoxMAG", "r": 2}, {"navn": "Herregårdsveien 42", "grp": "HC Vula", "lat": 59.47978891649508, "lon": 10.695428918621863, "adr": "Herregårdsveien 42, 1538 Moss", "area": "Moss", "bnr": "V-10929269", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKp1MAG", "r": 5}, {"navn": "Kamboveien 25", "grp": "HC Vula", "lat": 59.47041127831806, "lon": 10.692699744373273, "adr": "Kamboveien 25, 1538 Moss", "area": "Moss", "bnr": "V-10929364", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKqYMAW", "r": 5}, {"navn": "Mor Åses Vei 12", "grp": "HC Vula", "lat": 59.45006005870788, "lon": 10.69533395267311, "adr": "Mor Åses Vei 12, 1535 Moss", "area": "Moss", "bnr": "V-10929438", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKrkMAG", "r": 3}, {"navn": "Ingrids Vei 14", "grp": "HC Vula", "lat": 59.451349758905685, "lon": 10.694234222563791, "adr": "Ingrids Vei 14, 1535 Moss", "area": "Moss", "bnr": "V-10929521", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKt5MAG", "r": 3}, {"navn": "Nålveien 16", "grp": "HC Vula", "lat": 59.45865120351129, "lon": 10.694299647891562, "adr": "Nålveien 16, 1537 Moss", "area": "Moss", "bnr": "V-10929927", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKzdMAG", "r": 4}, {"navn": "Nålveien 3", "grp": "HC Vula", "lat": 59.45847404836032, "lon": 10.694800709427215, "adr": "Nålveien 3, 1537 Moss", "area": "Moss", "bnr": "V-10930000", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL0oMAG", "r": 4}, {"navn": "Kråkeveien 14", "grp": "HC Vula", "lat": 59.44698807598054, "lon": 10.674646652396039, "adr": "Kråkeveien 14, 1534 Moss", "area": "Moss", "bnr": "V-10930007", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DL0vMAG", "r": 1}, {"navn": "Elgveien 119", "grp": "HC Vula", "lat": 59.45034067034517, "lon": 10.682976803439788, "adr": "Elgveien 119, 1534 Moss", "area": "Moss", "bnr": "V-10930123", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DL2nMAG", "r": 1}, {"navn": "Innslaget 16", "grp": "HC Vula", "lat": 59.459813805768064, "lon": 10.69052881764981, "adr": "Innslaget 16, 1536 Moss", "area": "Moss", "bnr": "V-10930373", "bol": "H0301", "st": "Ikke hjemme", "sfid": "a4CSg000000DL6pMAG", "r": 4}, {"navn": "Veverbakken 135", "grp": "HC Vula", "lat": 59.46647409252318, "lon": 10.696403189550734, "adr": "Veverbakken 135, 1536 Moss", "area": "Moss", "bnr": "V-10930379", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL6vMAG", "r": 4}, {"navn": "Knappestøperen 21", "grp": "HC Vula", "lat": 59.4472865135335, "lon": 10.691032386027477, "adr": "Knappestøperen 21, 1535 Moss", "area": "Moss", "bnr": "V-10930451", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DL85MAG", "r": 2}, {"navn": "Osloveien 40", "grp": "HC Vula", "lat": 59.44652584851146, "lon": 10.684420616845317, "adr": "Osloveien 40, 1534 Moss", "area": "Moss", "bnr": "V-10930534", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DL9QMAW", "r": 2}, {"navn": "Kamboveien 12", "grp": "HC Vula", "lat": 59.4723369094534, "lon": 10.694508298523795, "adr": "Kamboveien 12, 1538 Moss", "area": "Moss", "bnr": "V-10930654", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLBMMA4", "r": 5}, {"navn": "Kulpeåsen 68", "grp": "HC Vula", "lat": 59.485315471847095, "lon": 10.691580761563738, "adr": "Kulpeåsen 68, 1539 Moss", "area": "Moss", "bnr": "V-10930699", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLC5MAO", "r": 5}, {"navn": "Veverbakken 129", "grp": "HC Vula", "lat": 59.46675282021056, "lon": 10.69710547024166, "adr": "Veverbakken 129, 1536 Moss", "area": "Moss", "bnr": "V-10930856", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLEcMAO", "r": 4}, {"navn": "Bukkespranget 3", "grp": "HC Vula", "lat": 59.45178493532864, "lon": 10.692400693842869, "adr": "Bukkespranget 3, 1535 Moss", "area": "Moss", "bnr": "V-10930972", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLGUMA4", "r": 3}, {"navn": "Veverbakken 141", "grp": "HC Vula", "lat": 59.46707543357083, "lon": 10.696926749608965, "adr": "Veverbakken 141, 1536 Moss", "area": "Moss", "bnr": "V-10931047", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLHhMAO", "r": 4}, {"navn": "Stubbeløkkveien 46", "grp": "HC Vula", "lat": 59.471339760903795, "lon": 10.697427305768134, "adr": "Stubbeløkkveien 46, 1538 Moss", "area": "Moss", "bnr": "V-10931090", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLIOMA4", "r": 5}, {"navn": "Ørneveien 13", "grp": "HC Vula", "lat": 59.45179339499178, "lon": 10.677956105246656, "adr": "Ørneveien 13, 1534 Moss", "area": "Moss", "bnr": "V-10931173", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLJjMAO", "r": 1}, {"navn": "Gamleveien 38", "grp": "HC Vula", "lat": 59.44852101990449, "lon": 10.676788538269465, "adr": "Gamleveien 38, 1534 Moss", "area": "Moss", "bnr": "V-10931597", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLQZMA4", "r": 1}, {"navn": "Elgveien 75", "grp": "HC Vula", "lat": 59.45220880994838, "lon": 10.682669254461123, "adr": "Elgveien 75, 1534 Moss", "area": "Moss", "bnr": "V-10931628", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLR4MAO", "r": 1}, {"navn": "Mor Åses Vei 6", "grp": "HC Vula", "lat": 59.44977245218851, "lon": 10.694326262467612, "adr": "Mor Åses Vei 6, 1535 Moss", "area": "Moss", "bnr": "V-10931816", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLU6MAO", "r": 3}, {"navn": "Gamleveien 57", "grp": "HC Vula", "lat": 59.452132609298324, "lon": 10.67672039045413, "adr": "Gamleveien 57, 1534 Moss", "area": "Moss", "bnr": "V-10931965", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLWVMA4", "r": 1}, {"navn": "Bøygen 15", "grp": "HC Vula", "lat": 59.44677099540371, "lon": 10.691306501479454, "adr": "Bøygen 15, 1535 Moss", "area": "Moss", "bnr": "V-10932270", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLbQMAW", "r": 2}, {"navn": "Veverbakken 127", "grp": "HC Vula", "lat": 59.46702795599061, "lon": 10.697645028323473, "adr": "Veverbakken 127, 1536 Moss", "area": "Moss", "bnr": "V-10932610", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLguMAG", "r": 4}, {"navn": "Tiurveien 1", "grp": "HC Vula", "lat": 59.44704399083598, "lon": 10.678498670191027, "adr": "Tiurveien 1, 1534 Moss", "area": "Moss", "bnr": "V-10932618", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLh2MAG", "r": 1}, {"navn": "Ingrids Vei 4", "grp": "HC Vula", "lat": 59.4514527775188, "lon": 10.695176107941302, "adr": "Ingrids Vei 4, 1535 Moss", "area": "Moss", "bnr": "V-10932815", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLkDMAW", "r": 3}, {"navn": "Osloveien 215 B", "grp": "HC Vula", "lat": 59.47007933951407, "lon": 10.690588015155477, "adr": "Osloveien 215 B, 1538 Moss", "area": "Moss", "bnr": "V-10932838", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLkaMAG", "r": 5}, {"navn": "Buveien 6", "grp": "HC Vula", "lat": 59.44737277241149, "lon": 10.682309870065318, "adr": "Buveien 6, 1534 Moss", "area": "Moss", "bnr": "V-10932882", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLlIMAW", "r": 2}, {"navn": "Innslaget 9", "grp": "HC Vula", "lat": 59.46077197720467, "lon": 10.690619949552826, "adr": "Innslaget 9, 1536 Moss", "area": "Moss", "bnr": "V-10932938", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLmCMAW", "r": 4}, {"navn": "Luenbakken 12", "grp": "HC Vula", "lat": 59.466507543981244, "lon": 10.69293353028529, "adr": "Luenbakken 12, 1538 Moss", "area": "Moss", "bnr": "V-10932944", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLmIMAW", "r": 4}, {"navn": "Elgveien 71", "grp": "HC Vula", "lat": 59.45251447580627, "lon": 10.682661332945328, "adr": "Elgveien 71, 1534 Moss", "area": "Moss", "bnr": "V-10933073", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLoNMAW", "r": 1}, {"navn": "Dovregubben 4", "grp": "HC Vula", "lat": 59.44838699565887, "lon": 10.69205749267626, "adr": "Dovregubben 4, 1535 Moss", "area": "Moss", "bnr": "V-10933107", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLovMAG", "r": 3}, {"navn": "Mor Åses Vei 23", "grp": "HC Vula", "lat": 59.4511061912531, "lon": 10.696391844728803, "adr": "Mor Åses Vei 23, 1535 Moss", "area": "Moss", "bnr": "V-10933139", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DLpRMAW", "r": 3}, {"navn": "Helgas Vei 10", "grp": "HC", "lat": 59.450528988035984, "lon": 10.693805071588876, "adr": "Helgas Vei 10, 1535 Moss", "area": "Moss", "bnr": "V-10899031", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC4mMAG", "r": 3}, {"navn": "Veverbakken 71", "grp": "HC", "lat": 59.46475791760665, "lon": 10.697834886418425, "adr": "Veverbakken 71, 1536 Moss", "area": "Moss", "bnr": "V-10899044", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DC4zMAG", "r": 4}, {"navn": "Slyngveien 65", "grp": "HC", "lat": 59.44794923822737, "lon": 10.683533607452878, "adr": "Slyngveien 65, 1534 Moss", "area": "Moss", "bnr": "V-10901690", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DClfMAG", "r": 2}, {"navn": "Granveien 6", "grp": "HC", "lat": 59.45007727239489, "lon": 10.677390932310736, "adr": "Granveien 6, 1534 Moss", "area": "Moss", "bnr": "V-10902043", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DCrMMAW", "r": 1}, {"navn": "Speiderveien 3", "grp": "HC", "lat": 59.44686833299741, "lon": 10.681680758892714, "adr": "Speiderveien 3, 1534 Moss", "area": "Moss", "bnr": "V-10902368", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DCwbMAG", "r": 2}, {"navn": "Elgveien 36", "grp": "HC", "lat": 59.44995453419127, "lon": 10.68613818148173, "adr": "Elgveien 36, 1534 Moss", "area": "Moss", "bnr": "V-10904163", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDPYMA4", "r": 2}, {"navn": "Falkeveien 9", "grp": "HC", "lat": 59.449781645290656, "lon": 10.674774627829628, "adr": "Falkeveien 9, 1534 Moss", "area": "Moss", "bnr": "V-10905496", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDl3MAG", "r": 1}, {"navn": "Gamleveien 52", "grp": "HC", "lat": 59.45067236924088, "lon": 10.675823617757008, "adr": "Gamleveien 52, 1534 Moss", "area": "Moss", "bnr": "V-10905943", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DDsGMAW", "r": 1}, {"navn": "Ørneveien 3", "grp": "HC", "lat": 59.45025741830873, "lon": 10.677262594970207, "adr": "Ørneveien 3, 1534 Moss", "area": "Moss", "bnr": "V-10910201", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DEywMAG", "r": 1}, {"navn": "Krapfossveien 67", "grp": "HC", "lat": 59.443446999077075, "lon": 10.685523252068093, "adr": "Krapfossveien 67, 1597 Moss", "area": "Moss", "bnr": "V-10911086", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DFDDMA4", "r": 2}, {"navn": "Hytteveien 17", "grp": "HC", "lat": 59.44172782017365, "lon": 10.6867092564587, "adr": "Hytteveien 17, 1597 Moss", "area": "Moss", "bnr": "V-10912541", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DFagMAG", "r": 2}, {"navn": "Sandbukta 9", "grp": "HC", "lat": 59.445886145279324, "lon": 10.67002625052408, "adr": "Sandbukta 9, 1534 Moss", "area": "Moss", "bnr": "V-10912880", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DFg9MAG", "r": 1}, {"navn": "Anitras Vei 17", "grp": "HC", "lat": 59.45117291887967, "lon": 10.693325697489, "adr": "Anitras Vei 17, 1535 Moss", "area": "Moss", "bnr": "V-10913317", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DFnCMAW", "r": 3}, {"navn": "Krapfossveien 61", "grp": "HC", "lat": 59.44267773804241, "lon": 10.684858889116644, "adr": "Krapfossveien 61, 1597 Moss", "area": "Moss", "bnr": "V-10914934", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGDHMA4", "r": 2}, {"navn": "Sandbukta 13", "grp": "HC", "lat": 59.44647609580794, "lon": 10.670249358151192, "adr": "Sandbukta 13, 1534 Moss", "area": "Moss", "bnr": "V-10916266", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGYlMAO", "r": 1}, {"navn": "Røysveien 46", "grp": "HC", "lat": 59.446071448364705, "lon": 10.67098783782188, "adr": "Røysveien 46, 1534 Moss", "area": "Moss", "bnr": "V-10916736", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGgLMAW", "r": 1}, {"navn": "Nålveien 20", "grp": "HC", "lat": 59.459069289042155, "lon": 10.694217377097454, "adr": "Nålveien 20, 1537 Moss", "area": "Moss", "bnr": "V-10917058", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DGlXMAW", "r": 4}, {"navn": "Osloveien 215", "grp": "HC", "lat": 59.46997254696307, "lon": 10.690580914798995, "adr": "Osloveien 215, 1538 Moss", "area": "Moss", "bnr": "V-10919212", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHKHMA4", "r": 5}, {"navn": "Herregårdsveien 40", "grp": "HC", "lat": 59.480152306573544, "lon": 10.695111671424414, "adr": "Herregårdsveien 40, 1538 Moss", "area": "Moss", "bnr": "V-10919251", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHKuMAO", "r": 5}, {"navn": "Stubbeløkkveien 64 B", "grp": "HC", "lat": 59.470607441828854, "lon": 10.699675925447064, "adr": "Stubbeløkkveien 64 B, 1538 Moss", "area": "Moss", "bnr": "V-10920402", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHdTMAW", "r": 5}, {"navn": "Elgveien 11 B", "grp": "HC", "lat": 59.448240788729805, "lon": 10.68704242065856, "adr": "Elgveien 11 B, 1534 Moss", "area": "Moss", "bnr": "V-10920417", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DHdiMAG", "r": 2}, {"navn": "Hytteveien 15", "grp": "HC", "lat": 59.4420646837689, "lon": 10.686288656652165, "adr": "Hytteveien 15, 1597 Moss", "area": "Moss", "bnr": "V-10920493", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHewMAG", "r": 2}, {"navn": "Sandbukta 3", "grp": "HC", "lat": 59.44471743497116, "lon": 10.670109728971592, "adr": "Sandbukta 3, 1534 Moss", "area": "Moss", "bnr": "V-10920776", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHjVMAW", "r": 1}, {"navn": "Gamleveien 45", "grp": "HC", "lat": 59.451182492802495, "lon": 10.676567503809377, "adr": "Gamleveien 45, 1534 Moss", "area": "Moss", "bnr": "V-10920866", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHkxMAG", "r": 1}, {"navn": "Gamleveien 16", "grp": "HC", "lat": 59.44593437019397, "lon": 10.676078435506522, "adr": "Gamleveien 16, 1534 Moss", "area": "Moss", "bnr": "V-10921140", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHpNMAW", "r": 1}, {"navn": "Mor Åses Vei 32", "grp": "HC", "lat": 59.45191609888953, "lon": 10.696273646552015, "adr": "Mor Åses Vei 32, 1535 Moss", "area": "Moss", "bnr": "V-10921364", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHszMAG", "r": 3}, {"navn": "Stubbeløkkveien 29 B", "grp": "HC", "lat": 59.47206150732049, "lon": 10.695105253118749, "adr": "Stubbeløkkveien 29 B, 1538 Moss", "area": "Moss", "bnr": "V-10921498", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHv9MAG", "r": 5}, {"navn": "Elgveien 85", "grp": "HC", "lat": 59.45151240756989, "lon": 10.681646762469473, "adr": "Elgveien 85, 1534 Moss", "area": "Moss", "bnr": "V-10921652", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHxdMAG", "r": 1}, {"navn": "Kamboveien 13", "grp": "Kun mobil", "lat": 59.47175683731535, "lon": 10.693526069395633, "adr": "Kamboveien 13, 1538 Moss", "area": "Moss", "bnr": "V-10923310", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIP9MAO", "r": 5}, {"navn": "Wankels Vei 23", "grp": "Kun mobil", "lat": 59.482115148535016, "lon": 10.69335607067586, "adr": "Wankels Vei 23, 1539 Moss", "area": "Moss", "bnr": "V-10923314", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIPDMA4", "r": 5}, {"navn": "Stubbeløkkveien 74 A", "grp": "Kun mobil", "lat": 59.469757314835825, "lon": 10.699342781504459, "adr": "Stubbeløkkveien 74 A, 1538 Moss", "area": "Moss", "bnr": "V-10923355", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIPsMAO", "r": 5}, {"navn": "Bukkespranget 9", "grp": "Kun mobil", "lat": 59.4516221152147, "lon": 10.692624879074074, "adr": "Bukkespranget 9, 1535 Moss", "area": "Moss", "bnr": "V-10923368", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIQ5MAO", "r": 3}, {"navn": "Elgveien 13", "grp": "Kun mobil", "lat": 59.44854151178032, "lon": 10.68705563630095, "adr": "Elgveien 13, 1534 Moss", "area": "Moss", "bnr": "V-10923401", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIQcMAO", "r": 2}, {"navn": "Bøygen 23", "grp": "Kun mobil", "lat": 59.44606857626516, "lon": 10.691447808187235, "adr": "Bøygen 23, 1535 Moss", "area": "Moss", "bnr": "V-10923414", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIQpMAO", "r": 2}, {"navn": "Spinnesiden 49", "grp": "Kun mobil", "lat": 59.465128776683606, "lon": 10.692788507599268, "adr": "Spinnesiden 49, 1536 Moss", "area": "Moss", "bnr": "V-10923529", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DISgMAO", "r": 4}, {"navn": "Kulpeåsen 64", "grp": "Kun mobil", "lat": 59.485241236566665, "lon": 10.692076960599183, "adr": "Kulpeåsen 64, 1539 Moss", "area": "Moss", "bnr": "V-10923575", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DITQMA4", "r": 5}, {"navn": "Osloveien 72", "grp": "Kun mobil", "lat": 59.45049030841505, "lon": 10.68737715230814, "adr": "Osloveien 72, 1534 Moss", "area": "Moss", "bnr": "V-10923618", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DIU7MAO", "r": 2}, {"navn": "Kamboveien 29", "grp": "Kun mobil", "lat": 59.46994087908078, "lon": 10.692319701145054, "adr": "Kamboveien 29, 1538 Moss", "area": "Moss", "bnr": "V-10923671", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIUyMAO", "r": 5}, {"navn": "Kulpeåsen 47", "grp": "Kun mobil", "lat": 59.48595609954596, "lon": 10.690140232764652, "adr": "Kulpeåsen 47, 1539 Moss", "area": "Moss", "bnr": "V-10923705", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIVWMA4", "r": 5}, {"navn": "Bukkespranget 17", "grp": "Kun mobil", "lat": 59.45188835930993, "lon": 10.693357944205017, "adr": "Bukkespranget 17, 1535 Moss", "area": "Moss", "bnr": "V-10923712", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIVdMAO", "r": 3}, {"navn": "Luenbakken 13", "grp": "Kun mobil", "lat": 59.465963414911684, "lon": 10.691453674478714, "adr": "Luenbakken 13, 1538 Moss", "area": "Moss", "bnr": "V-10923771", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIWaMAO", "r": 4}, {"navn": "Veverbakken 163", "grp": "Kun mobil", "lat": 59.46804475716811, "lon": 10.697876237108742, "adr": "Veverbakken 163, 1536 Moss", "area": "Moss", "bnr": "V-10923790", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIWtMAO", "r": 4}, {"navn": "Kulpeåsen 43", "grp": "Kun mobil", "lat": 59.486280378618815, "lon": 10.690068144632196, "adr": "Kulpeåsen 43, 1539 Moss", "area": "Moss", "bnr": "V-10923826", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIXTMA4", "r": 5}, {"navn": "Tråklestinget 1", "grp": "Kun mobil", "lat": 59.45823591484493, "lon": 10.690997002807636, "adr": "Tråklestinget 1, 1537 Moss", "area": "Moss", "bnr": "V-10923865", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIY6MAO", "r": 4}, {"navn": "Kantåsen 17", "grp": "Kun mobil", "lat": 59.465223666739064, "lon": 10.6939843213591, "adr": "Kantåsen 17, 1536 Moss", "area": "Moss", "bnr": "V-10923893", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIYYMA4", "r": 4}, {"navn": "Stubbeløkkveien 31 C", "grp": "Kun mobil", "lat": 59.47191738670186, "lon": 10.6957599667807, "adr": "Stubbeløkkveien 31 C, 1538 Moss", "area": "Moss", "bnr": "V-10923940", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIZJMA4", "r": 5}, {"navn": "Luenbakken 24", "grp": "Kun mobil", "lat": 59.465973213434054, "lon": 10.69277779786916, "adr": "Luenbakken 24, 1538 Moss", "area": "Moss", "bnr": "V-10923947", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DIZQMA4", "r": 4}, {"navn": "Sømmen 5", "grp": "Kun mobil", "lat": 59.459280155449285, "lon": 10.693590036835946, "adr": "Sømmen 5, 1537 Moss", "area": "Moss", "bnr": "V-10924010", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIaRMAW", "r": 4}, {"navn": "Kantåsen 9", "grp": "Kun mobil", "lat": 59.46433002930751, "lon": 10.694125072119192, "adr": "Kantåsen 9, 1536 Moss", "area": "Moss", "bnr": "V-10924151", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIciMAG", "r": 4}, {"navn": "Skoleåsen 11", "grp": "Kun mobil", "lat": 59.471372631817374, "lon": 10.692677230503635, "adr": "Skoleåsen 11, 1538 Moss", "area": "Moss", "bnr": "V-10924204", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIdZMAW", "r": 5}, {"navn": "Charlottes Vei 8", "grp": "Kun mobil", "lat": 59.48531378992702, "lon": 10.692480909929918, "adr": "Charlottes Vei 8, 1539 Moss", "area": "Moss", "bnr": "V-10924238", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIe7MAG", "r": 5}, {"navn": "Solveigbakken 9", "grp": "Kun mobil", "lat": 59.44926284059473, "lon": 10.695858517224194, "adr": "Solveigbakken 9, 1535 Moss", "area": "Moss", "bnr": "V-10924265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIeYMAW", "r": 3}, {"navn": "Spinnesiden 52", "grp": "Kun mobil", "lat": 59.46506101172205, "lon": 10.691779183823778, "adr": "Spinnesiden 52, 1536 Moss", "area": "Moss", "bnr": "V-10924347", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIfsMAG", "r": 4}, {"navn": "Mor Åses Vei 27", "grp": "Kun mobil", "lat": 59.450945583612956, "lon": 10.697001221664953, "adr": "Mor Åses Vei 27, 1535 Moss", "area": "Moss", "bnr": "V-10924348", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIftMAG", "r": 3}, {"navn": "Knappestøperen 12", "grp": "Kun mobil", "lat": 59.44756902833916, "lon": 10.69210482263857, "adr": "Knappestøperen 12, 1535 Moss", "area": "Moss", "bnr": "V-10924381", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIgQMAW", "r": 2}, {"navn": "Tråklestinget 13", "grp": "Kun mobil", "lat": 59.45898442855092, "lon": 10.691457865872492, "adr": "Tråklestinget 13, 1537 Moss", "area": "Moss", "bnr": "V-10924431", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIhEMAW", "r": 4}, {"navn": "Tråklestinget 19", "grp": "Kun mobil", "lat": 59.459577535524886, "lon": 10.69143456469914, "adr": "Tråklestinget 19, 1537 Moss", "area": "Moss", "bnr": "V-10924507", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIiSMAW", "r": 4}, {"navn": "Luenbakken 15", "grp": "Kun mobil", "lat": 59.46567640854542, "lon": 10.691421682594186, "adr": "Luenbakken 15, 1538 Moss", "area": "Moss", "bnr": "V-10924559", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIjIMAW", "r": 4}, {"navn": "Stubbeløkkveien 54 B", "grp": "Kun mobil", "lat": 59.47088305798, "lon": 10.698565834059531, "adr": "Stubbeløkkveien 54 B, 1538 Moss", "area": "Moss", "bnr": "V-10924593", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIjqMAG", "r": 5}, {"navn": "Sømmen 1", "grp": "Kun mobil", "lat": 59.4589293003694, "lon": 10.693771870924287, "adr": "Sømmen 1, 1537 Moss", "area": "Moss", "bnr": "V-10924675", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIlAMAW", "r": 4}, {"navn": "Sjøhagen 4", "grp": "Kun mobil", "lat": 59.486460012378174, "lon": 10.689651537120131, "adr": "Sjøhagen 4, 1539 Moss", "area": "Moss", "bnr": "V-10924703", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIlcMAG", "r": 5}, {"navn": "Elgveien 32", "grp": "Kun mobil", "lat": 59.4496751363769, "lon": 10.686212470585563, "adr": "Elgveien 32, 1534 Moss", "area": "Moss", "bnr": "V-10924797", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIn8MAG", "r": 2}, {"navn": "Bukkespranget 15", "grp": "Kun mobil", "lat": 59.450759496063085, "lon": 10.692652326136951, "adr": "Bukkespranget 15, 1535 Moss", "area": "Moss", "bnr": "V-10924835", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DInkMAG", "r": 3}, {"navn": "Skolebakken 1", "grp": "Kun mobil", "lat": 59.468899927920596, "lon": 10.690775488098415, "adr": "Skolebakken 1, 1538 Moss", "area": "Moss", "bnr": "V-10924931", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIpIMAW", "r": 5}, {"navn": "Osloveien 207", "grp": "Kun mobil", "lat": 59.468854476087564, "lon": 10.690150880145485, "adr": "Osloveien 207, 1538 Moss", "area": "Moss", "bnr": "V-10924935", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIpMMAW", "r": 4}, {"navn": "Skoleåsen 6", "grp": "Kun mobil", "lat": 59.47047283179256, "lon": 10.691414315347107, "adr": "Skoleåsen 6, 1538 Moss", "area": "Moss", "bnr": "V-10925001", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIqQMAW", "r": 5}, {"navn": "Nålveien 7", "grp": "Kun mobil", "lat": 59.45883932229506, "lon": 10.69485506261035, "adr": "Nålveien 7, 1537 Moss", "area": "Moss", "bnr": "V-10925028", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIqrMAG", "r": 4}, {"navn": "Sjøhagen 10", "grp": "Kun mobil", "lat": 59.485846711119436, "lon": 10.68956968379268, "adr": "Sjøhagen 10, 1539 Moss", "area": "Moss", "bnr": "V-10925037", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIr0MAG", "r": 5}, {"navn": "Bukkespranget 7", "grp": "Kun mobil", "lat": 59.451550441136945, "lon": 10.69212558640549, "adr": "Bukkespranget 7, 1535 Moss", "area": "Moss", "bnr": "V-10925115", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIsGMAW", "r": 3}, {"navn": "Osloveien 52", "grp": "Kun mobil", "lat": 59.447391102772215, "lon": 10.6864162555995, "adr": "Osloveien 52, 1534 Moss", "area": "Moss", "bnr": "V-10925177", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000DItGMAW", "r": 2}, {"navn": "Stubbeløkkveien 36 B", "grp": "Kun mobil", "lat": 59.47214548001808, "lon": 10.696275706740836, "adr": "Stubbeløkkveien 36 B, 1538 Moss", "area": "Moss", "bnr": "V-10925178", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DItHMAW", "r": 5}, {"navn": "Osloveien 311", "grp": "Kun mobil", "lat": 59.48377738774085, "lon": 10.69746526475142, "adr": "Osloveien 311, 1539 Moss", "area": "Moss", "bnr": "V-10925211", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DItoMAG", "r": 5}, {"navn": "Ingrids Vei 2", "grp": "Kun mobil", "lat": 59.45146541416937, "lon": 10.695704203454786, "adr": "Ingrids Vei 2, 1535 Moss", "area": "Moss", "bnr": "V-10925267", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIuiMAG", "r": 3}, {"navn": "Stubbeløkkveien 33 A", "grp": "Kun mobil", "lat": 59.47176971964906, "lon": 10.69544190009789, "adr": "Stubbeløkkveien 33 A, 1538 Moss", "area": "Moss", "bnr": "V-10925281", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIuwMAG", "r": 5}, {"navn": "Spinnesiden 8", "grp": "Kun mobil", "lat": 59.4626333613886, "lon": 10.691822668473801, "adr": "Spinnesiden 8, 1536 Moss", "area": "Moss", "bnr": "V-10925339", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIvsMAG", "r": 4}, {"navn": "Wankels Vei 33", "grp": "Kun mobil", "lat": 59.48309696700126, "lon": 10.69314036686935, "adr": "Wankels Vei 33, 1539 Moss", "area": "Moss", "bnr": "V-10925364", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIwHMAW", "r": 5}, {"navn": "Stubbeløkkveien 56 B", "grp": "Kun mobil", "lat": 59.47081380497434, "lon": 10.699056585864101, "adr": "Stubbeløkkveien 56 B, 1538 Moss", "area": "Moss", "bnr": "V-10925502", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIyVMAW", "r": 5}, {"navn": "Sømmen 2", "grp": "Kun mobil", "lat": 59.45904511447676, "lon": 10.693013643628152, "adr": "Sømmen 2, 1537 Moss", "area": "Moss", "bnr": "V-10925533", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIz0MAG", "r": 4}, {"navn": "Charlottes Vei 26", "grp": "Kun mobil", "lat": 59.48540812443082, "lon": 10.693893550950724, "adr": "Charlottes Vei 26, 1539 Moss", "area": "Moss", "bnr": "V-10925607", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ0CMAW", "r": 5}, {"navn": "Kantåsen 18", "grp": "Kun mobil", "lat": 59.465202705741525, "lon": 10.693321646704915, "adr": "Kantåsen 18, 1536 Moss", "area": "Moss", "bnr": "V-10925715", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ1wMAG", "r": 4}, {"navn": "Veverbakken 65", "grp": "Kun mobil", "lat": 59.46526213991047, "lon": 10.697048367632298, "adr": "Veverbakken 65, 1536 Moss", "area": "Moss", "bnr": "V-10925759", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ2eMAG", "r": 4}, {"navn": "Wankels Vei 27", "grp": "Kun mobil", "lat": 59.48262311854257, "lon": 10.692985100119303, "adr": "Wankels Vei 27, 1539 Moss", "area": "Moss", "bnr": "V-10925801", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ3KMAW", "r": 5}, {"navn": "Spinnesiden 18", "grp": "Kun mobil", "lat": 59.46376311702571, "lon": 10.691502544100134, "adr": "Spinnesiden 18, 1536 Moss", "area": "Moss", "bnr": "V-10925856", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ4DMAW", "r": 4}, {"navn": "Stubbeløkkveien 29 C", "grp": "Kun mobil", "lat": 59.47201885171449, "lon": 10.69500073682211, "adr": "Stubbeløkkveien 29 C, 1538 Moss", "area": "Moss", "bnr": "V-10925890", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ4lMAG", "r": 5}, {"navn": "Stubbeløkkveien 48", "grp": "Kun mobil", "lat": 59.47117300553157, "lon": 10.697680178170085, "adr": "Stubbeløkkveien 48, 1538 Moss", "area": "Moss", "bnr": "V-10925980", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ6DMAW", "r": 5}, {"navn": "Spinnesiden 56", "grp": "Kun mobil", "lat": 59.465332418677754, "lon": 10.692322193639711, "adr": "Spinnesiden 56, 1536 Moss", "area": "Moss", "bnr": "V-10926109", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ8IMAW", "r": 4}, {"navn": "Sjøhagen 1", "grp": "Kun mobil", "lat": 59.48709163147311, "lon": 10.68991443543278, "adr": "Sjøhagen 1, 1539 Moss", "area": "Moss", "bnr": "V-10926151", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJ8yMAG", "r": 5}, {"navn": "Stubbeløkkveien 111", "grp": "Kun mobil", "lat": 59.47051546240284, "lon": 10.697823697367589, "adr": "Stubbeløkkveien 111, 1538 Moss", "area": "Moss", "bnr": "V-10926165", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ9CMAW", "r": 5}, {"navn": "Stubbeløkkveien 31 A", "grp": "Kun mobil", "lat": 59.472016685666205, "lon": 10.695583131635862, "adr": "Stubbeløkkveien 31 A, 1538 Moss", "area": "Moss", "bnr": "V-10926192", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ9dMAG", "r": 5}, {"navn": "Osloveien 203", "grp": "Kun mobil", "lat": 59.468394186108824, "lon": 10.690322038381046, "adr": "Osloveien 203, 1538 Moss", "area": "Moss", "bnr": "V-10926242", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJARMA4", "r": 4}, {"navn": "Kamboveien 52", "grp": "Kun mobil", "lat": 59.47006454258673, "lon": 10.695072240211958, "adr": "Kamboveien 52, 1538 Moss", "area": "Moss", "bnr": "V-10926340", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJC1MAO", "r": 5}, {"navn": "Herregårdsveien 35", "grp": "Kun mobil", "lat": 59.47976368430299, "lon": 10.696681205949737, "adr": "Herregårdsveien 35, 1538 Moss", "area": "Moss", "bnr": "V-10926410", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJD9MAO", "r": 5}, {"navn": "Stubbeløkkveien 50", "grp": "Kun mobil", "lat": 59.47102618033248, "lon": 10.697919927293052, "adr": "Stubbeløkkveien 50, 1538 Moss", "area": "Moss", "bnr": "V-10926490", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJERMA4", "r": 5}, {"navn": "Veverbakken 66", "grp": "Kun mobil", "lat": 59.46606714624207, "lon": 10.695923930478758, "adr": "Veverbakken 66, 1536 Moss", "area": "Moss", "bnr": "V-10926491", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJESMA4", "r": 4}, {"navn": "Spinnesiden 47", "grp": "Kun mobil", "lat": 59.46489778098045, "lon": 10.6928576991012, "adr": "Spinnesiden 47, 1536 Moss", "area": "Moss", "bnr": "V-10926554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJFTMA4", "r": 4}, {"navn": "Knappestøperen 37", "grp": "Kun mobil", "lat": 59.446085606339196, "lon": 10.689437917862215, "adr": "Knappestøperen 37, 1535 Moss", "area": "Moss", "bnr": "V-10926673", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJHOMA4", "r": 2}, {"navn": "Kulpeåsen 45", "grp": "Kun mobil", "lat": 59.48607978955972, "lon": 10.690083901966757, "adr": "Kulpeåsen 45, 1539 Moss", "area": "Moss", "bnr": "V-10926684", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJHZMA4", "r": 5}, {"navn": "Charlottes Vei 38 B", "grp": "Kun mobil", "lat": 59.48519313225211, "lon": 10.694479992569665, "adr": "Charlottes Vei 38 B, 1539 Moss", "area": "Moss", "bnr": "V-10926763", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DJIqMAO", "r": 5}, {"navn": "Veverbakken 119", "grp": "Kun mobil", "lat": 59.46712262213625, "lon": 10.698343385637143, "adr": "Veverbakken 119, 1536 Moss", "area": "Moss", "bnr": "V-10926840", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJK5MAO", "r": 4}, {"navn": "Knappestøperen 9", "grp": "Kun mobil", "lat": 59.44812751920861, "lon": 10.691841679211992, "adr": "Knappestøperen 9, 1535 Moss", "area": "Moss", "bnr": "V-10926862", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJKRMA4", "r": 2}, {"navn": "Stubbeløkkveien 41", "grp": "Kun mobil", "lat": 59.47100297303779, "lon": 10.695002802387899, "adr": "Stubbeløkkveien 41, 1538 Moss", "area": "Moss", "bnr": "V-10926883", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJKmMAO", "r": 5}, {"navn": "Veverbakken 59", "grp": "Kun mobil", "lat": 59.464720224420944, "lon": 10.696788421221786, "adr": "Veverbakken 59, 1536 Moss", "area": "Moss", "bnr": "V-10926891", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJKuMAO", "r": 4}, {"navn": "Elgveien 62", "grp": "Kun mobil", "lat": 59.452419468569154, "lon": 10.684443856790857, "adr": "Elgveien 62, 1534 Moss", "area": "Moss", "bnr": "V-10926946", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJLnMAO", "r": 1}, {"navn": "Veverbakken 60", "grp": "Kun mobil", "lat": 59.465319304970215, "lon": 10.695765391416723, "adr": "Veverbakken 60, 1536 Moss", "area": "Moss", "bnr": "V-10927050", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJNTMA4", "r": 4}, {"navn": "Osloveien 317", "grp": "Kun mobil", "lat": 59.48403058746356, "lon": 10.698025367920222, "adr": "Osloveien 317, 1539 Moss", "area": "Moss", "bnr": "V-10927070", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJNnMAO", "r": 5}, {"navn": "Wankels Vei 49", "grp": "Kun mobil", "lat": 59.48327243138922, "lon": 10.69415562745096, "adr": "Wankels Vei 49, 1539 Moss", "area": "Moss", "bnr": "V-10927117", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJOYMA4", "r": 5}, {"navn": "Stubbeløkkveien 44", "grp": "Kun mobil", "lat": 59.471512890664684, "lon": 10.69716769008173, "adr": "Stubbeløkkveien 44, 1538 Moss", "area": "Moss", "bnr": "V-10927199", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJPsMAO", "r": 5}, {"navn": "Spinnesiden 50", "grp": "Kun mobil", "lat": 59.46480990973969, "lon": 10.69174898478839, "adr": "Spinnesiden 50, 1536 Moss", "area": "Moss", "bnr": "V-10927283", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJREMA4", "r": 4}, {"navn": "Elgveien 77", "grp": "Kun mobil", "lat": 59.45196622699949, "lon": 10.68267484171453, "adr": "Elgveien 77, 1534 Moss", "area": "Moss", "bnr": "V-10927291", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJRMMA4", "r": 1}, {"navn": "Elgveien 109", "grp": "Kun mobil", "lat": 59.4510600906337, "lon": 10.682594536207716, "adr": "Elgveien 109, 1534 Moss", "area": "Moss", "bnr": "V-10927325", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJRuMAO", "r": 1}, {"navn": "Wankels Vei 73", "grp": "Kun mobil", "lat": 59.48506806816158, "lon": 10.695320977570988, "adr": "Wankels Vei 73, 1539 Moss", "area": "Moss", "bnr": "V-10927326", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJRvMAO", "r": 5}, {"navn": "Stubbeløkkveien 64 A", "grp": "Kun mobil", "lat": 59.470561203922315, "lon": 10.699667998791863, "adr": "Stubbeløkkveien 64 A, 1538 Moss", "area": "Moss", "bnr": "V-10927348", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJSHMA4", "r": 5}, {"navn": "Elgveien 81 A", "grp": "Kun mobil", "lat": 59.45230992293589, "lon": 10.681792214620812, "adr": "Elgveien 81 A, 1534 Moss", "area": "Moss", "bnr": "V-10927372", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJSfMAO", "r": 1}, {"navn": "Stubbeløkkveien 100", "grp": "Kun mobil", "lat": 59.46904247125675, "lon": 10.698649948448432, "adr": "Stubbeløkkveien 100, 1538 Moss", "area": "Moss", "bnr": "V-10927413", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJTKMA4", "r": 5}, {"navn": "Osloveien 302 B", "grp": "Kun mobil", "lat": 59.483869856089534, "lon": 10.696569357469816, "adr": "Osloveien 302 B, 1539 Moss", "area": "Moss", "bnr": "V-10927477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJUMMA4", "r": 5}, {"navn": "Mor Åses Vei 28", "grp": "Kun mobil", "lat": 59.45138421960769, "lon": 10.69607765217785, "adr": "Mor Åses Vei 28, 1535 Moss", "area": "Moss", "bnr": "V-10927480", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJUPMA4", "r": 3}, {"navn": "Mor Åses Vei 33", "grp": "Kun mobil", "lat": 59.45181847424068, "lon": 10.697204566658643, "adr": "Mor Åses Vei 33, 1535 Moss", "area": "Moss", "bnr": "V-10927492", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJUbMAO", "r": 3}, {"navn": "Knappestøperen 39", "grp": "Kun mobil", "lat": 59.44607990587347, "lon": 10.689878585295952, "adr": "Knappestøperen 39, 1535 Moss", "area": "Moss", "bnr": "V-10927502", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJUlMAO", "r": 2}, {"navn": "Elgveien 102", "grp": "Kun mobil", "lat": 59.45101725361224, "lon": 10.68522085978157, "adr": "Elgveien 102, 1534 Moss", "area": "Moss", "bnr": "V-10927503", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJUmMAO", "r": 1}, {"navn": "Kantåsen 15", "grp": "Kun mobil", "lat": 59.465004606722374, "lon": 10.694052949665917, "adr": "Kantåsen 15, 1536 Moss", "area": "Moss", "bnr": "V-10927528", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJVBMA4", "r": 4}, {"navn": "Luenbakken 6", "grp": "Kun mobil", "lat": 59.46713889474335, "lon": 10.692236035214094, "adr": "Luenbakken 6, 1538 Moss", "area": "Moss", "bnr": "V-10927621", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJWgMAO", "r": 4}, {"navn": "Elgveien 1", "grp": "Kun mobil", "lat": 59.44711035965822, "lon": 10.686107712721887, "adr": "Elgveien 1, 1534 Moss", "area": "Moss", "bnr": "V-10927941", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJbqMAG", "r": 2}, {"navn": "Ingrids Vei 1", "grp": "Kun mobil", "lat": 59.45170273316662, "lon": 10.696104189585046, "adr": "Ingrids Vei 1, 1535 Moss", "area": "Moss", "bnr": "V-10927952", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJc1MAG", "r": 3}, {"navn": "Kamboveien 15", "grp": "Kun mobil", "lat": 59.47151688497157, "lon": 10.693266234991842, "adr": "Kamboveien 15, 1538 Moss", "area": "Moss", "bnr": "V-10927972", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJcLMAW", "r": 5}, {"navn": "Kamboveien 54", "grp": "Kun mobil", "lat": 59.469990268784635, "lon": 10.694690847469337, "adr": "Kamboveien 54, 1538 Moss", "area": "Moss", "bnr": "V-10928002", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJcpMAG", "r": 5}, {"navn": "Kamboveien 16", "grp": "Kun mobil", "lat": 59.4717313400949, "lon": 10.694107291454769, "adr": "Kamboveien 16, 1538 Moss", "area": "Moss", "bnr": "V-10928009", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJcwMAG", "r": 5}, {"navn": "Charlottes Vei 34 B", "grp": "Kun mobil", "lat": 59.48531102604287, "lon": 10.694801634588659, "adr": "Charlottes Vei 34 B, 1539 Moss", "area": "Moss", "bnr": "V-10928028", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DJdFMAW", "r": 5}, {"navn": "Mor Åses Vei 29", "grp": "Kun mobil", "lat": 59.451152491448944, "lon": 10.696976308603382, "adr": "Mor Åses Vei 29, 1535 Moss", "area": "Moss", "bnr": "V-10928081", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJe6MAG", "r": 3}, {"navn": "Mor Åses Vei 35", "grp": "Kun mobil", "lat": 59.45195942229793, "lon": 10.697087310234735, "adr": "Mor Åses Vei 35, 1535 Moss", "area": "Moss", "bnr": "V-10928120", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJejMAG", "r": 3}, {"navn": "Ingrids Vei 13", "grp": "Kun mobil", "lat": 59.45198065805297, "lon": 10.694759739796934, "adr": "Ingrids Vei 13, 1535 Moss", "area": "Moss", "bnr": "V-10928139", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJf2MAG", "r": 3}, {"navn": "Luenbakken 9", "grp": "Kun mobil", "lat": 59.46636252075809, "lon": 10.69184600741469, "adr": "Luenbakken 9, 1538 Moss", "area": "Moss", "bnr": "V-10928141", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJf4MAG", "r": 4}, {"navn": "Kamboveien 23", "grp": "Kun mobil", "lat": 59.47058942877581, "lon": 10.69281456117329, "adr": "Kamboveien 23, 1538 Moss", "area": "Moss", "bnr": "V-10928386", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJj1MAG", "r": 5}, {"navn": "Elgveien 92", "grp": "Kun mobil", "lat": 59.451950779377995, "lon": 10.683873668976853, "adr": "Elgveien 92, 1534 Moss", "area": "Moss", "bnr": "V-10928394", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJj9MAG", "r": 1}, {"navn": "Tråklestinget 16", "grp": "Kun mobil", "lat": 59.459027682666644, "lon": 10.690912684563617, "adr": "Tråklestinget 16, 1537 Moss", "area": "Moss", "bnr": "V-10928411", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJjQMAW", "r": 4}, {"navn": "Stubbeløkkveien 31 B", "grp": "Kun mobil", "lat": 59.47195650528018, "lon": 10.695652487427777, "adr": "Stubbeløkkveien 31 B, 1538 Moss", "area": "Moss", "bnr": "V-10928424", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJjdMAG", "r": 5}, {"navn": "Osloveien 333", "grp": "Kun mobil", "lat": 59.484862799827255, "lon": 10.697572719220938, "adr": "Osloveien 333, 1539 Moss", "area": "Moss", "bnr": "V-10928483", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJkaMAG", "r": 5}, {"navn": "Innslaget 5", "grp": "Kun mobil", "lat": 59.46115060478197, "lon": 10.691061429597507, "adr": "Innslaget 5, 1536 Moss", "area": "Moss", "bnr": "V-10928564", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJltMAG", "r": 4}, {"navn": "Kleiva 16 A", "grp": "Kun mobil", "lat": 59.45019906881627, "lon": 10.683892411430634, "adr": "Kleiva 16 A, 1534 Moss", "area": "Moss", "bnr": "V-10928586", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJmFMAW", "r": 1}, {"navn": "Osloveien 317", "grp": "Kun mobil", "lat": 59.48403058746356, "lon": 10.698025367920222, "adr": "Osloveien 317, 1539 Moss", "area": "Moss", "bnr": "V-10928659", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DJnQMAW", "r": 5}, {"navn": "Veverbakken 54", "grp": "Kun mobil", "lat": 59.46483666019555, "lon": 10.695159888876331, "adr": "Veverbakken 54, 1536 Moss", "area": "Moss", "bnr": "V-10928699", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJo4MAG", "r": 4}, {"navn": "Slyngveien 61", "grp": "Kun mobil", "lat": 59.448304875737286, "lon": 10.683815873430104, "adr": "Slyngveien 61, 1534 Moss", "area": "Moss", "bnr": "V-10928717", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJoMMAW", "r": 2}, {"navn": "Kamboveien 27", "grp": "Kun mobil", "lat": 59.47021791706509, "lon": 10.692372359994474, "adr": "Kamboveien 27, 1538 Moss", "area": "Moss", "bnr": "V-10928737", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJogMAG", "r": 5}];
+var AREAS = ["Moss"];
+var STORE_KEY = "dorkart_Alexander_19.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Alexander";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":26,"m":7,"h":[[[59.445469,10.677498],[59.44541,10.677326],[59.444446,10.67011],[59.444467,10.669907],[59.444526,10.669735],[59.444614,10.66962],[59.444717,10.669579],[59.445886,10.669496],[59.44658,10.669759],[59.452325,10.676345],[59.454117,10.683484],[59.454138,10.683687],[59.454117,10.68389],[59.454058,10.684062],[59.45397,10.684177],[59.450772,10.686329],[59.450668,10.686369],[59.450564,10.686329],[59.450303,10.685912],[59.450211,10.685071],[59.449724,10.684868],[59.449641,10.684761],[59.449336,10.683218],[59.449383,10.682912],[59.449405,10.681638],[59.448132,10.680846],[59.447837,10.680198],[59.447693,10.680245],[59.446958,10.68009]]],"b":[[59.454138,10.683687]],"g":["Elgveien","Gamleveien","Sandbukta"]},{"n":2,"c":"#7b2cbf","s":31,"m":11,"h":[[[59.448167,10.692365],[59.446674,10.69312],[59.44657,10.693079],[59.441624,10.687199],[59.441536,10.687084],[59.441477,10.686912],[59.441456,10.686709],[59.441477,10.686506],[59.441536,10.686334],[59.442486,10.684484],[59.442574,10.684369],[59.446764,10.681191],[59.446868,10.68115],[59.446972,10.681191],[59.448529,10.682362],[59.449459,10.683839],[59.44965,10.684804],[59.450211,10.685071],[59.450369,10.686515],[59.450655,10.686641],[59.450974,10.686291],[59.451204,10.686663],[59.451263,10.686835],[59.451283,10.687038],[59.451263,10.687241],[59.451204,10.687413],[59.449627,10.690039],[59.44941,10.689667],[59.44877,10.689592]]],"b":[[59.451283,10.687038]],"g":["Elgveien","Osloveien","Knappestøperen"]},{"n":3,"c":"#0b7285","s":25,"m":13,"h":[[[59.448346,10.691543],[59.45155,10.691595],[59.451654,10.691636],[59.451977,10.692026],[59.452036,10.692198],[59.452563,10.696416],[59.452542,10.696619],[59.452483,10.696791],[59.449598,10.702503],[59.448566,10.704462],[59.448478,10.704577],[59.448374,10.704617],[59.44827,10.704577],[59.448182,10.704462],[59.448124,10.70429],[59.448103,10.704087],[59.448115,10.692605]]],"b":[[59.452563,10.696416]],"g":["Mor Åses Vei","Ingrids Vei","Bukkespranget"]},{"n":4,"c":"#a61e4d","s":31,"m":34,"h":[[[59.468295,10.698079],[59.468237,10.698251],[59.468149,10.698366],[59.467123,10.698874],[59.464758,10.698365],[59.45837,10.695291],[59.457958,10.694579],[59.457899,10.694407],[59.457878,10.694204],[59.457985,10.690794],[59.458186,10.690064],[59.458274,10.68995],[59.459055,10.689528],[59.466214,10.688624],[59.468958,10.689661],[59.469046,10.689776],[59.469105,10.689948],[59.469126,10.690151],[59.4691,10.6904],[59.468652,10.690527],[59.468292,10.69206],[59.468271,10.692664],[59.468504,10.693735],[59.468304,10.694619],[59.468589,10.695282]]],"b":[[59.469126,10.690151]],"g":["Veverbakken","Nålveien","Osloveien"]},{"n":5,"c":"#343a40","s":22,"m":49,"h":[[[59.469973,10.690051],[59.470728,10.690314],[59.472406,10.692598],[59.472465,10.692771],[59.472608,10.694508],[59.472396,10.696479],[59.472337,10.696651],[59.470799,10.700051],[59.470711,10.700166],[59.470607,10.700206],[59.469653,10.699833],[59.468851,10.699025],[59.468792,10.698853],[59.468771,10.69865],[59.468746,10.697266],[59.46896,10.696213],[59.468715,10.695578],[59.468629,10.690775],[59.468649,10.690573],[59.468666,10.690523],[59.469419,10.690311],[59.469435,10.690148]],[[59.48646,10.689121],[59.487195,10.689424],[59.487284,10.689539],[59.487342,10.689711],[59.487363,10.689914],[59.487342,10.690117],[59.485184,10.698591],[59.485125,10.698764],[59.485037,10.698878],[59.484933,10.698919],[59.479764,10.697212],[59.47966,10.697171],[59.479572,10.697056],[59.479513,10.696884],[59.479492,10.696681],[59.479518,10.695429],[59.479538,10.695226],[59.479597,10.695054],[59.479685,10.694939],[59.485743,10.68908],[59.485847,10.689039]]],"b":[[59.472608,10.694508],[59.487363,10.689914]],"g":["Stubbeløkkveien","Kamboveien","Osloveien"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
