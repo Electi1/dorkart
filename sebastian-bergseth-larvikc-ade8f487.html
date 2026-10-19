@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Sebastian Bergseth 19.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Sebastian Bergseth</div>
+<div class="date">19.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Torpelia 11 A", "grp": "HP", "lat": 58.997658673156394, "lon": 9.871858880328238, "adr": "Torpelia 11 A, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899104", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC5xMAG", "r": 1}, {"navn": "Krabbegata 9", "grp": "HP", "lat": 58.989032541777895, "lon": 9.86981724066302, "adr": "Krabbegata 9, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899122", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC6FMAW", "r": 5}, {"navn": "Amundrødbakken 24", "grp": "HP", "lat": 58.98755463570996, "lon": 9.86654350803232, "adr": "Amundrødbakken 24, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899212", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DC7hMAG", "r": 5}, {"navn": "Torpesvingen 8", "grp": "HP", "lat": 58.99745065183956, "lon": 9.866722511650861, "adr": "Torpesvingen 8, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899219", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC7oMAG", "r": 2}, {"navn": "Langholtstranda 7", "grp": "HP", "lat": 58.9932312253067, "lon": 9.858374312503578, "adr": "Langholtstranda 7, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899307", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC9EMAW", "r": 3}, {"navn": "Amundrødbakken 26", "grp": "HP", "lat": 58.98740361132454, "lon": 9.866296110578425, "adr": "Amundrødbakken 26, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899313", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC9KMAW", "r": 5}, {"navn": "Torpesvingen 4 B", "grp": "HP", "lat": 58.997459436912145, "lon": 9.86715438616931, "adr": "Torpesvingen 4 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10900281", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCOwMAO", "r": 2}, {"navn": "Torpelia 1", "grp": "HP", "lat": 58.99830583485279, "lon": 9.869643813365208, "adr": "Torpelia 1, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10900549", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCTGMA4", "r": 2}, {"navn": "Barkevikveien 11", "grp": "HP", "lat": 58.99584251134133, "lon": 9.855995697946437, "adr": "Barkevikveien 11, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10901273", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCewMAG", "r": 3}, {"navn": "Nordgata 5", "grp": "HP", "lat": 58.99401812182454, "lon": 9.86132814810213, "adr": "Nordgata 5, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10901450", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DChnMAG", "r": 3}, {"navn": "Strandebakken 18", "grp": "HP", "lat": 58.993927604368075, "lon": 9.869766637624295, "adr": "Strandebakken 18, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10902356", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCwPMAW", "r": 1}, {"navn": "Krabbesvingen 10", "grp": "HP", "lat": 58.99086579058841, "lon": 9.86024012243024, "adr": "Krabbesvingen 10, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10902661", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DD1KMAW", "r": 4}, {"navn": "Torpeløkka 10", "grp": "HP", "lat": 58.9964793116206, "lon": 9.870944898614349, "adr": "Torpeløkka 10, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10902677", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DD1aMAG", "r": 1}, {"navn": "Omrestranda 93", "grp": "HP", "lat": 58.97882172091761, "lon": 9.873841055970733, "adr": "Omrestranda 93, 3296 Nevlunghavn", "area": "Nevlunghavn", "bnr": "V-10903140", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DD93MAG", "r": 5}, {"navn": "Nordgata 11", "grp": "HP", "lat": 58.9942111549182, "lon": 9.860391425879838, "adr": "Nordgata 11, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10903248", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDAnMAO", "r": 3}, {"navn": "Omreveien 36", "grp": "HP", "lat": 58.979900793020796, "lon": 9.869507062603143, "adr": "Omreveien 36, 3296 Nevlunghavn", "area": "Nevlunghavn", "bnr": "V-10903414", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDDTMA4", "r": 5}, {"navn": "Krabbegata 7", "grp": "HP", "lat": 58.98870052930429, "lon": 9.869774068229816, "adr": "Krabbegata 7, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10903439", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDDsMAO", "r": 5}, {"navn": "Torpeløkka 12", "grp": "HP", "lat": 58.996405899905014, "lon": 9.871444305116169, "adr": "Torpeløkka 12, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10904455", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDUGMA4", "r": 1}, {"navn": "Helgeroveien 1102", "grp": "HP", "lat": 58.99068857705407, "lon": 9.878612196556478, "adr": "Helgeroveien 1102, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10904537", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDVaMAO", "r": 1}, {"navn": "Krabbegata 5", "grp": "HP", "lat": 58.98887871957369, "lon": 9.869987373279567, "adr": "Krabbegata 5, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10904573", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDWAMA4", "r": 5}, {"navn": "Torpeveien 83 B", "grp": "HP", "lat": 58.99933097586447, "lon": 9.865427739272663, "adr": "Torpeveien 83 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10904742", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDYtMAO", "r": 2}, {"navn": "Skomakersvingen 8", "grp": "HP", "lat": 58.9945376475137, "lon": 9.864635681304168, "adr": "Skomakersvingen 8, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905062", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDe3MAG", "r": 3}, {"navn": "Krabbegata 12", "grp": "HP", "lat": 58.989431032887595, "lon": 9.869322648309936, "adr": "Krabbegata 12, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905136", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDfFMAW", "r": 4}, {"navn": "Krabbegata 58 C", "grp": "HP", "lat": 58.991080668298906, "lon": 9.865194656452314, "adr": "Krabbegata 58 C, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905152", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDfVMAW", "r": 4}, {"navn": "Søndersrødveien 9", "grp": "HP", "lat": 58.98754538820585, "lon": 9.87459966056184, "adr": "Søndersrødveien 9, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905444", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDkDMAW", "r": 5}, {"navn": "Lynglia 8", "grp": "HP", "lat": 58.99459015869913, "lon": 9.867527792570012, "adr": "Lynglia 8, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905949", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDsMMAW", "r": 1}, {"navn": "Amundrødbakken 16", "grp": "HP", "lat": 58.98737073447486, "lon": 9.867182700549831, "adr": "Amundrødbakken 16, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10906595", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DE2mMAG", "r": 5}, {"navn": "Helgeroveien 1106", "grp": "HP", "lat": 58.98872928737303, "lon": 9.874838484212743, "adr": "Helgeroveien 1106, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10906986", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DE95MAG", "r": 5}, {"navn": "Torpesvingen 44", "grp": "HP", "lat": 58.997751532488486, "lon": 9.867391483489968, "adr": "Torpesvingen 44, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10907098", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEAtMAO", "r": 2}, {"navn": "Krabbegata 63", "grp": "HP", "lat": 58.99277621317625, "lon": 9.861975856127398, "adr": "Krabbegata 63, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10907520", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEHhMAO", "r": 3}, {"navn": "Søbakken 15", "grp": "HP", "lat": 58.99209866560533, "lon": 9.858922159337506, "adr": "Søbakken 15, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10907595", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEIuMAO", "r": 3}, {"navn": "Strandebakken 65", "grp": "HP", "lat": 58.993418858603825, "lon": 9.863923686258532, "adr": "Strandebakken 65, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10908006", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEPXMA4", "r": 3}, {"navn": "Krabbegata 42", "grp": "HP", "lat": 58.99106706905447, "lon": 9.86642290824901, "adr": "Krabbegata 42, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10909030", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DEg3MAG", "r": 4}, {"navn": "Brunlanesveien 1126", "grp": "HP", "lat": 58.99405061002149, "lon": 9.873908335149991, "adr": "Brunlanesveien 1126, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10909709", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEr0MAG", "r": 1}, {"navn": "Strandebakken 63", "grp": "HP", "lat": 58.99379414592321, "lon": 9.864211542088704, "adr": "Strandebakken 63, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10910229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEzOMAW", "r": 3}, {"navn": "Torpelia 13 B", "grp": "HP", "lat": 58.997865800737465, "lon": 9.87137501884237, "adr": "Torpelia 13 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10910521", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF46MAG", "r": 2}, {"navn": "Skomakersvingen 10", "grp": "HP", "lat": 58.994696210347996, "lon": 9.864965110687045, "adr": "Skomakersvingen 10, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10910609", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF5WMAW", "r": 3}, {"navn": "Torpesvingen 30", "grp": "HP", "lat": 58.99850239918586, "lon": 9.865908237463008, "adr": "Torpesvingen 30, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10910807", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DF8iMAG", "r": 2}, {"navn": "Krabbegata 59", "grp": "HP", "lat": 58.9925853243669, "lon": 9.86231914469411, "adr": "Krabbegata 59, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10911937", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DFQwMAO", "r": 3}, {"navn": "Krabbegata 65", "grp": "HP", "lat": 58.99268641678576, "lon": 9.861973612302192, "adr": "Krabbegata 65, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10912006", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFS3MAO", "r": 3}, {"navn": "Brunlanesveien 1096", "grp": "HP", "lat": 58.99544197135322, "lon": 9.878263358096232, "adr": "Brunlanesveien 1096, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10912154", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFURMA4", "r": 1}, {"navn": "Krabbegata 14", "grp": "HP", "lat": 58.990123164725375, "lon": 9.86923567865364, "adr": "Krabbegata 14, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10912784", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFebMAG", "r": 4}, {"navn": "Amundrødbakken 18", "grp": "HP", "lat": 58.9877207072117, "lon": 9.867226297683596, "adr": "Amundrødbakken 18, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10913089", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DFjWMAW", "r": 5}, {"navn": "Barkevikveien 12", "grp": "HP", "lat": 58.9953022505225, "lon": 9.860408200045162, "adr": "Barkevikveien 12, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10913453", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DFpOMAW", "r": 3}, {"navn": "Torpeveien 100 B", "grp": "HP", "lat": 58.99998534916984, "lon": 9.865076880260952, "adr": "Torpeveien 100 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10913562", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFr9MAG", "r": 2}, {"navn": "Brunlanesveien 1185", "grp": "HP", "lat": 58.989451516088124, "lon": 9.871620143996424, "adr": "Brunlanesveien 1185, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10914038", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFypMAG", "r": 5}, {"navn": "Torpesvingen 2 A", "grp": "HP", "lat": 58.9975474263916, "lon": 9.867292360895538, "adr": "Torpesvingen 2 A, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10914499", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DG6GMAW", "r": 2}, {"navn": "Torpelia 6 B", "grp": "HP", "lat": 58.9981635208101, "lon": 9.868902220868915, "adr": "Torpelia 6 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915296", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGJ7MAO", "r": 2}, {"navn": "Søbakken 4", "grp": "HP", "lat": 58.99329837880803, "lon": 9.859082556550028, "adr": "Søbakken 4, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915372", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGKLMA4", "r": 3}, {"navn": "Langholtstranda 11", "grp": "HP", "lat": 58.992941032799386, "lon": 9.858389715440577, "adr": "Langholtstranda 11, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915491", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGMGMA4", "r": 3}, {"navn": "Torpesvingen 6", "grp": "HP", "lat": 58.9974499531568, "lon": 9.866826926420096, "adr": "Torpesvingen 6, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915742", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGQJMA4", "r": 2}, {"navn": "Søbakken 14", "grp": "HP", "lat": 58.99242369975239, "lon": 9.858528246911133, "adr": "Søbakken 14, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915828", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGRhMAO", "r": 3}, {"navn": "Krabbegata 58 D", "grp": "HP", "lat": 58.9910548279197, "lon": 9.865298421332204, "adr": "Krabbegata 58 D, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915901", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGSsMAO", "r": 4}, {"navn": "Krabbegata 72", "grp": "HP", "lat": 58.99207450660884, "lon": 9.864847165232614, "adr": "Krabbegata 72, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10918608", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DHAXMA4", "r": 4}, {"navn": "Torpeveien 85 B", "grp": "HP", "lat": 58.99910084160739, "lon": 9.86492240574418, "adr": "Torpeveien 85 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10918700", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHC1MAO", "r": 2}, {"navn": "Torpeveien 86", "grp": "HP", "lat": 58.99991591695084, "lon": 9.866596478058819, "adr": "Torpeveien 86, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10919285", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHLSMA4", "r": 2}, {"navn": "Langholtstranda 25", "grp": "HP", "lat": 58.99150880333658, "lon": 9.858214858351733, "adr": "Langholtstranda 25, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10919684", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHRtMAO", "r": 3}, {"navn": "Brunlanesveien 1123 B", "grp": "HP", "lat": 58.99385271446588, "lon": 9.874752616594096, "adr": "Brunlanesveien 1123 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10920634", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHhDMAW", "r": 1}, {"navn": "Torpeveien 64", "grp": "HP", "lat": 58.998826522358776, "lon": 9.86780145431557, "adr": "Torpeveien 64, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10920679", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHhwMAG", "r": 2}, {"navn": "Strandebakken 67", "grp": "HP", "lat": 58.99364705296327, "lon": 9.863777991331965, "adr": "Strandebakken 67, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10921524", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHvZMAW", "r": 3}, {"navn": "Langholtstranda 71", "grp": "HP", "lat": 58.988112538384584, "lon": 9.853397399200638, "adr": "Langholtstranda 71, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10921539", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHvoMAG", "r": 4}, {"navn": "Helgeroveien 1094", "grp": "HP", "lat": 58.98893903161774, "lon": 9.87861462440848, "adr": "Helgeroveien 1094, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10922746", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIFHMA4", "r": 5}, {"navn": "Nordgata 9", "grp": "HP", "lat": 58.99431555012458, "lon": 9.860764730656916, "adr": "Nordgata 9, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10922925", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIIAMA4", "r": 3}, {"navn": "Brunlanesveien 1135", "grp": "HC Vula", "lat": 58.993343451021325, "lon": 9.873559756254346, "adr": "Brunlanesveien 1135, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10928800", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKhSMAW", "r": 1}, {"navn": "Omreveien 47", "grp": "HC Vula", "lat": 58.98153939634408, "lon": 9.876900478333907, "adr": "Omreveien 47, 3296 Nevlunghavn", "area": "Nevlunghavn", "bnr": "V-10929036", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKlGMAW", "r": 5}, {"navn": "Krabbesvingen 21", "grp": "HC Vula", "lat": 58.98988440853914, "lon": 9.864787041922261, "adr": "Krabbesvingen 21, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10929163", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DKnJMAW", "r": 4}, {"navn": "Torpeveien 81", "grp": "HC Vula", "lat": 58.99946469344551, "lon": 9.865577308654364, "adr": "Torpeveien 81, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10929216", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKoAMAW", "r": 2}, {"navn": "Strandebakken 21", "grp": "HC Vula", "lat": 58.99348970581686, "lon": 9.869442335043495, "adr": "Strandebakken 21, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10929245", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKodMAG", "r": 1}, {"navn": "Helgeroveien 1078", "grp": "HC Vula", "lat": 58.987573603485345, "lon": 9.879716101506697, "adr": "Helgeroveien 1078, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10929354", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKqOMAW", "r": 5}, {"navn": "Søndersrødveien 46", "grp": "HC Vula", "lat": 58.985796837312456, "lon": 9.870188059818926, "adr": "Søndersrødveien 46, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10930205", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL47MAG", "r": 5}, {"navn": "Torpeveien 78", "grp": "HC Vula", "lat": 58.99950149082754, "lon": 9.86665568975272, "adr": "Torpeveien 78, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10930306", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL5kMAG", "r": 2}, {"navn": "Torpeveien 68", "grp": "HC Vula", "lat": 58.998973656995865, "lon": 9.86715416634835, "adr": "Torpeveien 68, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10930331", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DL69MAG", "r": 2}, {"navn": "Torpelia 20", "grp": "HC Vula", "lat": 58.99752843449709, "lon": 9.870926137622098, "adr": "Torpelia 20, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10930884", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLF4MAO", "r": 1}, {"navn": "Torpelia 34", "grp": "HC Vula", "lat": 58.99818921978002, "lon": 9.870826205661636, "adr": "Torpelia 34, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10931396", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLNKMA4", "r": 2}, {"navn": "Skomakersvingen 13", "grp": "HC Vula", "lat": 58.995082411445104, "lon": 9.86361726876933, "adr": "Skomakersvingen 13, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10931976", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLWgMAO", "r": 3}, {"navn": "Torpesvingen 36", "grp": "HC Vula", "lat": 58.99825333033823, "lon": 9.866220509958092, "adr": "Torpesvingen 36, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10932029", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLXXMA4", "r": 2}, {"navn": "Strandebakken 68", "grp": "HC Vula", "lat": 58.993786690126235, "lon": 9.861285821786772, "adr": "Strandebakken 68, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10932174", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLZsMAO", "r": 3}, {"navn": "Strandebakken 86", "grp": "HC Vula", "lat": 58.99367125763953, "lon": 9.859464277228167, "adr": "Strandebakken 86, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10933006", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLnIMAW", "r": 3}, {"navn": "Torpeveien 98", "grp": "HC Vula", "lat": 58.9997790240883, "lon": 9.8654442050048, "adr": "Torpeveien 98, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10933015", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLnRMAW", "r": 2}, {"navn": "Torpesvingen 26", "grp": "HC Vula", "lat": 58.99853756620685, "lon": 9.865618441319103, "adr": "Torpesvingen 26, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10933031", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLnhMAG", "r": 2}, {"navn": "Brunlanesveien 1137", "grp": "HC Vula", "lat": 58.993141860106626, "lon": 9.873088244600934, "adr": "Brunlanesveien 1137, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10933186", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLqCMAW", "r": 1}, {"navn": "Torpeløkka 7", "grp": "HC Vula", "lat": 58.99683986527567, "lon": 9.87208533420392, "adr": "Torpeløkka 7, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10933278", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DLrgMAG", "r": 1}, {"navn": "Sønsebergveien 12", "grp": "HC", "lat": 58.992020900839705, "lon": 9.868831027832325, "adr": "Sønsebergveien 12, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10899298", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DC95MAG", "r": 4}, {"navn": "Søndersrødveien 36", "grp": "HC", "lat": 58.98717690852801, "lon": 9.869702599317579, "adr": "Søndersrødveien 36, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10900554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DCTLMA4", "r": 5}, {"navn": "Amundrødveien 77", "grp": "HC", "lat": 58.98428802581068, "lon": 9.866165696850187, "adr": "Amundrødveien 77, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10901878", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DCohMAG", "r": 5}, {"navn": "Brunlanesveien 1089", "grp": "HC", "lat": 58.995644488733, "lon": 9.880183010232605, "adr": "Brunlanesveien 1089, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10904262", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDR9MAO", "r": 1}, {"navn": "Torpeløkka 34", "grp": "HC", "lat": 58.9973443588959, "lon": 9.86878063235478, "adr": "Torpeløkka 34, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905403", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DDjYMAW", "r": 2}, {"navn": "Torpesvingen 48", "grp": "HC", "lat": 58.998006494673426, "lon": 9.867272575015217, "adr": "Torpesvingen 48, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10905472", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DDkfMAG", "r": 2}, {"navn": "Krabbegata 72", "grp": "HC", "lat": 58.99207450660884, "lon": 9.864847165232614, "adr": "Krabbegata 72, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10907594", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEItMAO", "r": 4}, {"navn": "Nordgata 10", "grp": "HC", "lat": 58.99444392754836, "lon": 9.861042915215256, "adr": "Nordgata 10, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10908420", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEWDMA4", "r": 3}, {"navn": "Krabbegata 67", "grp": "HC", "lat": 58.993108344010125, "lon": 9.862001558693725, "adr": "Krabbegata 67, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10909966", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEv9MAG", "r": 3}, {"navn": "Krabbesvingen 6", "grp": "HC", "lat": 58.99101494518525, "lon": 9.863334460067414, "adr": "Krabbesvingen 6, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10910193", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DEyoMAG", "r": 4}, {"navn": "Omreveien 58", "grp": "HC", "lat": 58.98121094168953, "lon": 9.873673647767754, "adr": "Omreveien 58, 3296 Nevlunghavn", "area": "Nevlunghavn", "bnr": "V-10911628", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFLxMAO", "r": 5}, {"navn": "Brunlanesveien 1108", "grp": "HC", "lat": 58.99475715978753, "lon": 9.875809354029235, "adr": "Brunlanesveien 1108, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10911951", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFRAMA4", "r": 1}, {"navn": "Brunlanesveien 1106", "grp": "HC", "lat": 58.99503124619418, "lon": 9.876582097703507, "adr": "Brunlanesveien 1106, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10912610", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFbnMAG", "r": 1}, {"navn": "Krabbegata 54", "grp": "HC", "lat": 58.99154573486364, "lon": 9.865352500545884, "adr": "Krabbegata 54, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10913757", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DFuIMAW", "r": 4}, {"navn": "Nordgata 2", "grp": "HC", "lat": 58.99412715682169, "lon": 9.862757974242783, "adr": "Nordgata 2, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10914531", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DG6mMAG", "r": 3}, {"navn": "Krabbegata 3", "grp": "HC", "lat": 58.98851778128234, "lon": 9.870239285160592, "adr": "Krabbegata 3, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915077", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGFaMAO", "r": 5}, {"navn": "Brunlanesveien 1114", "grp": "HC", "lat": 58.99460007112295, "lon": 9.87526584237041, "adr": "Brunlanesveien 1114, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915640", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGOfMAO", "r": 1}, {"navn": "Torpesvingen 28", "grp": "HC", "lat": 58.99859792983597, "lon": 9.865724392198995, "adr": "Torpesvingen 28, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915720", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGPxMAO", "r": 2}, {"navn": "Krabbegata 42", "grp": "HC", "lat": 58.99106706905447, "lon": 9.86642290824901, "adr": "Krabbegata 42, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10915822", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DGRbMAO", "r": 4}, {"navn": "Strandebakken 36 B", "grp": "HC", "lat": 58.994379531252406, "lon": 9.867061293415588, "adr": "Strandebakken 36 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10916265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGYkMAO", "r": 3}, {"navn": "Gamle Sønsebergveien 6", "grp": "HC", "lat": 58.99336943937079, "lon": 9.87130146072953, "adr": "Gamle Sønsebergveien 6, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10916980", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DGkHMAW", "r": 1}, {"navn": "Barkevikveien 56", "grp": "HC", "lat": 59.00042269478967, "lon": 9.85765337422238, "adr": "Barkevikveien 56, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10917057", "bol": "NH011", "st": "Ikke besøkt", "sfid": "a4CSg000000DGlWMAW", "r": 2}, {"navn": "Sønsebergveien 28", "grp": "HC", "lat": 58.99057914803331, "lon": 9.868203052196117, "adr": "Sønsebergveien 28, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10917982", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DH0RMAW", "r": 4}, {"navn": "Krabbegata 78", "grp": "HC", "lat": 58.99200367286442, "lon": 9.863348762873281, "adr": "Krabbegata 78, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10918769", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHD8MAO", "r": 4}, {"navn": "Krabbegata 36", "grp": "HC", "lat": 58.99052107052531, "lon": 9.867488112940816, "adr": "Krabbegata 36, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10918948", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHG1MAO", "r": 4}, {"navn": "Torpesvingen 32", "grp": "HC", "lat": 58.99846589901065, "lon": 9.865994350522632, "adr": "Torpesvingen 32, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10919479", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHOaMAO", "r": 2}, {"navn": "Krabbegata 56", "grp": "HC", "lat": 58.991451541717446, "lon": 9.86533621586239, "adr": "Krabbegata 56, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10919797", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHTiMAO", "r": 4}, {"navn": "Torpeløkka 10", "grp": "HC", "lat": 58.9964793116206, "lon": 9.870944898614349, "adr": "Torpeløkka 10, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10920489", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DHesMAG", "r": 1}, {"navn": "Amundrødbakken 27", "grp": "HC", "lat": 58.98668465665303, "lon": 9.862328270583655, "adr": "Amundrødbakken 27, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10921370", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DHt5MAG", "r": 4}, {"navn": "Barkevikveien 7", "grp": "HC", "lat": 58.995599090405584, "lon": 9.859120714557571, "adr": "Barkevikveien 7, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10922155", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DI5kMAG", "r": 3}, {"navn": "Brunlanesveien 1113", "grp": "HC", "lat": 58.994265944111135, "lon": 9.875535824738572, "adr": "Brunlanesveien 1113, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923025", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIJmMAO", "r": 1}, {"navn": "Torpeveien 96", "grp": "HC", "lat": 58.99976604819763, "lon": 9.865638832775465, "adr": "Torpeveien 96, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10929009", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DKkpMAG", "r": 2}, {"navn": "Strandebakken 22", "grp": "Kun mobil", "lat": 58.99431781616748, "lon": 9.869167343499642, "adr": "Strandebakken 22, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923452", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIRRMA4", "r": 1}, {"navn": "Nordgata 2", "grp": "Kun mobil", "lat": 58.99412715682169, "lon": 9.862757974242783, "adr": "Nordgata 2, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923464", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CSg000000DIRdMAO", "r": 3}, {"navn": "Torpeløkka 30", "grp": "Kun mobil", "lat": 58.997232336957865, "lon": 9.869815165446155, "adr": "Torpeløkka 30, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923488", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIS1MAO", "r": 2}, {"navn": "Torpesvingen 25", "grp": "Kun mobil", "lat": 58.99897332904807, "lon": 9.865994908091302, "adr": "Torpesvingen 25, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DITtMAO", "r": 2}, {"navn": "Torpeveien 70", "grp": "Kun mobil", "lat": 58.99903263028253, "lon": 9.867065137019582, "adr": "Torpeveien 70, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923608", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DITxMAO", "r": 2}, {"navn": "Strandebakken 61", "grp": "Kun mobil", "lat": 58.99370984523899, "lon": 9.864731534907586, "adr": "Strandebakken 61, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923620", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIU9MAO", "r": 3}, {"navn": "Helgeroveien 1100", "grp": "Kun mobil", "lat": 58.988841493821624, "lon": 9.880809895945323, "adr": "Helgeroveien 1100, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923714", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIVfMAO", "r": 5}, {"navn": "Krabbegata 50", "grp": "Kun mobil", "lat": 58.9912953995253, "lon": 9.865854367591906, "adr": "Krabbegata 50, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923733", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIVyMAO", "r": 4}, {"navn": "Krabbesvingen 52", "grp": "Kun mobil", "lat": 58.989908696565735, "lon": 9.866393816609271, "adr": "Krabbesvingen 52, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10923863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIY4MAO", "r": 4}, {"navn": "Torpesvingen 31", "grp": "Kun mobil", "lat": 58.998524055481724, "lon": 9.866833036039745, "adr": "Torpesvingen 31, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924039", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIauMAG", "r": 2}, {"navn": "Torpesvingen 12", "grp": "Kun mobil", "lat": 58.99787238297481, "lon": 9.866108248973024, "adr": "Torpesvingen 12, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924042", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIaxMAG", "r": 2}, {"navn": "Strandebakken 42", "grp": "Kun mobil", "lat": 58.99412561129661, "lon": 9.865681757998544, "adr": "Strandebakken 42, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924080", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIbZMAW", "r": 3}, {"navn": "Amundrødbakken 34", "grp": "Kun mobil", "lat": 58.9868089165097, "lon": 9.863897377166642, "adr": "Amundrødbakken 34, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924217", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DIdmMAG", "r": 4}, {"navn": "Torpelia 10", "grp": "Kun mobil", "lat": 58.997681198730064, "lon": 9.868907474860983, "adr": "Torpelia 10, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924244", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIeDMAW", "r": 2}, {"navn": "Krabbegata 46", "grp": "Kun mobil", "lat": 58.99096547896082, "lon": 9.86549804474417, "adr": "Krabbegata 46, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924500", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIiLMAW", "r": 4}, {"navn": "Krabbesvingen 23", "grp": "Kun mobil", "lat": 58.989844187220555, "lon": 9.865295899027197, "adr": "Krabbesvingen 23, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924587", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIjkMAG", "r": 4}, {"navn": "Søbakken 13", "grp": "Kun mobil", "lat": 58.9923674339707, "lon": 9.858887084671737, "adr": "Søbakken 13, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924646", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIkhMAG", "r": 3}, {"navn": "Strandebakken 75", "grp": "Kun mobil", "lat": 58.9936453849835, "lon": 9.862276030968415, "adr": "Strandebakken 75, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924679", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIlEMAW", "r": 3}, {"navn": "Søbakken 16", "grp": "Kun mobil", "lat": 58.9923152190122, "lon": 9.858499442917037, "adr": "Søbakken 16, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924687", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIlMMAW", "r": 3}, {"navn": "Brunlanesveien 1107", "grp": "Kun mobil", "lat": 58.9946256330574, "lon": 9.876798041485806, "adr": "Brunlanesveien 1107, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924744", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DImHMAW", "r": 1}, {"navn": "Brunlanesveien 1120", "grp": "Kun mobil", "lat": 58.994501874264856, "lon": 9.87491179147057, "adr": "Brunlanesveien 1120, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924786", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DImxMAG", "r": 1}, {"navn": "Krabbegata 25 B", "grp": "Kun mobil", "lat": 58.98961362439109, "lon": 9.867138148417371, "adr": "Krabbegata 25 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924789", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIn0MAG", "r": 4}, {"navn": "Krabbesvingen 40", "grp": "Kun mobil", "lat": 58.989491871294945, "lon": 9.864392632236322, "adr": "Krabbesvingen 40, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIo7MAG", "r": 4}, {"navn": "Torpeveien 74", "grp": "Kun mobil", "lat": 58.99925728149638, "lon": 9.866778359349935, "adr": "Torpeveien 74, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924933", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIpKMAW", "r": 2}, {"navn": "Torpeveien 60", "grp": "Kun mobil", "lat": 58.99867551302623, "lon": 9.868356387393606, "adr": "Torpeveien 60, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924936", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIpNMAW", "r": 2}, {"navn": "Baggersteinveien 38", "grp": "Kun mobil", "lat": 58.99520307218327, "lon": 9.861817210058936, "adr": "Baggersteinveien 38, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10924972", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIpxMAG", "r": 3}, {"navn": "Amundrødbakken 35", "grp": "Kun mobil", "lat": 58.987327067647925, "lon": 9.863637166449049, "adr": "Amundrødbakken 35, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925131", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIsWMAW", "r": 4}, {"navn": "Langholtstranda 35", "grp": "Kun mobil", "lat": 58.9906186980614, "lon": 9.858497248904198, "adr": "Langholtstranda 35, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925148", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIsnMAG", "r": 3}, {"navn": "Torpesvingen 29", "grp": "Kun mobil", "lat": 58.998758818115675, "lon": 9.866645729603452, "adr": "Torpesvingen 29, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925191", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DItUMAW", "r": 2}, {"navn": "Strandebakken 70", "grp": "Kun mobil", "lat": 58.993911515910526, "lon": 9.861017442566547, "adr": "Strandebakken 70, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925350", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIw3MAG", "r": 3}, {"navn": "Amundrødbakken 8", "grp": "Kun mobil", "lat": 58.98725479575482, "lon": 9.868267302005465, "adr": "Amundrødbakken 8, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925381", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIwYMAW", "r": 5}, {"navn": "Torpeveien 110", "grp": "Kun mobil", "lat": 59.00112122740448, "lon": 9.864304642084068, "adr": "Torpeveien 110, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925411", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIx2MAG", "r": 2}, {"navn": "Krabbesvingen 18", "grp": "Kun mobil", "lat": 58.989821428469696, "lon": 9.863457726245404, "adr": "Krabbesvingen 18, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925435", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DIxQMAW", "r": 4}, {"navn": "Amundrødbakken 25", "grp": "Kun mobil", "lat": 58.986530380721746, "lon": 9.862568013087698, "adr": "Amundrødbakken 25, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925683", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJ1QMAW", "r": 4}, {"navn": "Amundrødveien 32", "grp": "Kun mobil", "lat": 58.98590866457147, "lon": 9.865562594966837, "adr": "Amundrødveien 32, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925700", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJ1hMAG", "r": 4}, {"navn": "Torpeløkka 26", "grp": "Kun mobil", "lat": 58.99725237726164, "lon": 9.87084258331308, "adr": "Torpeløkka 26, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925820", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ3dMAG", "r": 2}, {"navn": "Sønsebergveien 14", "grp": "Kun mobil", "lat": 58.991654720072184, "lon": 9.868525963366315, "adr": "Sønsebergveien 14, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925877", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ4YMAW", "r": 4}, {"navn": "Strandebakken 6 A", "grp": "Kun mobil", "lat": 58.99433415403678, "lon": 9.87341428855964, "adr": "Strandebakken 6 A, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925882", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ4dMAG", "r": 1}, {"navn": "Torpeveien 106", "grp": "Kun mobil", "lat": 59.00062622173479, "lon": 9.864461083331323, "adr": "Torpeveien 106, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10925892", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ4nMAG", "r": 2}, {"navn": "Barkevikveien 19", "grp": "Kun mobil", "lat": 58.99611488746306, "lon": 9.858536581150165, "adr": "Barkevikveien 19, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926062", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ7XMAW", "r": 3}, {"navn": "Torpelia 6 A", "grp": "Kun mobil", "lat": 58.99810841916276, "lon": 9.868815544578618, "adr": "Torpelia 6 A, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926081", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ7qMAG", "r": 2}, {"navn": "Lynglia 27", "grp": "Kun mobil", "lat": 58.99461426037853, "lon": 9.869157409428432, "adr": "Lynglia 27, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926083", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ7sMAG", "r": 1}, {"navn": "Torpesvingen 17", "grp": "Kun mobil", "lat": 58.99862513551247, "lon": 9.864609351968689, "adr": "Torpesvingen 17, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926127", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ8aMAG", "r": 2}, {"navn": "Torpelia 28", "grp": "Kun mobil", "lat": 58.99787255954169, "lon": 9.871972202091243, "adr": "Torpelia 28, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926135", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ8iMAG", "r": 1}, {"navn": "Krabbegata 74", "grp": "Kun mobil", "lat": 58.99182342540597, "lon": 9.864788662908861, "adr": "Krabbegata 74, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926155", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJ92MAG", "r": 4}, {"navn": "Krabbesvingen 42", "grp": "Kun mobil", "lat": 58.98954662654565, "lon": 9.864935187528644, "adr": "Krabbesvingen 42, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926159", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000DJ96MAG", "r": 4}, {"navn": "Krabbesvingen 27", "grp": "Kun mobil", "lat": 58.99012255590644, "lon": 9.865302880954774, "adr": "Krabbesvingen 27, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926241", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJAQMA4", "r": 4}, {"navn": "Barkevikveien 17", "grp": "Kun mobil", "lat": 58.99587296418463, "lon": 9.858722009668805, "adr": "Barkevikveien 17, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926444", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJDhMAO", "r": 3}, {"navn": "Barkevikveien 32", "grp": "Kun mobil", "lat": 58.9971294748101, "lon": 9.85830772066668, "adr": "Barkevikveien 32, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926503", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJEeMAO", "r": 3}, {"navn": "Baggersteinveien 36", "grp": "Kun mobil", "lat": 58.995030757472236, "lon": 9.862338510203175, "adr": "Baggersteinveien 36, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926662", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJHDMA4", "r": 3}, {"navn": "Torpeveien 97", "grp": "Kun mobil", "lat": 58.999625879966594, "lon": 9.864033918068497, "adr": "Torpeveien 97, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926669", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJHKMA4", "r": 2}, {"navn": "Barkevikveien 1", "grp": "Kun mobil", "lat": 58.994921755029026, "lon": 9.859415377193983, "adr": "Barkevikveien 1, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926728", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJIHMA4", "r": 3}, {"navn": "Torpesvingen 3", "grp": "Kun mobil", "lat": 58.99749569044971, "lon": 9.865896886511807, "adr": "Torpesvingen 3, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10926749", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJIcMAO", "r": 2}, {"navn": "Strandebakken 25", "grp": "Kun mobil", "lat": 58.993560371234544, "lon": 9.868547839541996, "adr": "Strandebakken 25, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927014", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJMtMAO", "r": 1}, {"navn": "Torpeveien 82", "grp": "Kun mobil", "lat": 58.99980376629301, "lon": 9.866713765199108, "adr": "Torpeveien 82, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927076", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJNtMAO", "r": 2}, {"navn": "Torpeveien 114", "grp": "Kun mobil", "lat": 59.001752188271126, "lon": 9.86382782293952, "adr": "Torpeveien 114, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927150", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJP5MAO", "r": 2}, {"navn": "Brunlanesveien 1091", "grp": "Kun mobil", "lat": 58.995050416572056, "lon": 9.88037670101255, "adr": "Brunlanesveien 1091, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927201", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJPuMAO", "r": 1}, {"navn": "Torpesvingen 56", "grp": "Kun mobil", "lat": 58.998439815872736, "lon": 9.867878753222296, "adr": "Torpesvingen 56, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927213", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DJQ6MAO", "r": 2}, {"navn": "Omreveien 38", "grp": "Kun mobil", "lat": 58.980902666226676, "lon": 9.87224102489745, "adr": "Omreveien 38, 3296 Nevlunghavn", "area": "Nevlunghavn", "bnr": "V-10927229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJQMMA4", "r": 5}, {"navn": "Lynglia 17", "grp": "Kun mobil", "lat": 58.99519980516278, "lon": 9.867553568526017, "adr": "Lynglia 17, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927303", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJRYMA4", "r": 1}, {"navn": "Barkevikveien 14 B", "grp": "Kun mobil", "lat": 58.995407652090556, "lon": 9.859683327772508, "adr": "Barkevikveien 14 B, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927335", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJS4MAO", "r": 3}, {"navn": "Søndersrødveien 17", "grp": "Kun mobil", "lat": 58.98693583152423, "lon": 9.8744276084806, "adr": "Søndersrødveien 17, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927483", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJUSMA4", "r": 5}, {"navn": "Brunlanesveien 1131", "grp": "Kun mobil", "lat": 58.99355002313623, "lon": 9.87395830524379, "adr": "Brunlanesveien 1131, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927548", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJVVMA4", "r": 1}, {"navn": "Strandebakken 39 C", "grp": "Kun mobil", "lat": 58.993565500812615, "lon": 9.866172400644839, "adr": "Strandebakken 39 C, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJZMMA4", "r": 3}, {"navn": "Lynglia 25", "grp": "Kun mobil", "lat": 58.994841902657576, "lon": 9.868693235552685, "adr": "Lynglia 25, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927853", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJaQMAW", "r": 1}, {"navn": "Baggersteinveien 8", "grp": "Kun mobil", "lat": 58.99494570436366, "lon": 9.86310738613142, "adr": "Baggersteinveien 8, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927894", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJb5MAG", "r": 3}, {"navn": "Torpesvingen 23", "grp": "Kun mobil", "lat": 58.99895107072415, "lon": 9.865562676814163, "adr": "Torpesvingen 23, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927938", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJbnMAG", "r": 2}, {"navn": "Torpesvingen 20", "grp": "Kun mobil", "lat": 58.99830513353295, "lon": 9.865591720478214, "adr": "Torpesvingen 20, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10927967", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJcGMAW", "r": 2}, {"navn": "Torpelia 5", "grp": "Kun mobil", "lat": 58.99776176373952, "lon": 9.869616169966353, "adr": "Torpelia 5, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10928051", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJdcMAG", "r": 2}, {"navn": "Søbakken 3", "grp": "Kun mobil", "lat": 58.993175350368816, "lon": 9.859486727811912, "adr": "Søbakken 3, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10928138", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJf1MAG", "r": 3}, {"navn": "Krabbegata 38", "grp": "Kun mobil", "lat": 58.99053529184775, "lon": 9.866705385058596, "adr": "Krabbegata 38, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10928343", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJiKMAW", "r": 4}, {"navn": "Amundrødveien 43", "grp": "Kun mobil", "lat": 58.985397310906635, "lon": 9.86681991716454, "adr": "Amundrødveien 43, 3295 Helgeroa", "area": "Helgeroa", "bnr": "V-10928536", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DJlRMAW", "r": 4}];
+var AREAS = ["Helgeroa", "Nevlunghavn"];
+var STORE_KEY = "dorkart_Sebastian Bergseth_19.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Sebastian Bergseth";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":21,"m":11,"h":[[[58.994657,9.867007],[58.995304,9.86707],[58.995392,9.867184],[58.996235,9.868405],[58.996179,9.868773],[58.996251,9.868881],[58.996847,9.870358],[58.996879,9.871257],[58.997228,9.871689],[58.997338,9.871526],[58.997437,9.870315],[58.997506,9.870246],[58.99772,9.870556],[58.997812,9.870827],[58.997614,9.871382],[58.9978,9.871677],[58.998088,9.871664],[58.998144,9.871972],[58.998123,9.872172],[58.995895,9.880383],[58.995836,9.880553],[58.995748,9.880666],[58.99505,9.8809],[58.994947,9.88086],[58.994859,9.880747],[58.9948,9.880577],[58.992891,9.873288],[58.99287,9.873088],[58.993289,9.868548],[58.99331,9.868348],[58.993368,9.868178],[58.993888,9.867637],[58.994064,9.867997]],[[58.990792,9.878129],[58.99088,9.878242],[58.990939,9.878412],[58.99096,9.878612],[58.990939,9.878812],[58.99088,9.878982],[58.990792,9.879096],[58.990689,9.879135],[58.990585,9.879096],[58.990497,9.878982],[58.990438,9.878812],[58.990417,9.878612],[58.990438,9.878412],[58.990497,9.878242],[58.990585,9.878129],[58.990689,9.878089]]],"b":[[58.998144,9.871972],[58.99096,9.878612]],"g":["Brunlanesveien","Strandebakken","Torpeløkka"]},{"n":2,"c":"#7b2cbf","s":27,"m":22,"h":[[[58.997341,9.871493],[58.99706,9.871213],[58.997002,9.871043],[58.996961,9.869815],[58.997245,9.865697],[59.000231,9.857283],[59.000319,9.85717],[59.000423,9.85713],[59.000527,9.85717],[59.000615,9.857283],[59.000673,9.857453],[59.002003,9.863628],[59.002024,9.863828],[59.002003,9.864028],[59.001944,9.864198],[58.998381,9.871196],[58.998106,9.871663],[58.9978,9.871677],[58.997614,9.871382],[58.997852,9.870716],[58.997839,9.8704],[58.997547,9.870206],[58.997437,9.870315]]],"b":[[59.002024,9.863828]],"g":["Torpesvingen","Torpeveien","Torpelia"]},{"n":3,"c":"#0b7285","s":27,"m":18,"h":[[[58.99064,9.859422],[58.990368,9.858697],[58.990347,9.858497],[58.990368,9.858297],[58.990427,9.858127],[58.990515,9.858014],[58.995843,9.855473],[58.995946,9.855512],[58.996034,9.855626],[58.997321,9.857938],[58.99738,9.858108],[58.997401,9.858308],[58.99738,9.858508],[58.994769,9.86682],[58.994324,9.867563],[58.993374,9.866542],[58.992881,9.865258],[58.992896,9.865192],[58.992673,9.863986],[58.992705,9.863695],[58.991655,9.861494],[58.991844,9.86084],[58.99148,9.859574],[58.991132,9.859163]]],"b":[[58.997401,9.858308]],"g":["Strandebakken","Barkevikveien","Nordgata"]},{"n":4,"c":"#a61e4d","s":19,"m":17,"h":[[[58.985293,9.867303],[58.985205,9.86719],[58.985147,9.86702],[58.985126,9.86682],[58.985147,9.86662],[58.98628,9.862368],[58.986338,9.862198],[58.986581,9.861845],[58.990866,9.859717],[58.99097,9.859757],[58.991058,9.85987],[58.992254,9.863149],[58.992346,9.864847],[58.992292,9.868831],[58.992272,9.869031],[58.992213,9.869201],[58.992125,9.869314],[58.990123,9.869759],[58.989431,9.869846],[58.989306,9.869793],[58.988909,9.868605],[58.988809,9.868008],[58.988675,9.867836],[58.988654,9.866141],[58.988333,9.864831],[58.987232,9.864981],[58.986719,9.865453],[58.986564,9.866627],[58.986371,9.867275],[58.986252,9.867898]],[[58.988216,9.852914],[58.988304,9.853027],[58.988363,9.853197],[58.988384,9.853397],[58.988363,9.853598],[58.988304,9.853767],[58.988216,9.853881],[58.988113,9.853921],[58.988009,9.853881],[58.987921,9.853767],[58.987862,9.853598],[58.987841,9.853397],[58.987862,9.853197],[58.987921,9.853027],[58.988009,9.852914],[58.988113,9.852874]]],"b":[[58.992346,9.864847],[58.988384,9.853397]],"g":["Krabbegata","Krabbesvingen","Amundrødbakken"]},{"n":5,"c":"#343a40","s":20,"m":4,"h":[[[58.989702,9.87142],[58.989723,9.87162],[58.989113,9.88081],[58.989092,9.88101],[58.989033,9.88118],[58.988945,9.881293],[58.988841,9.881333],[58.988738,9.881293],[58.98747,9.880199],[58.987382,9.880086],[58.987323,9.879916],[58.984656,9.868918],[58.986179,9.868248],[58.986371,9.867275],[58.986564,9.866627],[58.986681,9.865743],[58.987507,9.865813],[58.987747,9.866174],[58.989093,9.869156],[58.989365,9.869968]],[[58.984037,9.866366],[58.984017,9.866166],[58.984037,9.865965],[58.984096,9.865796],[58.984184,9.865682],[58.984288,9.865643],[58.984973,9.865671],[58.984536,9.868424]],[[58.980005,9.869024],[58.980093,9.869137],[58.981153,9.872041],[58.981462,9.873473],[58.981811,9.8769],[58.98179,9.877101],[58.981731,9.87727],[58.981643,9.877384],[58.981539,9.877424],[58.981436,9.877384],[58.978718,9.874324],[58.97863,9.874211],[58.978571,9.874041],[58.97855,9.873841],[58.978571,9.873641],[58.97965,9.869307],[58.979709,9.869137],[58.979797,9.869024],[58.979901,9.868984]]],"b":[[58.989723,9.87162],[58.981811,9.8769]],"g":["Amundrødbakken","Krabbegata","Søndersrødveien"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
