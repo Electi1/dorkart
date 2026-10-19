@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Nikolai 19.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Nikolai</div>
+<div class="date">19.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Vestrepollsvegen 169", "grp": "HC Vula", "lat": 60.32599491169832, "lon": 5.167533989307636, "adr": "Vestrepollsvegen 169, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933431", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOugMAG", "r": 5}, {"navn": "Katlavika 3 A", "grp": "HC Vula", "lat": 60.326886039116765, "lon": 5.175307776327035, "adr": "Katlavika 3 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933435", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOukMAG", "r": 4}, {"navn": "Kongsgardsvegen 80", "grp": "HC Vula", "lat": 60.297672532186844, "lon": 5.1561119768853585, "adr": "Kongsgardsvegen 80, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933459", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOv8MAG", "r": 1}, {"navn": "Høganeset 40", "grp": "HP", "lat": 60.30205145210283, "lon": 5.168276931823559, "adr": "Høganeset 40, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933469", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOvIMAW", "r": 1}, {"navn": "Hjeltaskjeret 10", "grp": "HC Vula", "lat": 60.29837855541482, "lon": 5.156590433040187, "adr": "Hjeltaskjeret 10, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933495", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOviMAG", "r": 1}, {"navn": "Jaktaneset 37", "grp": "HC Vula", "lat": 60.31960445390125, "lon": 5.1909569108024405, "adr": "Jaktaneset 37, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933516", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOw3MAG", "r": 3}, {"navn": "Kongsgardsvegen 31", "grp": "HC Vula", "lat": 60.29864870445281, "lon": 5.163441362620108, "adr": "Kongsgardsvegen 31, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933519", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOw6MAG", "r": 1}, {"navn": "Bjorøyvegen 330 B", "grp": "HP", "lat": 60.30907804784345, "lon": 5.167395872298014, "adr": "Bjorøyvegen 330 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933533", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOwKMAW", "r": 1}, {"navn": "Fløsteinspollen 61", "grp": "HC Vula", "lat": 60.328631360926856, "lon": 5.182746414238683, "adr": "Fløsteinspollen 61, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933564", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOwpMAG", "r": 4}, {"navn": "Pollhaugen 2", "grp": "HP", "lat": 60.325428258333204, "lon": 5.174380032552685, "adr": "Pollhaugen 2, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933580", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOx5MAG", "r": 4}, {"navn": "Vestrepollsvegen 220", "grp": "HP", "lat": 60.323258413722414, "lon": 5.166217396643434, "adr": "Vestrepollsvegen 220, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933606", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOxVMAW", "r": 5}, {"navn": "Høganeset 24", "grp": "HC Vula", "lat": 60.304408876136534, "lon": 5.168978764421984, "adr": "Høganeset 24, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933624", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOxnMAG", "r": 1}, {"navn": "Tyssøyvågen 25", "grp": "HC", "lat": 60.29671704960796, "lon": 5.154159636292424, "adr": "Tyssøyvågen 25, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933639", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOy2MAG", "r": 1}, {"navn": "Tyssøyvågen 38", "grp": "HC Vula", "lat": 60.295161795503645, "lon": 5.158158468219571, "adr": "Tyssøyvågen 38, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933648", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOyBMAW", "r": 1}, {"navn": "Bjorøyvegen 335", "grp": "HC Vula", "lat": 60.30870174506667, "lon": 5.166663661371304, "adr": "Bjorøyvegen 335, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933674", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOybMAG", "r": 1}, {"navn": "Vestrepollsvegen 137", "grp": "HC Vula", "lat": 60.3274858504705, "lon": 5.167683840344122, "adr": "Vestrepollsvegen 137, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933703", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOz4MAG", "r": 5}, {"navn": "Pollhaugen 9", "grp": "HC Vula", "lat": 60.325569176597845, "lon": 5.1731654992987695, "adr": "Pollhaugen 9, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933732", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DOzXMAW", "r": 4}, {"navn": "Bjorøyvegen 109", "grp": "HC Vula", "lat": 60.32336806651061, "lon": 5.179315994903984, "adr": "Bjorøyvegen 109, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933805", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP0hMAG", "r": 4}, {"navn": "Vestrepollsvegen 48", "grp": "HP", "lat": 60.324179861625886, "lon": 5.174417532027608, "adr": "Vestrepollsvegen 48, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933829", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP15MAG", "r": 4}, {"navn": "Ørnadalen 94", "grp": "HC", "lat": 60.321768189537686, "lon": 5.157517436289483, "adr": "Ørnadalen 94, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933864", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP1eMAG", "r": 5}, {"navn": "Skiparvikvegen 8", "grp": "HC", "lat": 60.32184730529319, "lon": 5.183010163820038, "adr": "Skiparvikvegen 8, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933870", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP1kMAG", "r": 3}, {"navn": "Helletoppen 23", "grp": "HC", "lat": 60.31755920448554, "lon": 5.178583479792195, "adr": "Helletoppen 23, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933886", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP20MAG", "r": 2}, {"navn": "Jaktaneset 35", "grp": "HP", "lat": 60.31941768280034, "lon": 5.190973255739188, "adr": "Jaktaneset 35, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933890", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP24MAG", "r": 3}, {"navn": "Bjorøyvegen 309", "grp": "HP", "lat": 60.31057945306998, "lon": 5.164450275923276, "adr": "Bjorøyvegen 309, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933893", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP27MAG", "r": 1}, {"navn": "Skiparvikvegen 80 D", "grp": "HC", "lat": 60.319893033664705, "lon": 5.184505965286951, "adr": "Skiparvikvegen 80 D, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933901", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP2FMAW", "r": 3}, {"navn": "Vestrepollsvegen 180", "grp": "HC Vula", "lat": 60.32439669801876, "lon": 5.166601346649697, "adr": "Vestrepollsvegen 180, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933951", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP33MAG", "r": 5}, {"navn": "Helletoppen 21", "grp": "HC Vula", "lat": 60.31760957632529, "lon": 5.178515666176391, "adr": "Helletoppen 21, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933972", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP3OMAW", "r": 2}, {"navn": "Bjorøyvegen 334", "grp": "HC Vula", "lat": 60.30911972221683, "lon": 5.168064070500787, "adr": "Bjorøyvegen 334, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10933993", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP3jMAG", "r": 1}, {"navn": "Tangen 25", "grp": "HP", "lat": 60.30347817554548, "lon": 5.167566209341442, "adr": "Tangen 25, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934001", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DP3rMAG", "r": 1}, {"navn": "Ørnadalen 72", "grp": "HC Vula", "lat": 60.319691719129864, "lon": 5.160625337924417, "adr": "Ørnadalen 72, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934051", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP4fMAG", "r": 5}, {"navn": "Helletoppen 13", "grp": "HC Vula", "lat": 60.31812923684485, "lon": 5.178065784591282, "adr": "Helletoppen 13, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934053", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP4hMAG", "r": 2}, {"navn": "Flyndrevikvegen 87", "grp": "HC Vula", "lat": 60.3148465098233, "lon": 5.183067123361614, "adr": "Flyndrevikvegen 87, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934054", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP4iMAG", "r": 2}, {"navn": "Geitavegen 33", "grp": "HP", "lat": 60.306209586213335, "lon": 5.173441696207201, "adr": "Geitavegen 33, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934104", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP5WMAW", "r": 1}, {"navn": "Helletoppen 1", "grp": "HC Vula", "lat": 60.319976337876554, "lon": 5.177030429575321, "adr": "Helletoppen 1, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934125", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP5rMAG", "r": 2}, {"navn": "Helletoppen 41", "grp": "HC Vula", "lat": 60.31783473379699, "lon": 5.177834140071323, "adr": "Helletoppen 41, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934133", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP5zMAG", "r": 2}, {"navn": "Tangen 20", "grp": "HC", "lat": 60.30286215258095, "lon": 5.16584509949627, "adr": "Tangen 20, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934164", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP6UMAW", "r": 1}, {"navn": "Bjorøyvegen 330 C", "grp": "HP", "lat": 60.30920389713473, "lon": 5.167296317509652, "adr": "Bjorøyvegen 330 C, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934179", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP6jMAG", "r": 1}, {"navn": "Tangen 21", "grp": "HC Vula", "lat": 60.303455235338376, "lon": 5.166771842100352, "adr": "Tangen 21, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934185", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP6pMAG", "r": 1}, {"navn": "Nilsvikhaugane 16", "grp": "HC Vula", "lat": 60.3309896760454, "lon": 5.17644584541537, "adr": "Nilsvikhaugane 16, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934194", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP6yMAG", "r": 4}, {"navn": "Skiparvikvegen 64 B", "grp": "HP", "lat": 60.32089904165587, "lon": 5.185809715885621, "adr": "Skiparvikvegen 64 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934214", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP7IMAW", "r": 3}, {"navn": "Kongsgardsvegen 35", "grp": "HP", "lat": 60.29922736840526, "lon": 5.163246655122122, "adr": "Kongsgardsvegen 35, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934228", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP7WMAW", "r": 1}, {"navn": "Katlavika 6 A", "grp": "HC Vula", "lat": 60.32680243705475, "lon": 5.174059498786439, "adr": "Katlavika 6 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934239", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP7hMAG", "r": 4}, {"navn": "Høganeset 26", "grp": "HC Vula", "lat": 60.30389030938712, "lon": 5.169075783789495, "adr": "Høganeset 26, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934249", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP7rMAG", "r": 1}, {"navn": "Flyndrevikvegen 39", "grp": "HC", "lat": 60.318261369917614, "lon": 5.180336361742524, "adr": "Flyndrevikvegen 39, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934262", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP84MAG", "r": 2}, {"navn": "Skiparvikvegen 162 B", "grp": "HP", "lat": 60.31920592057595, "lon": 5.189598641834591, "adr": "Skiparvikvegen 162 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934281", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP8NMAW", "r": 3}, {"navn": "Vestrepollsvegen 120", "grp": "HP", "lat": 60.32493593005868, "lon": 5.168528371152985, "adr": "Vestrepollsvegen 120, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934305", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP8lMAG", "r": 5}, {"navn": "Vestrepollsvegen 7", "grp": "HC Vula", "lat": 60.32333388079486, "lon": 5.1785540502825125, "adr": "Vestrepollsvegen 7, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934314", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP8uMAG", "r": 4}, {"navn": "Kongsgardsvegen 71", "grp": "HP", "lat": 60.29688985266401, "lon": 5.158884497237092, "adr": "Kongsgardsvegen 71, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934324", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP94MAG", "r": 1}, {"navn": "Høganeset 18 B", "grp": "HP", "lat": 60.30506758179705, "lon": 5.169214947910754, "adr": "Høganeset 18 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934330", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP9AMAW", "r": 1}, {"navn": "Katlavika 7", "grp": "HP", "lat": 60.32712604596846, "lon": 5.174652433000426, "adr": "Katlavika 7, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934333", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP9DMAW", "r": 4}, {"navn": "Bjorøytoppen 1", "grp": "HC Vula", "lat": 60.31886791870927, "lon": 5.1747497576095345, "adr": "Bjorøytoppen 1, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934366", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP9kMAG", "r": 2}, {"navn": "Fløsteinspollen 7", "grp": "HP", "lat": 60.325669107307796, "lon": 5.181185752024041, "adr": "Fløsteinspollen 7, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934372", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DP9qMAG", "r": 4}, {"navn": "Høganeset 18 A", "grp": "HC Vula", "lat": 60.305167833233774, "lon": 5.169421311111222, "adr": "Høganeset 18 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934387", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPA5MAO", "r": 1}, {"navn": "Katlavika 17", "grp": "HC", "lat": 60.32797835865737, "lon": 5.175531509181696, "adr": "Katlavika 17, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934409", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPARMA4", "r": 4}, {"navn": "Skiparvikvegen 80 A", "grp": "HP", "lat": 60.31980946999299, "lon": 5.184353881722937, "adr": "Skiparvikvegen 80 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934416", "bol": "", "st": "Ikke besøkt", "sfid": "a4CSg000000DPAYMA4", "r": 3}, {"navn": "Bjorøytoppen 9", "grp": "HC Vula", "lat": 60.318396058256496, "lon": 5.176780442580519, "adr": "Bjorøytoppen 9, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934438", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPAuMAO", "r": 2}, {"navn": "Tyssøyvågen 15", "grp": "HC Vula", "lat": 60.29724645429482, "lon": 5.155057269684808, "adr": "Tyssøyvågen 15, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934471", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPBRMA4", "r": 1}, {"navn": "Vestrepollsvegen 71", "grp": "HC", "lat": 60.324559960042315, "lon": 5.17544246887526, "adr": "Vestrepollsvegen 71, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934479", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPBZMA4", "r": 4}, {"navn": "Jaktaneset 41", "grp": "HP", "lat": 60.31997568422161, "lon": 5.190768443498384, "adr": "Jaktaneset 41, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934488", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPBiMAO", "r": 3}, {"navn": "Tyssøyvågen 10", "grp": "HP", "lat": 60.29625615988775, "lon": 5.155626521169151, "adr": "Tyssøyvågen 10, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934502", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPBwMAO", "r": 1}, {"navn": "Vestrepollsvegen 8", "grp": "HP", "lat": 60.32202727450393, "lon": 5.177080343433889, "adr": "Vestrepollsvegen 8, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934507", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPC1MAO", "r": 3}, {"navn": "Bjorøyvegen 332", "grp": "HC Vula", "lat": 60.308721948217006, "lon": 5.167808514115223, "adr": "Bjorøyvegen 332, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934536", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPCUMA4", "r": 1}, {"navn": "Vestrepollsvegen 152", "grp": "HC Vula", "lat": 60.325522941821646, "lon": 5.168280031275774, "adr": "Vestrepollsvegen 152, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934542", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPCaMAO", "r": 5}, {"navn": "Skiparvikvegen 157", "grp": "HC Vula", "lat": 60.31865493007717, "lon": 5.188910811507697, "adr": "Skiparvikvegen 157, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934543", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPCbMAO", "r": 3}, {"navn": "Vestrepollsvegen 149", "grp": "HC Vula", "lat": 60.32688709553292, "lon": 5.16708302245274, "adr": "Vestrepollsvegen 149, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPCmMAO", "r": 5}, {"navn": "Skiparvikvegen 5", "grp": "HC Vula", "lat": 60.32209114223241, "lon": 5.182111658396398, "adr": "Skiparvikvegen 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934571", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPD3MAO", "r": 3}, {"navn": "Skiparvikvegen 14", "grp": "HC Vula", "lat": 60.32105269049272, "lon": 5.182885540942658, "adr": "Skiparvikvegen 14, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934585", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPDHMA4", "r": 3}, {"navn": "Flyndrevikvegen 79", "grp": "HC Vula", "lat": 60.31503347937901, "lon": 5.182066732138594, "adr": "Flyndrevikvegen 79, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPDaMAO", "r": 2}, {"navn": "Skiparvikvegen 12", "grp": "HP", "lat": 60.32123095500039, "lon": 5.183770936899941, "adr": "Skiparvikvegen 12, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934607", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DPDdMAO", "r": 3}, {"navn": "Bjorøyvegen 330 A", "grp": "HP", "lat": 60.30896865884696, "lon": 5.167502011049282, "adr": "Bjorøyvegen 330 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934625", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPDvMAO", "r": 1}, {"navn": "Helletoppen 38", "grp": "HC Vula", "lat": 60.31716238580183, "lon": 5.179198556565019, "adr": "Helletoppen 38, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934639", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPE9MAO", "r": 2}, {"navn": "Vestrepollsvegen 141", "grp": "HC Vula", "lat": 60.32785289036045, "lon": 5.16734490088223, "adr": "Vestrepollsvegen 141, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934640", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPEAMA4", "r": 5}, {"navn": "Vestrepollsvegen 26", "grp": "HC Vula", "lat": 60.32321413619871, "lon": 5.173845510799904, "adr": "Vestrepollsvegen 26, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934651", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPELMA4", "r": 5}, {"navn": "Bjorøyneset 44", "grp": "HC Vula", "lat": 60.326146973412946, "lon": 5.183775008877623, "adr": "Bjorøyneset 44, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934652", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPEMMA4", "r": 4}, {"navn": "Helletoppen 35", "grp": "HC", "lat": 60.31754110044539, "lon": 5.177866303132093, "adr": "Helletoppen 35, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934656", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPEQMA4", "r": 2}, {"navn": "Bjorøyvegen 166 B", "grp": "HC Vula", "lat": 60.319736379543684, "lon": 5.176136950570993, "adr": "Bjorøyvegen 166 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934658", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPESMA4", "r": 2}, {"navn": "Flyndrevikvegen 60", "grp": "HP", "lat": 60.316756055408966, "lon": 5.182264079334094, "adr": "Flyndrevikvegen 60, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934668", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPEcMAO", "r": 2}, {"navn": "Vestrepollsvegen 12", "grp": "HC", "lat": 60.32226568771529, "lon": 5.1750586526710665, "adr": "Vestrepollsvegen 12, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934673", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPEhMAO", "r": 5}, {"navn": "Nilsvikhaugane 27", "grp": "HC", "lat": 60.33151902115077, "lon": 5.17602685683214, "adr": "Nilsvikhaugane 27, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934688", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPEwMAO", "r": 4}, {"navn": "Nilsvikhaugane 26", "grp": "HC", "lat": 60.3311458247929, "lon": 5.175303664097576, "adr": "Nilsvikhaugane 26, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934701", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPF9MAO", "r": 4}, {"navn": "Fløsteinspollen 43", "grp": "HC", "lat": 60.32821198193746, "lon": 5.1823084659848595, "adr": "Fløsteinspollen 43, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934717", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DPFPMA4", "r": 4}, {"navn": "Tangen 13", "grp": "HC Vula", "lat": 60.30263633882656, "lon": 5.166741086622443, "adr": "Tangen 13, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934744", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPFqMAO", "r": 1}, {"navn": "Helletoppen 47", "grp": "HP", "lat": 60.317628223009564, "lon": 5.1772708302428825, "adr": "Helletoppen 47, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934747", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPFtMAO", "r": 2}, {"navn": "Helletoppen 5", "grp": "HC Vula", "lat": 60.318594392951006, "lon": 5.177924362588322, "adr": "Helletoppen 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934784", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPGUMA4", "r": 2}, {"navn": "Skiparvikvegen 80 B", "grp": "HC Vula", "lat": 60.319831832178416, "lon": 5.184540844568278, "adr": "Skiparvikvegen 80 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934786", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPGWMA4", "r": 3}, {"navn": "Pollhaugen 4", "grp": "HC Vula", "lat": 60.325514941877806, "lon": 5.173644792079871, "adr": "Pollhaugen 4, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934803", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPGnMAO", "r": 4}, {"navn": "Kongsgardsvegen 96", "grp": "HC Vula", "lat": 60.29891630660448, "lon": 5.15777696839364, "adr": "Kongsgardsvegen 96, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934819", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPH3MAO", "r": 1}, {"navn": "Kongsgardsvegen 108", "grp": "HC Vula", "lat": 60.29957798416464, "lon": 5.157251801291613, "adr": "Kongsgardsvegen 108, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934822", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPH6MAO", "r": 1}, {"navn": "Ørnadalen 83", "grp": "HC Vula", "lat": 60.321576815904876, "lon": 5.162089348040577, "adr": "Ørnadalen 83, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934839", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DPHNMA4", "r": 5}, {"navn": "Hjeltaskjeret 1", "grp": "HP", "lat": 60.29868920423861, "lon": 5.157694988495024, "adr": "Hjeltaskjeret 1, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934841", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPHPMA4", "r": 1}, {"navn": "Vestrepollsvegen 5", "grp": "HC Vula", "lat": 60.32308726993778, "lon": 5.179054305095024, "adr": "Vestrepollsvegen 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934848", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPHWMA4", "r": 4}, {"navn": "Skiparvikvegen 1", "grp": "HC Vula", "lat": 60.32249364404297, "lon": 5.1823546074465145, "adr": "Skiparvikvegen 1, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934861", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPHjMAO", "r": 3}, {"navn": "Kongsgardsvegen 60", "grp": "HC", "lat": 60.296851459291055, "lon": 5.160446585353818, "adr": "Kongsgardsvegen 60, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934862", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPHkMAO", "r": 1}, {"navn": "Katlavika 3 C", "grp": "HC Vula", "lat": 60.326798666104175, "lon": 5.17545759531046, "adr": "Katlavika 3 C, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934864", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPHmMAO", "r": 4}, {"navn": "Bjorøyneset 53", "grp": "HP", "lat": 60.32493042861271, "lon": 5.18582193857172, "adr": "Bjorøyneset 53, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934879", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPI1MAO", "r": 3}, {"navn": "Ørnadalen 44", "grp": "HC Vula", "lat": 60.317551799817714, "lon": 5.1602969498655975, "adr": "Ørnadalen 44, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934883", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPI5MAO", "r": 5}, {"navn": "Flyndrevikvegen 41 B", "grp": "HP", "lat": 60.31790959132611, "lon": 5.179750812634244, "adr": "Flyndrevikvegen 41 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934889", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIBMA4", "r": 2}, {"navn": "Skiparvikvegen 54", "grp": "HC Vula", "lat": 60.32031207324554, "lon": 5.184639520321606, "adr": "Skiparvikvegen 54, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934907", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPITMA4", "r": 3}, {"navn": "Katlavika 5", "grp": "HC Vula", "lat": 60.32675237849942, "lon": 5.174786850754165, "adr": "Katlavika 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934909", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIVMA4", "r": 4}, {"navn": "Ørnadalen 52", "grp": "HC Vula", "lat": 60.3187003068993, "lon": 5.1592920027079625, "adr": "Ørnadalen 52, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934912", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIYMA4", "r": 5}, {"navn": "Ørnadalen 10", "grp": "HP", "lat": 60.315665137776946, "lon": 5.163162691092903, "adr": "Ørnadalen 10, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934913", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIZMA4", "r": 2}, {"navn": "Vestrepollsvegen 130", "grp": "HC Vula", "lat": 60.32553150525269, "lon": 5.169854277789287, "adr": "Vestrepollsvegen 130, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934931", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIrMAO", "r": 5}, {"navn": "Bjorøyneset 44", "grp": "HP", "lat": 60.326146973412946, "lon": 5.183775008877623, "adr": "Bjorøyneset 44, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934937", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIxMAO", "r": 4}, {"navn": "Vestrepollsvegen 192", "grp": "HC Vula", "lat": 60.32415550246082, "lon": 5.1673449307257915, "adr": "Vestrepollsvegen 192, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934939", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPIzMAO", "r": 5}, {"navn": "Helletoppen 37", "grp": "HP", "lat": 60.31770078836305, "lon": 5.177954824097801, "adr": "Helletoppen 37, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934940", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPJ0MAO", "r": 2}, {"navn": "Bjorøyvegen 115", "grp": "HC Vula", "lat": 60.32285921405714, "lon": 5.1788136366429045, "adr": "Bjorøyvegen 115, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934952", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPJCMA4", "r": 3}, {"navn": "Vestrepollsvegen 202 A", "grp": "HP", "lat": 60.32375383364876, "lon": 5.168215729116392, "adr": "Vestrepollsvegen 202 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934959", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DPJJMA4", "r": 5}, {"navn": "Bjorøyhamn 41", "grp": "HC", "lat": 60.321713045770224, "lon": 5.183968350582997, "adr": "Bjorøyhamn 41, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934964", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPJOMA4", "r": 3}, {"navn": "Kongsgardsvegen 33", "grp": "HC Vula", "lat": 60.299222507447794, "lon": 5.1647578187495835, "adr": "Kongsgardsvegen 33, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10934989", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPJnMAO", "r": 1}, {"navn": "Vestrepollsvegen 198", "grp": "HC Vula", "lat": 60.32456198166209, "lon": 5.168301400018062, "adr": "Vestrepollsvegen 198, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935026", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPKOMA4", "r": 5}, {"navn": "Pollhaugen 5", "grp": "HC Vula", "lat": 60.32582902029544, "lon": 5.1736261137980035, "adr": "Pollhaugen 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935037", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPKZMA4", "r": 4}, {"navn": "Skiparvikvegen 21", "grp": "HC Vula", "lat": 60.32002319256604, "lon": 5.183658326359811, "adr": "Skiparvikvegen 21, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935042", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPKeMAO", "r": 3}, {"navn": "Geitavegen 31", "grp": "HC", "lat": 60.30606750460271, "lon": 5.172878611351046, "adr": "Geitavegen 31, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935046", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPKiMAO", "r": 1}, {"navn": "Skiparvikvegen 148", "grp": "HC Vula", "lat": 60.319478923211335, "lon": 5.188180336485301, "adr": "Skiparvikvegen 148, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935048", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPKkMAO", "r": 3}, {"navn": "Vestrepollsvegen 226 A", "grp": "HC Vula", "lat": 60.32354621501973, "lon": 5.167687245987076, "adr": "Vestrepollsvegen 226 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935068", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPL4MAO", "r": 5}, {"navn": "Kongsgardsvegen 95", "grp": "HC Vula", "lat": 60.29878595707457, "lon": 5.15855301303491, "adr": "Kongsgardsvegen 95, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935079", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPLFMA4", "r": 1}, {"navn": "Helletoppen 46", "grp": "HC Vula", "lat": 60.31678881648323, "lon": 5.178776841621835, "adr": "Helletoppen 46, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935084", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPLKMA4", "r": 2}, {"navn": "Tyssøyvågen 42", "grp": "HC Vula", "lat": 60.29488972054907, "lon": 5.157516738027245, "adr": "Tyssøyvågen 42, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935101", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPLbMAO", "r": 1}, {"navn": "Bjorøyneset 8", "grp": "HC Vula", "lat": 60.323149021528444, "lon": 5.182658853921666, "adr": "Bjorøyneset 8, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935111", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPLlMAO", "r": 3}, {"navn": "Kongsgardsvegen 106", "grp": "HP", "lat": 60.299705565029754, "lon": 5.158336259069727, "adr": "Kongsgardsvegen 106, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935131", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPM5MAO", "r": 1}, {"navn": "Vestrepollsvegen 9 A", "grp": "HC Vula", "lat": 60.3235546381294, "lon": 5.178672033655983, "adr": "Vestrepollsvegen 9 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935145", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DPMJMA4", "r": 4}, {"navn": "Skiparvikvegen 162 A", "grp": "HC Vula", "lat": 60.319249626775225, "lon": 5.189555483585341, "adr": "Skiparvikvegen 162 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935296", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPOkMAO", "r": 3}, {"navn": "Vestrepollsvegen 56", "grp": "HC Vula", "lat": 60.323841838038625, "lon": 5.173605201999034, "adr": "Vestrepollsvegen 56, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935301", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPOpMAO", "r": 5}, {"navn": "Bjorøytoppen 5", "grp": "HC", "lat": 60.31866412874361, "lon": 5.175788529503832, "adr": "Bjorøytoppen 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935307", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPOvMAO", "r": 2}, {"navn": "Katlavika 3 B", "grp": "HP", "lat": 60.326790387994585, "lon": 5.175326231990148, "adr": "Katlavika 3 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935318", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPP6MAO", "r": 4}, {"navn": "Bjorøyvegen 170 A", "grp": "HP", "lat": 60.31938243146643, "lon": 5.1763280600076484, "adr": "Bjorøyvegen 170 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935320", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPP8MAO", "r": 2}, {"navn": "Bjorøytoppen 2", "grp": "HP", "lat": 60.31914813187635, "lon": 5.175115657431038, "adr": "Bjorøytoppen 2, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935377", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPQ3MAO", "r": 2}, {"navn": "Vestrepollsvegen 151", "grp": "HC Vula", "lat": 60.32664446120383, "lon": 5.167147761338948, "adr": "Vestrepollsvegen 151, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935398", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPQOMA4", "r": 5}, {"navn": "Smivågen 11", "grp": "HC Vula", "lat": 60.29559606814849, "lon": 5.159217618096256, "adr": "Smivågen 11, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935409", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPQZMA4", "r": 1}, {"navn": "Flyndrevikvegen 86", "grp": "HC Vula", "lat": 60.31496776973623, "lon": 5.184158344938054, "adr": "Flyndrevikvegen 86, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935410", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPQaMAO", "r": 2}, {"navn": "Flyndrevikvegen 75", "grp": "HC Vula", "lat": 60.31567032725734, "lon": 5.1820502871427045, "adr": "Flyndrevikvegen 75, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935416", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPQgMAO", "r": 2}, {"navn": "Flyndrevikvegen 43 A", "grp": "HC Vula", "lat": 60.31775597399401, "lon": 5.180250844567122, "adr": "Flyndrevikvegen 43 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935418", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPQiMAO", "r": 2}, {"navn": "Tyssøyvågen 40", "grp": "HC Vula", "lat": 60.29502655720654, "lon": 5.157803098208357, "adr": "Tyssøyvågen 40, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935455", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPRJMA4", "r": 1}, {"navn": "Vestrepollsvegen 14", "grp": "HC Vula", "lat": 60.322854662812624, "lon": 5.175533435698899, "adr": "Vestrepollsvegen 14, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935457", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPRLMA4", "r": 4}, {"navn": "Skiparvikvegen 158", "grp": "HC", "lat": 60.31936268813813, "lon": 5.188828225989956, "adr": "Skiparvikvegen 158, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935495", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPRxMAO", "r": 3}, {"navn": "Katlavika 6 B", "grp": "HP", "lat": 60.32676912239231, "lon": 5.174088781458283, "adr": "Katlavika 6 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935504", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DPS6MAO", "r": 4}, {"navn": "Bjorøyhamn 60 A", "grp": "HC Vula", "lat": 60.32175924302608, "lon": 5.18557606935863, "adr": "Bjorøyhamn 60 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935517", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPSJMA4", "r": 3}, {"navn": "Bjorøyneset 6", "grp": "HC Vula", "lat": 60.323095195280025, "lon": 5.18266333273458, "adr": "Bjorøyneset 6, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935528", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPSUMA4", "r": 3}, {"navn": "Tangen 11", "grp": "HC Vula", "lat": 60.301852597813095, "lon": 5.168861779959163, "adr": "Tangen 11, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935560", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPT0MAO", "r": 1}, {"navn": "Vestrepollsvegen 76", "grp": "HC Vula", "lat": 60.325586580949945, "lon": 5.175195331686141, "adr": "Vestrepollsvegen 76, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935612", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPTqMAO", "r": 4}, {"navn": "Helletoppen 49", "grp": "HP", "lat": 60.31743842509571, "lon": 5.17726948396698, "adr": "Helletoppen 49, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935619", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPTxMAO", "r": 2}, {"navn": "Vestrepollsvegen 9 B", "grp": "HP", "lat": 60.3235732390135, "lon": 5.178666143239192, "adr": "Vestrepollsvegen 9 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935624", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPU2MAO", "r": 4}, {"navn": "Fløsteinspollen 49", "grp": "HC Vula", "lat": 60.3281659189971, "lon": 5.183612988867141, "adr": "Fløsteinspollen 49, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935625", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPU3MAO", "r": 4}, {"navn": "Nilsvikhaugane 18", "grp": "HP", "lat": 60.33089135575619, "lon": 5.176499604173323, "adr": "Nilsvikhaugane 18, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935646", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPUOMA4", "r": 4}, {"navn": "Bjorøyvegen 166 A", "grp": "HC Vula", "lat": 60.31965012720873, "lon": 5.176004577896355, "adr": "Bjorøyvegen 166 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935647", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPUPMA4", "r": 2}, {"navn": "Bjorøytoppen 14", "grp": "Kun mobil", "lat": 60.319061898632704, "lon": 5.177427440951723, "adr": "Bjorøytoppen 14, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935661", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPboMAG", "r": 2}, {"navn": "Vestrepollsvegen 68", "grp": "Kun mobil", "lat": 60.32513867246712, "lon": 5.173688884474748, "adr": "Vestrepollsvegen 68, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935672", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPbzMAG", "r": 4}, {"navn": "Bjorøyvegen 141", "grp": "Kun mobil", "lat": 60.32137980387932, "lon": 5.178008000666671, "adr": "Bjorøyvegen 141, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935676", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPc3MAG", "r": 3}, {"navn": "Skiparvikvegen 50", "grp": "Kun mobil", "lat": 60.32046552502628, "lon": 5.185600299746858, "adr": "Skiparvikvegen 50, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935679", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPc6MAG", "r": 3}, {"navn": "Ørnadalen 68", "grp": "Kun mobil", "lat": 60.32018960519488, "lon": 5.15975121338738, "adr": "Ørnadalen 68, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935681", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPc8MAG", "r": 5}, {"navn": "Flyndrevikvegen 56", "grp": "Kun mobil", "lat": 60.31726761182251, "lon": 5.181754308132463, "adr": "Flyndrevikvegen 56, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935691", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPcIMAW", "r": 2}, {"navn": "Bjorøyvegen 101", "grp": "Kun mobil", "lat": 60.3243762584204, "lon": 5.179053020616218, "adr": "Bjorøyvegen 101, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935696", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPcNMAW", "r": 4}, {"navn": "Høganeset 28", "grp": "Kun mobil", "lat": 60.303999576540164, "lon": 5.168501403290788, "adr": "Høganeset 28, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935702", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPcTMAW", "r": 1}, {"navn": "Jaktaneset 31", "grp": "Kun mobil", "lat": 60.31948738319621, "lon": 5.190354181003478, "adr": "Jaktaneset 31, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935719", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPckMAG", "r": 3}, {"navn": "Vestrepollsvegen 16", "grp": "Kun mobil", "lat": 60.322676640071016, "lon": 5.175282401716584, "adr": "Vestrepollsvegen 16, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935727", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPcsMAG", "r": 4}, {"navn": "Katlavika 23", "grp": "Kun mobil", "lat": 60.32910694262274, "lon": 5.176015692353413, "adr": "Katlavika 23, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935728", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPctMAG", "r": 4}, {"navn": "Bjorøyvegen 170 B", "grp": "Kun mobil", "lat": 60.31940251259192, "lon": 5.176444781696778, "adr": "Bjorøyvegen 170 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935731", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPcwMAG", "r": 2}, {"navn": "Vestrepollsvegen 150", "grp": "Kun mobil", "lat": 60.32579805443208, "lon": 5.168499716528536, "adr": "Vestrepollsvegen 150, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935737", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPd2MAG", "r": 5}, {"navn": "Geitavegen 36", "grp": "Kun mobil", "lat": 60.30686119448165, "lon": 5.172658837954975, "adr": "Geitavegen 36, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935741", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPd6MAG", "r": 1}, {"navn": "Smivågen 5", "grp": "Kun mobil", "lat": 60.29623430167619, "lon": 5.158907190366881, "adr": "Smivågen 5, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935747", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPdCMAW", "r": 1}, {"navn": "Fløsteinspollen 59", "grp": "Kun mobil", "lat": 60.32841131639615, "lon": 5.182768515888654, "adr": "Fløsteinspollen 59, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935761", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPdQMAW", "r": 4}, {"navn": "Bjorøyvegen 107", "grp": "Kun mobil", "lat": 60.32364631089734, "lon": 5.1793015659482835, "adr": "Bjorøyvegen 107, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935786", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPdpMAG", "r": 4}, {"navn": "Bjorøyneset 34", "grp": "Kun mobil", "lat": 60.32548266714212, "lon": 5.182204542317517, "adr": "Bjorøyneset 34, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935789", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPdsMAG", "r": 4}, {"navn": "Tangen 26", "grp": "Kun mobil", "lat": 60.30349770179122, "lon": 5.165752422685215, "adr": "Tangen 26, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935798", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000DPe1MAG", "r": 1}, {"navn": "Tangen 15", "grp": "Kun mobil", "lat": 60.30287666087667, "lon": 5.166658555734618, "adr": "Tangen 15, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935800", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPe3MAG", "r": 1}, {"navn": "Helletoppen 17", "grp": "Kun mobil", "lat": 60.318031824887555, "lon": 5.178678863631542, "adr": "Helletoppen 17, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935811", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPeEMAW", "r": 2}, {"navn": "Høganeset 27", "grp": "Kun mobil", "lat": 60.30442467605865, "lon": 5.1673465202273565, "adr": "Høganeset 27, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935826", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPeTMAW", "r": 1}, {"navn": "Tyssøyvågen 12", "grp": "Kun mobil", "lat": 60.29625089076314, "lon": 5.156996337109283, "adr": "Tyssøyvågen 12, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935841", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPeiMAG", "r": 1}, {"navn": "Skiparvikvegen 146", "grp": "Kun mobil", "lat": 60.31955672583819, "lon": 5.187446310028244, "adr": "Skiparvikvegen 146, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPezMAG", "r": 3}, {"navn": "Vestrepollsvegen 238", "grp": "Kun mobil", "lat": 60.32385385169899, "lon": 5.1655990670342815, "adr": "Vestrepollsvegen 238, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935860", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPf1MAG", "r": 5}, {"navn": "Vestrepollsvegen 204 A", "grp": "Kun mobil", "lat": 60.32393228043419, "lon": 5.168667885741797, "adr": "Vestrepollsvegen 204 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935864", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPf5MAG", "r": 5}, {"navn": "Vestrepollsvegen 138 C", "grp": "Kun mobil", "lat": 60.325359605362344, "lon": 5.1710532446537885, "adr": "Vestrepollsvegen 138 C, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935874", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfFMAW", "r": 5}, {"navn": "Bjorøyneset 3", "grp": "Kun mobil", "lat": 60.323407184707186, "lon": 5.184114770255648, "adr": "Bjorøyneset 3, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935876", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfHMAW", "r": 3}, {"navn": "Ørnadalen 50 B", "grp": "Kun mobil", "lat": 60.31804266753209, "lon": 5.159242472770736, "adr": "Ørnadalen 50 B, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935884", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfPMAW", "r": 5}, {"navn": "Skiparvikvegen 52", "grp": "Kun mobil", "lat": 60.32051007266879, "lon": 5.18496074952298, "adr": "Skiparvikvegen 52, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935898", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfdMAG", "r": 3}, {"navn": "Vestrepollsvegen 133", "grp": "Kun mobil", "lat": 60.32726666987232, "lon": 5.168617424579113, "adr": "Vestrepollsvegen 133, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935899", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfeMAG", "r": 5}, {"navn": "Helletoppen 39", "grp": "Kun mobil", "lat": 60.31778148663709, "lon": 5.177881226539075, "adr": "Helletoppen 39, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935901", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfgMAG", "r": 2}, {"navn": "Bjorøyvegen 156", "grp": "Kun mobil", "lat": 60.31933902474116, "lon": 5.17893551551095, "adr": "Bjorøyvegen 156, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935908", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPfnMAG", "r": 2}, {"navn": "Vestrepollsvegen 202 A", "grp": "Kun mobil", "lat": 60.32375383364876, "lon": 5.168215729116392, "adr": "Vestrepollsvegen 202 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935922", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPg1MAG", "r": 5}, {"navn": "Bjorøyhamn 58", "grp": "Kun mobil", "lat": 60.321893352392564, "lon": 5.186176654309714, "adr": "Bjorøyhamn 58, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935926", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPg5MAG", "r": 3}, {"navn": "Helletoppen 59", "grp": "Kun mobil", "lat": 60.316499024497446, "lon": 5.177989049007889, "adr": "Helletoppen 59, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935928", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPg7MAG", "r": 2}, {"navn": "Jaktaneset 26 A", "grp": "Kun mobil", "lat": 60.32113203811059, "lon": 5.1881505116475095, "adr": "Jaktaneset 26 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935937", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgGMAW", "r": 3}, {"navn": "Jaktaneset 24", "grp": "Kun mobil", "lat": 60.3212939600993, "lon": 5.1878416184319525, "adr": "Jaktaneset 24, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935940", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgJMAW", "r": 3}, {"navn": "Bjorøytoppen 16", "grp": "Kun mobil", "lat": 60.31869730414188, "lon": 5.177252632235157, "adr": "Bjorøytoppen 16, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935950", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgTMAW", "r": 2}, {"navn": "Helletoppen 44", "grp": "Kun mobil", "lat": 60.3169075233511, "lon": 5.178851640472623, "adr": "Helletoppen 44, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935952", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgVMAW", "r": 2}, {"navn": "Skiparvikvegen 159 A", "grp": "Kun mobil", "lat": 60.31881967564515, "lon": 5.1893265458829845, "adr": "Skiparvikvegen 159 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935974", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgrMAG", "r": 3}, {"navn": "Bjorøyvegen 103", "grp": "Kun mobil", "lat": 60.324073857940334, "lon": 5.1788527636999, "adr": "Bjorøyvegen 103, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935981", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgyMAG", "r": 4}, {"navn": "Vestrepollsvegen 138 A", "grp": "Kun mobil", "lat": 60.325376102627374, "lon": 5.1711858129522055, "adr": "Vestrepollsvegen 138 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935982", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPgzMAG", "r": 5}, {"navn": "Ørnadalen 57", "grp": "Kun mobil", "lat": 60.32026158387417, "lon": 5.1615505598202045, "adr": "Ørnadalen 57, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935984", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPh1MAG", "r": 5}, {"navn": "Fløsteinspollen 57", "grp": "Kun mobil", "lat": 60.32842406115582, "lon": 5.183211902391626, "adr": "Fløsteinspollen 57, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935987", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPh4MAG", "r": 4}, {"navn": "Bjorøyvegen 130", "grp": "Kun mobil", "lat": 60.32204475432034, "lon": 5.179561441002458, "adr": "Bjorøyvegen 130, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935991", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPh8MAG", "r": 3}, {"navn": "Bjorøyhamn 62", "grp": "Kun mobil", "lat": 60.32209034032204, "lon": 5.185211145086713, "adr": "Bjorøyhamn 62, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10935996", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPhDMAW", "r": 3}, {"navn": "Høganeset 30", "grp": "Kun mobil", "lat": 60.30368716030379, "lon": 5.168266304730015, "adr": "Høganeset 30, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936001", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPhIMAW", "r": 1}, {"navn": "Bjorøytoppen 3", "grp": "Kun mobil", "lat": 60.31877498357886, "lon": 5.175268096042555, "adr": "Bjorøytoppen 3, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936011", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPhSMAW", "r": 2}, {"navn": "Ørnadalen 64", "grp": "Kun mobil", "lat": 60.320396702482995, "lon": 5.15889313780787, "adr": "Ørnadalen 64, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936034", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPhpMAG", "r": 5}, {"navn": "Bjorøyvegen 168 A", "grp": "Kun mobil", "lat": 60.319806213674674, "lon": 5.17660721361221, "adr": "Bjorøyvegen 168 A, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936043", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPhyMAG", "r": 2}, {"navn": "Flyndrevikvegen 77", "grp": "Kun mobil", "lat": 60.31532431927836, "lon": 5.182177710473971, "adr": "Flyndrevikvegen 77, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936047", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPi2MAG", "r": 2}, {"navn": "Bjorøyneset 31", "grp": "Kun mobil", "lat": 60.32499150004767, "lon": 5.183161054962929, "adr": "Bjorøyneset 31, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936050", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPi5MAG", "r": 4}, {"navn": "Vestrepollsvegen 224", "grp": "Kun mobil", "lat": 60.32356577168333, "lon": 5.167150230901657, "adr": "Vestrepollsvegen 224, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936066", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPiLMAW", "r": 5}, {"navn": "Bjorøyhamn 66", "grp": "Kun mobil", "lat": 60.32161098152732, "lon": 5.18479589407757, "adr": "Bjorøyhamn 66, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936075", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPiUMAW", "r": 3}, {"navn": "Kongsgardsvegen 62", "grp": "Kun mobil", "lat": 60.29678801727427, "lon": 5.160428680954154, "adr": "Kongsgardsvegen 62, 5177 Bjørøyhamn", "area": "Bjørøyhamn", "bnr": "V-10936091", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000DPikMAG", "r": 1}];
+var AREAS = ["Bjørøyhamn"];
+var STORE_KEY = "dorkart_Nikolai_19.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Nikolai";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+var map = L.map("map", {zoomControl:true, tap:true});
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":38,"m":9,"h":[[[60.310683,5.163947],[60.310771,5.164065],[60.31083,5.164242],[60.310851,5.16445],[60.31083,5.164659],[60.309312,5.168449],[60.307053,5.173044],[60.306313,5.173945],[60.30621,5.173986],[60.306106,5.173945],[60.301661,5.169247],[60.295404,5.159602],[60.294698,5.157902],[60.294639,5.157725],[60.294618,5.157517],[60.294639,5.157308],[60.294698,5.157132],[60.296525,5.153775],[60.296613,5.153657],[60.296717,5.153615],[60.296821,5.153657]]],"b":[[60.310851,5.16445]],"g":["Kongsgardsvegen","Høganeset","Tyssøyvågen"]},{"n":2,"c":"#7b2cbf","s":28,"m":12,"h":[[[60.318972,5.174247],[60.31934,5.174731],[60.319928,5.175752],[60.320227,5.176822],[60.320248,5.17703],[60.320227,5.177239],[60.319531,5.17932],[60.317371,5.182257],[60.315072,5.184661],[60.314968,5.184703],[60.314864,5.184661],[60.314776,5.184543],[60.314717,5.184367],[60.314575,5.183067],[60.314783,5.181858],[60.316307,5.177604],[60.318764,5.174247],[60.318868,5.174206]],[[60.315769,5.16266],[60.315857,5.162778],[60.315916,5.162954],[60.315937,5.163163],[60.315916,5.163371],[60.315857,5.163548],[60.315769,5.163666],[60.315665,5.163707],[60.315561,5.163666],[60.315473,5.163548],[60.315414,5.163371],[60.315394,5.163163],[60.315414,5.162954],[60.315473,5.162778],[60.315561,5.16266],[60.315665,5.162618]]],"b":[[60.320248,5.17703],[60.315937,5.163163]],"g":["Helletoppen","Flyndrevikvegen","Bjorøytoppen"]},{"n":3,"c":"#0b7285","s":26,"m":13,"h":[[[60.320547,5.18013],[60.321188,5.177623],[60.321923,5.176578],[60.322027,5.176536],[60.322131,5.176578],[60.322219,5.176695],[60.323051,5.178429],[60.323077,5.178539],[60.322663,5.180112],[60.322729,5.18066],[60.322998,5.180913],[60.32353,5.181059],[60.3239,5.181279],[60.324129,5.182052],[60.324077,5.182818],[60.324318,5.184433],[60.324846,5.184481],[60.325181,5.185614],[60.325202,5.185822],[60.325181,5.18603],[60.325122,5.186207],[60.325034,5.186325],[60.32008,5.191271],[60.319604,5.191501],[60.319314,5.191476],[60.319226,5.191358],[60.318404,5.189119],[60.318384,5.188911],[60.318404,5.188703],[60.320472,5.180429],[60.320563,5.18027]]],"b":[[60.325202,5.185822]],"g":["Skiparvikvegen","Jaktaneset","Bjorøyhamn"]},{"n":4,"c":"#a61e4d","s":31,"m":10,"h":[[[60.324312,5.173507],[60.325569,5.172621],[60.33125,5.174801],[60.331711,5.175642],[60.33177,5.175819],[60.33179,5.176027],[60.33177,5.176235],[60.328823,5.183131],[60.328616,5.183597],[60.32827,5.184116],[60.326147,5.184319],[60.324888,5.183664],[60.3248,5.183546],[60.324126,5.182093],[60.32417,5.18144],[60.323691,5.181155],[60.322864,5.179346],[60.323077,5.178539],[60.322891,5.177173],[60.322844,5.177173],[60.322537,5.176514],[60.322427,5.175496],[60.322513,5.174859],[60.32292,5.174526],[60.323021,5.174678],[60.32355,5.175132],[60.323618,5.174668]]],"b":[[60.33179,5.176027]],"g":["Vestrepollsvegen","Katlavika","Fløsteinspollen"]},{"n":5,"c":"#343a40","s":22,"m":12,"h":[[[60.317301,5.160505],[60.31728,5.160297],[60.317301,5.160089],[60.31736,5.159912],[60.317851,5.158858],[60.317939,5.15874],[60.321664,5.157015],[60.321768,5.156973],[60.321872,5.157015],[60.328045,5.16696],[60.328104,5.167137],[60.328124,5.167345],[60.328104,5.167553],[60.327459,5.169002],[60.325208,5.17228],[60.325029,5.17235],[60.324514,5.172154],[60.324497,5.173196],[60.323981,5.174061],[60.32318,5.174814],[60.323021,5.174678],[60.32262,5.174074],[60.322425,5.175511],[60.322266,5.175603],[60.322162,5.175561],[60.322074,5.175444],[60.322015,5.175267],[60.320688,5.171113],[60.320682,5.169818],[60.320474,5.169265],[60.320031,5.168348],[60.31977,5.168238]]],"b":[[60.328124,5.167345]],"g":["Vestrepollsvegen","Ørnadalen"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
