@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Elliot 20.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Elliot</div>
+<div class="date">20.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Trolldalslia 23", "grp": "HC", "lat": 58.38435632671598, "lon": 8.692603798859068, "adr": "Trolldalslia 23, 4870 Fevik", "area": "Fevik", "bnr": "V-10788150", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIJS2A2", "r": 2}, {"navn": "Trålumbakken 11", "grp": "HP", "lat": 58.38384794366983, "lon": 8.676187512237052, "adr": "Trålumbakken 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10788177", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIJt2AM", "r": 3}, {"navn": "Haugenesveien 56", "grp": "HP", "lat": 58.38132134137496, "lon": 8.70090323252325, "adr": "Haugenesveien 56, 4870 Fevik", "area": "Fevik", "bnr": "V-10788602", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIQk2AM", "r": 1}, {"navn": "Snarveien 7", "grp": "HC", "lat": 58.38217008933322, "lon": 8.70282840743261, "adr": "Snarveien 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10789252", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIbE2AU", "r": 1}, {"navn": "Furufjell 14", "grp": "HC", "lat": 58.37596176117301, "lon": 8.672515400833305, "adr": "Furufjell 14, 4870 Fevik", "area": "Fevik", "bnr": "V-10789647", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIhb2AE", "r": 4}, {"navn": "Haugenesveien 1", "grp": "HC", "lat": 58.37913802383757, "lon": 8.70056262970652, "adr": "Haugenesveien 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10789857", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIkz2AE", "r": 1}, {"navn": "Omveien 2", "grp": "HP", "lat": 58.3847054944697, "lon": 8.703952901327169, "adr": "Omveien 2, 4870 Fevik", "area": "Fevik", "bnr": "V-10790239", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIr92AE", "r": 1}, {"navn": "Lauvåsen 29", "grp": "HC Vula", "lat": 58.37877428517673, "lon": 8.673019406339419, "adr": "Lauvåsen 29, 4870 Fevik", "area": "Fevik", "bnr": "V-10790610", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIx82AE", "r": 4}, {"navn": "Skippergada 11", "grp": "HP", "lat": 58.37953401844041, "lon": 8.678655133653969, "adr": "Skippergada 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10790647", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIxj2AE", "r": 4}, {"navn": "Snarveien 5", "grp": "HP", "lat": 58.38206314516068, "lon": 8.703188416537056, "adr": "Snarveien 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10790707", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bIyh2AE", "r": 1}, {"navn": "Sømsveien 120", "grp": "HP", "lat": 58.38534632028568, "lon": 8.701433530098535, "adr": "Sømsveien 120, 4870 Fevik", "area": "Fevik", "bnr": "V-10791029", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bJ3t2AE", "r": 2}, {"navn": "Skippergada 8", "grp": "HP", "lat": 58.37921765174477, "lon": 8.677854352172277, "adr": "Skippergada 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10791125", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bJ5R2AU", "r": 4}, {"navn": "Teisendal 15", "grp": "HP", "lat": 58.38485562356431, "lon": 8.695958253240219, "adr": "Teisendal 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10791980", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CWS000000bJJE2A2", "r": 2}, {"navn": "Bregneveien 3", "grp": "HC", "lat": 58.38367924192921, "lon": 8.699087643490238, "adr": "Bregneveien 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10793117", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bJbZ2AU", "r": 2}, {"navn": "Gml. Birketveitveien 12", "grp": "HP", "lat": 58.388578868706915, "lon": 8.68039288640179, "adr": "Gml. Birketveitveien 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10793714", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CWS000000bJlC2AU", "r": 3}, {"navn": "Vinterly 6", "grp": "HC", "lat": 58.375512182194534, "lon": 8.661611474223895, "adr": "Vinterly 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10793804", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bJme2AE", "r": 5}, {"navn": "Trolldalslia 64", "grp": "HC", "lat": 58.382601996369274, "lon": 8.691760602812664, "adr": "Trolldalslia 64, 4870 Fevik", "area": "Fevik", "bnr": "V-10795977", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bKLh2AM", "r": 2}, {"navn": "Gml. Birketveitveien 22", "grp": "HP", "lat": 58.38912030826694, "lon": 8.679833630720646, "adr": "Gml. Birketveitveien 22, 4870 Fevik", "area": "Fevik", "bnr": "V-10796657", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bKWf2AM", "r": 3}, {"navn": "Mellomveien 7", "grp": "HC", "lat": 58.38417957632256, "lon": 8.70180251986591, "adr": "Mellomveien 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10796729", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bKXp2AM", "r": 2}, {"navn": "Nedre Hausland 63", "grp": "HP", "lat": 58.373728323772745, "lon": 8.666706199755033, "adr": "Nedre Hausland 63, 4870 Fevik", "area": "Fevik", "bnr": "V-10796844", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bKZg2AM", "r": 5}, {"navn": "Bregneveien 7", "grp": "HC", "lat": 58.38367577896912, "lon": 8.697616965549281, "adr": "Bregneveien 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10796923", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bKax2AE", "r": 2}, {"navn": "Lauvåsen 76", "grp": "HC", "lat": 58.378800659229164, "lon": 8.665837619451516, "adr": "Lauvåsen 76, 4870 Fevik", "area": "Fevik", "bnr": "V-10798331", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bKxf2AE", "r": 5}, {"navn": "Kaféheia 11", "grp": "HC", "lat": 58.382920940563835, "lon": 8.674125502580232, "adr": "Kaféheia 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10798598", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bL1y2AE", "r": 3}, {"navn": "Barlinda 67", "grp": "HC", "lat": 58.37900207223041, "lon": 8.703898083608028, "adr": "Barlinda 67, 4870 Fevik", "area": "Fevik", "bnr": "V-10798909", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bL6z2AE", "r": 1}, {"navn": "Ranvigveien 20", "grp": "HP", "lat": 58.37949941086269, "lon": 8.686435602404051, "adr": "Ranvigveien 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10799041", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bL972AE", "r": 3}, {"navn": "Ruagerveien 12", "grp": "HC", "lat": 58.38486895978135, "lon": 8.70865453255628, "adr": "Ruagerveien 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10799408", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLF22AM", "r": 1}, {"navn": "Krokveien 32", "grp": "HP", "lat": 58.386709370915, "lon": 8.704380781522792, "adr": "Krokveien 32, 4870 Fevik", "area": "Fevik", "bnr": "V-10799418", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLFC2A2", "r": 1}, {"navn": "Liaveien 11", "grp": "HC", "lat": 58.38080037394933, "lon": 8.671554010743145, "adr": "Liaveien 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10799541", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLHB2A2", "r": 4}, {"navn": "Ranvigveien 32", "grp": "HC Vula", "lat": 58.379258794713465, "lon": 8.687207197617843, "adr": "Ranvigveien 32, 4870 Fevik", "area": "Fevik", "bnr": "V-10799720", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLK42AM", "r": 3}, {"navn": "Trolldalstunet 4 A", "grp": "HP", "lat": 58.382456416973795, "lon": 8.68728149831144, "adr": "Trolldalstunet 4 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10799775", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLKx2AM", "r": 3}, {"navn": "Mellomveien 9", "grp": "HP", "lat": 58.3845212272618, "lon": 8.701953551524847, "adr": "Mellomveien 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10799869", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLMT2A2", "r": 2}, {"navn": "Trolldalslia 12", "grp": "HC", "lat": 58.38461974965085, "lon": 8.690846871678088, "adr": "Trolldalslia 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10800271", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLSx2AM", "r": 2}, {"navn": "Lillevei 3", "grp": "HC", "lat": 58.373402365673215, "lon": 8.665700591129566, "adr": "Lillevei 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10801203", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLhz2AE", "r": 5}, {"navn": "Sømsveien 41", "grp": "HC", "lat": 58.383285316520464, "lon": 8.686029034023152, "adr": "Sømsveien 41, 4870 Fevik", "area": "Fevik", "bnr": "V-10801863", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLuF2AU", "r": 3}, {"navn": "Kaféheia 12", "grp": "HP", "lat": 58.38203713732719, "lon": 8.674015244622687, "adr": "Kaféheia 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10802056", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLxM2AU", "r": 3}, {"navn": "Trolldalstunet 19 A", "grp": "HP", "lat": 58.38315132376938, "lon": 8.688646849078973, "adr": "Trolldalstunet 19 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10802076", "bol": "U0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bLxg2AE", "r": 3}, {"navn": "Nedre Hausland 43", "grp": "HC", "lat": 58.37350229854045, "lon": 8.662707784347248, "adr": "Nedre Hausland 43, 4870 Fevik", "area": "Fevik", "bnr": "V-10802471", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bM432AE", "r": 5}, {"navn": "Skibberheia 23", "grp": "HP", "lat": 58.37478153020181, "lon": 8.664143427829869, "adr": "Skibberheia 23, 4870 Fevik", "area": "Fevik", "bnr": "V-10802509", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bM4f2AE", "r": 5}, {"navn": "Brattemoen 22", "grp": "HP", "lat": 58.37452374215864, "lon": 8.66519417759629, "adr": "Brattemoen 22, 4870 Fevik", "area": "Fevik", "bnr": "V-10803181", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMFV2A2", "r": 5}, {"navn": "Jordenebakken 1", "grp": "HP", "lat": 58.37712940755654, "lon": 8.679634489133507, "adr": "Jordenebakken 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10803409", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMJB2A2", "r": 4}, {"navn": "Lauvåsen 33", "grp": "HC", "lat": 58.37860110379766, "lon": 8.672029277412596, "adr": "Lauvåsen 33, 4870 Fevik", "area": "Fevik", "bnr": "V-10804102", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMUM2A2", "r": 4}, {"navn": "Omveien 5", "grp": "HP", "lat": 58.38495511341105, "lon": 8.703147022267615, "adr": "Omveien 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10804349", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMYL2A2", "r": 1}, {"navn": "Furufjell 3", "grp": "HP", "lat": 58.37579196729046, "lon": 8.669993477409696, "adr": "Furufjell 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10804667", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMdT2AU", "r": 5}, {"navn": "Liaveien 20", "grp": "HC Vula", "lat": 58.381581866876985, "lon": 8.671591208114382, "adr": "Liaveien 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10804880", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMgu2AE", "r": 4}, {"navn": "Barlinda 38", "grp": "HP", "lat": 58.37962000768702, "lon": 8.70312343867193, "adr": "Barlinda 38, 4870 Fevik", "area": "Fevik", "bnr": "V-10805322", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMo22AE", "r": 1}, {"navn": "Sømsveien 76", "grp": "HP", "lat": 58.38536350669922, "lon": 8.69349802594047, "adr": "Sømsveien 76, 4870 Fevik", "area": "Fevik", "bnr": "V-10805855", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CWS000000bMwd2AE", "r": 2}, {"navn": "Hammeneveien 8", "grp": "HC", "lat": 58.380165540845915, "lon": 8.679777962680387, "adr": "Hammeneveien 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10805940", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bMy02AE", "r": 3}, {"navn": "Birketveit 24", "grp": "HC Vula", "lat": 58.38486071329235, "lon": 8.682505910562714, "adr": "Birketveit 24, 4870 Fevik", "area": "Fevik", "bnr": "V-10806290", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bN3e2AE", "r": 3}, {"navn": "Klomra 12", "grp": "HP", "lat": 58.372938449106655, "lon": 8.67037220726121, "adr": "Klomra 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10806314", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bN422AE", "r": 5}, {"navn": "Trålum Gården 9", "grp": "HP", "lat": 58.3834397995052, "lon": 8.678174985817158, "adr": "Trålum Gården 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10806716", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNAW2A2", "r": 3}, {"navn": "Trålumbakken 4", "grp": "HC Vula", "lat": 58.38495321354472, "lon": 8.676399707807397, "adr": "Trålumbakken 4, 4870 Fevik", "area": "Fevik", "bnr": "V-10806956", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNEO2A2", "r": 3}, {"navn": "Lauvåsen Terrasse 1", "grp": "HC Vula", "lat": 58.38036276472777, "lon": 8.672525918832612, "adr": "Lauvåsen Terrasse 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10807057", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNG12AM", "r": 4}, {"navn": "Teisendal 35", "grp": "HP", "lat": 58.38476313099564, "lon": 8.696723498532997, "adr": "Teisendal 35, 4870 Fevik", "area": "Fevik", "bnr": "V-10807735", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CWS000000bNQx2AM", "r": 2}, {"navn": "Sømsveien 23 B", "grp": "HP", "lat": 58.381961634290285, "lon": 8.683301476796572, "adr": "Sømsveien 23 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10807799", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNRz2AM", "r": 3}, {"navn": "Øvre Ranviga 3", "grp": "HC", "lat": 58.3799303497682, "lon": 8.686363381138108, "adr": "Øvre Ranviga 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10807816", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNSG2A2", "r": 3}, {"navn": "Lauvåsen 32 A", "grp": "HP", "lat": 58.37905941634752, "lon": 8.672127618583696, "adr": "Lauvåsen 32 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10807974", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNUo2AM", "r": 4}, {"navn": "Haugenesveien 64", "grp": "HC Vula", "lat": 58.381683187420336, "lon": 8.702011688359187, "adr": "Haugenesveien 64, 4870 Fevik", "area": "Fevik", "bnr": "V-10808083", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNWZ2A2", "r": 1}, {"navn": "Snarveien 9", "grp": "HC", "lat": 58.38237543051747, "lon": 8.702296561507698, "adr": "Snarveien 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10808278", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNZi2AM", "r": 1}, {"navn": "Trolldalslia 45", "grp": "HC", "lat": 58.38334460069018, "lon": 8.691316337128079, "adr": "Trolldalslia 45, 4870 Fevik", "area": "Fevik", "bnr": "V-10808345", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNan2AE", "r": 2}, {"navn": "Barlinda 15", "grp": "HP", "lat": 58.38068242297981, "lon": 8.704243100480758, "adr": "Barlinda 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10808421", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNc12AE", "r": 1}, {"navn": "Nedre Hausland 69", "grp": "HP", "lat": 58.373260224587256, "lon": 8.667336335279233, "adr": "Nedre Hausland 69, 4870 Fevik", "area": "Fevik", "bnr": "V-10809214", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bNoo2AE", "r": 5}, {"navn": "Trolldalstunet 21 A", "grp": "HC", "lat": 58.38298346337834, "lon": 8.688316570218992, "adr": "Trolldalstunet 21 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10810188", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bO4W2AU", "r": 3}, {"navn": "Sømsveien 30", "grp": "HC", "lat": 58.38222786455814, "lon": 8.685641867372727, "adr": "Sømsveien 30, 4870 Fevik", "area": "Fevik", "bnr": "V-10810365", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bO7N2AU", "r": 3}, {"navn": "Ranvigveien 16", "grp": "HC", "lat": 58.378916705379964, "lon": 8.686150090017476, "adr": "Ranvigveien 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10810541", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOAD2A2", "r": 3}, {"navn": "Omveien 9", "grp": "HP", "lat": 58.385325052238606, "lon": 8.703879302160455, "adr": "Omveien 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10810696", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOCi2AM", "r": 1}, {"navn": "Furufjell 38", "grp": "HC", "lat": 58.37653942033055, "lon": 8.672968738741503, "adr": "Furufjell 38, 4870 Fevik", "area": "Fevik", "bnr": "V-10810711", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOCx2AM", "r": 4}, {"navn": "Mellomveien 4", "grp": "HP", "lat": 58.38437943216085, "lon": 8.702775623717987, "adr": "Mellomveien 4, 4870 Fevik", "area": "Fevik", "bnr": "V-10810926", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOGQ2A2", "r": 1}, {"navn": "Barlinda 13", "grp": "HC", "lat": 58.380997876365385, "lon": 8.704719259047259, "adr": "Barlinda 13, 4870 Fevik", "area": "Fevik", "bnr": "V-10811480", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOPM2A2", "r": 1}, {"navn": "Teisendal 21", "grp": "HC", "lat": 58.38483992773079, "lon": 8.696156769343036, "adr": "Teisendal 21, 4870 Fevik", "area": "Fevik", "bnr": "V-10812149", "bol": "H0202", "st": "Ikke hjemme", "sfid": "a4CWS000000bObl2AE", "r": 2}, {"navn": "Haugenesveien 12", "grp": "HP", "lat": 58.38206545522081, "lon": 8.701966484432692, "adr": "Haugenesveien 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10812460", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOgm2AE", "r": 1}, {"navn": "Teisendal 16", "grp": "HP", "lat": 58.38515548403877, "lon": 8.69590607730633, "adr": "Teisendal 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10812717", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOkv2AE", "r": 2}, {"navn": "Brattemoen 15", "grp": "HP", "lat": 58.37422123092585, "lon": 8.666291231560711, "adr": "Brattemoen 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10812802", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOmI2AU", "r": 5}, {"navn": "Haugenesveien 45", "grp": "HC Vula", "lat": 58.37887009917933, "lon": 8.701214658706082, "adr": "Haugenesveien 45, 4870 Fevik", "area": "Fevik", "bnr": "V-10812825", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOmf2AE", "r": 1}, {"navn": "Trolldalstunet 6 A", "grp": "HP", "lat": 58.38229596176336, "lon": 8.68777883532578, "adr": "Trolldalstunet 6 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10813278", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOty2AE", "r": 3}, {"navn": "Barlinda 44", "grp": "HC", "lat": 58.379726316623966, "lon": 8.702489870263154, "adr": "Barlinda 44, 4870 Fevik", "area": "Fevik", "bnr": "V-10813295", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOuF2AU", "r": 1}, {"navn": "Ruagerveien 38", "grp": "HC", "lat": 58.38183712543192, "lon": 8.710389563730203, "adr": "Ruagerveien 38, 4870 Fevik", "area": "Fevik", "bnr": "V-10813568", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bOye2AE", "r": 1}, {"navn": "Sømsveien 72", "grp": "HC", "lat": 58.385191427032744, "lon": 8.69290094910877, "adr": "Sømsveien 72, 4870 Fevik", "area": "Fevik", "bnr": "V-10813700", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bP0m2AE", "r": 2}, {"navn": "Øvre Ranviga 5", "grp": "HP", "lat": 58.38088442493624, "lon": 8.68719280934124, "adr": "Øvre Ranviga 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10814882", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bPJq2AM", "r": 3}, {"navn": "Trolldalslia 24", "grp": "HC", "lat": 58.38379094433458, "lon": 8.68944155463452, "adr": "Trolldalslia 24, 4870 Fevik", "area": "Fevik", "bnr": "V-10815383", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bPTX2A2", "r": 2}, {"navn": "Vinterly 1", "grp": "HP", "lat": 58.37573266586756, "lon": 8.661096440450953, "adr": "Vinterly 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10815968", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bPcy2AE", "r": 5}, {"navn": "Barlinda 55", "grp": "HP", "lat": 58.37932804561241, "lon": 8.705040995009961, "adr": "Barlinda 55, 4870 Fevik", "area": "Fevik", "bnr": "V-10816937", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bPuD2AU", "r": 1}, {"navn": "Bregneveien 12", "grp": "HC", "lat": 58.38392584358387, "lon": 8.69701627766015, "adr": "Bregneveien 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10817637", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQ5V2AU", "r": 2}, {"navn": "Bregneveien 18", "grp": "HC", "lat": 58.38352855640312, "lon": 8.696130422804393, "adr": "Bregneveien 18, 4870 Fevik", "area": "Fevik", "bnr": "V-10817916", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQA02AM", "r": 2}, {"navn": "Ormåsen 7", "grp": "HC", "lat": 58.37508819572244, "lon": 8.6681124384243, "adr": "Ormåsen 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10818018", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQBe2AM", "r": 5}, {"navn": "Skudeveien 20", "grp": "HP", "lat": 58.37638817642626, "lon": 8.682274429713328, "adr": "Skudeveien 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10818025", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQBl2AM", "r": 4}, {"navn": "Trolldalslia 18", "grp": "HC", "lat": 58.38424290968766, "lon": 8.690634689439552, "adr": "Trolldalslia 18, 4870 Fevik", "area": "Fevik", "bnr": "V-10818719", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQOY2A2", "r": 2}, {"navn": "Skoleveien 110", "grp": "HP", "lat": 58.37593494647086, "lon": 8.681601454388147, "adr": "Skoleveien 110, 4870 Fevik", "area": "Fevik", "bnr": "V-10818932", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQRz2AM", "r": 4}, {"navn": "Lauvåsen 12", "grp": "HC Vula", "lat": 58.37944723306101, "lon": 8.672756691973321, "adr": "Lauvåsen 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10818940", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQS72AM", "r": 4}, {"navn": "Trolldalstunet 4 B", "grp": "HP", "lat": 58.3825377084359, "lon": 8.687468886697408, "adr": "Trolldalstunet 4 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10818957", "bol": "H0102", "st": "Ikke hjemme", "sfid": "a4CWS000000bQSO2A2", "r": 3}, {"navn": "Gml. Birketveitveien 26", "grp": "HP", "lat": 58.38986799116059, "lon": 8.679366119573658, "adr": "Gml. Birketveitveien 26, 4870 Fevik", "area": "Fevik", "bnr": "V-10819062", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQU52AM", "r": 3}, {"navn": "Trolldalslia 41", "grp": "HC Vula", "lat": 58.38336681155756, "lon": 8.692335368922116, "adr": "Trolldalslia 41, 4870 Fevik", "area": "Fevik", "bnr": "V-10819130", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQVB2A2", "r": 2}, {"navn": "Judehavskleiva 28", "grp": "HC", "lat": 58.37915962486839, "lon": 8.67621336945884, "adr": "Judehavskleiva 28, 4870 Fevik", "area": "Fevik", "bnr": "V-10819458", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQaT2AU", "r": 4}, {"navn": "Teisendal 5", "grp": "HC", "lat": 58.38555803675177, "lon": 8.697180595866111, "adr": "Teisendal 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10819633", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQdI2AU", "r": 2}, {"navn": "Trolldalstunet 5 B", "grp": "HC", "lat": 58.383037712528676, "lon": 8.68735843863832, "adr": "Trolldalstunet 5 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10820034", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQlN2AU", "r": 3}, {"navn": "Teisendal 50 A", "grp": "HP", "lat": 58.385313898638856, "lon": 8.69416201561944, "adr": "Teisendal 50 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10820866", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bQyn2AE", "r": 2}, {"navn": "Sømsveien 7", "grp": "HC", "lat": 58.380920360997656, "lon": 8.679925022488879, "adr": "Sømsveien 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10821261", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bR5A2AU", "r": 3}, {"navn": "Lillevei 39", "grp": "HC", "lat": 58.37261039703874, "lon": 8.665092627259064, "adr": "Lillevei 39, 4870 Fevik", "area": "Fevik", "bnr": "V-10821338", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bR6P2AU", "r": 5}, {"navn": "Skippergada 38", "grp": "HP", "lat": 58.37823912382689, "lon": 8.685266978300161, "adr": "Skippergada 38, 4870 Fevik", "area": "Fevik", "bnr": "V-10821435", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bR7y2AE", "r": 3}, {"navn": "Snarveien 13", "grp": "HP", "lat": 58.382706389511625, "lon": 8.701712346885381, "adr": "Snarveien 13, 4870 Fevik", "area": "Fevik", "bnr": "V-10821648", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bRBP2A2", "r": 1}, {"navn": "Lauvåsen 82", "grp": "HC Vula", "lat": 58.37824180506138, "lon": 8.665073464265044, "adr": "Lauvåsen 82, 4870 Fevik", "area": "Fevik", "bnr": "V-10821818", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bRE92AM", "r": 5}, {"navn": "Liaveien 16", "grp": "HC Vula", "lat": 58.38149760825604, "lon": 8.670258174337132, "adr": "Liaveien 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10822140", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bRJL2A2", "r": 4}, {"navn": "Trolldalslia 66", "grp": "HC", "lat": 58.38271043101475, "lon": 8.692033269551407, "adr": "Trolldalslia 66, 4870 Fevik", "area": "Fevik", "bnr": "V-10823731", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bRj02AE", "r": 2}, {"navn": "Nedre Hausland 39", "grp": "HC", "lat": 58.37368016839861, "lon": 8.662039326026779, "adr": "Nedre Hausland 39, 4870 Fevik", "area": "Fevik", "bnr": "V-10824863", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bS1G2AU", "r": 5}, {"navn": "Ranvigveien 44", "grp": "HC", "lat": 58.37846390586522, "lon": 8.689043797123526, "adr": "Ranvigveien 44, 4870 Fevik", "area": "Fevik", "bnr": "V-10825072", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bS4d2AE", "r": 3}, {"navn": "Trolldalslia 40", "grp": "HC", "lat": 58.38394846259388, "lon": 8.691441032498311, "adr": "Trolldalslia 40, 4870 Fevik", "area": "Fevik", "bnr": "V-10825623", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSDW2A2", "r": 2}, {"navn": "Mellomveien 8", "grp": "HC", "lat": 58.38476479816298, "lon": 8.702413244899734, "adr": "Mellomveien 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10826272", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSNz2AM", "r": 2}, {"navn": "Ormåsen 11", "grp": "HP", "lat": 58.37465531603989, "lon": 8.667432626437753, "adr": "Ormåsen 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10826417", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSQK2A2", "r": 5}, {"navn": "Ruagerveien 50", "grp": "HP", "lat": 58.3809407998675, "lon": 8.711200605251465, "adr": "Ruagerveien 50, 4870 Fevik", "area": "Fevik", "bnr": "V-10826507", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSRm2AM", "r": 1}, {"navn": "Trolldalstunet 3 B", "grp": "HC", "lat": 58.382932012486194, "lon": 8.687106280530125, "adr": "Trolldalstunet 3 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10826626", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSTh2AM", "r": 3}, {"navn": "Sømsveien 87", "grp": "HC", "lat": 58.386595468072784, "lon": 8.69412013749825, "adr": "Sømsveien 87, 4870 Fevik", "area": "Fevik", "bnr": "V-10827787", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSmQ2AU", "r": 2}, {"navn": "Haugenesveien 3", "grp": "HP", "lat": 58.37913758402946, "lon": 8.70037454386384, "adr": "Haugenesveien 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10828624", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bSzv2AE", "r": 1}, {"navn": "Skibberheia 28 A", "grp": "HC Vula", "lat": 58.374931506019, "lon": 8.66313867011473, "adr": "Skibberheia 28 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10828870", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bT3t2AE", "r": 5}, {"navn": "Teisendal 19", "grp": "HP", "lat": 58.384793192088495, "lon": 8.696143489791554, "adr": "Teisendal 19, 4870 Fevik", "area": "Fevik", "bnr": "V-10829228", "bol": "H0102", "st": "Ikke hjemme", "sfid": "a4CWS000000bT9f2AE", "r": 2}, {"navn": "Krokveien 26", "grp": "HP", "lat": 58.38628054931132, "lon": 8.705376314696016, "adr": "Krokveien 26, 4870 Fevik", "area": "Fevik", "bnr": "V-10830503", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTVp2AM", "r": 1}, {"navn": "Trolldalslia 36 B", "grp": "HC", "lat": 58.383639751834316, "lon": 8.690058527985364, "adr": "Trolldalslia 36 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10830652", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTYE2A2", "r": 2}, {"navn": "Sømsveien 97", "grp": "HC", "lat": 58.387109282608876, "lon": 8.694902423214065, "adr": "Sømsveien 97, 4870 Fevik", "area": "Fevik", "bnr": "V-10831231", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bThZ2AU", "r": 2}, {"navn": "Barlinda 29", "grp": "HP", "lat": 58.38039009113303, "lon": 8.706006811346153, "adr": "Barlinda 29, 4870 Fevik", "area": "Fevik", "bnr": "V-10831474", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTlU2AU", "r": 1}, {"navn": "Storesandveien 15", "grp": "HP", "lat": 58.38067788893342, "lon": 8.683552378385867, "adr": "Storesandveien 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10831680", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bToo2AE", "r": 3}, {"navn": "Lauvåsen 1", "grp": "HC Vula", "lat": 58.37791159318718, "lon": 8.672839304189838, "adr": "Lauvåsen 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10831785", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTqV2AU", "r": 4}, {"navn": "Haugenesveien 35", "grp": "HC", "lat": 58.379240049276746, "lon": 8.701946792456525, "adr": "Haugenesveien 35, 4870 Fevik", "area": "Fevik", "bnr": "V-10831793", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTqd2AE", "r": 1}, {"navn": "Haugenesveien 54", "grp": "HP", "lat": 58.38105315617126, "lon": 8.700915572446325, "adr": "Haugenesveien 54, 4870 Fevik", "area": "Fevik", "bnr": "V-10831984", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTvJ2AU", "r": 1}, {"navn": "Feviktoppen 20", "grp": "HC", "lat": 58.38201021357315, "lon": 8.677572388604844, "adr": "Feviktoppen 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10832126", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bTxb2AE", "r": 3}, {"navn": "Haugenesveien 5", "grp": "HC", "lat": 58.37917294945261, "lon": 8.700134857077046, "adr": "Haugenesveien 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10832310", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bU0Z2AU", "r": 1}, {"navn": "Kaféheia 3", "grp": "HP", "lat": 58.381970044624225, "lon": 8.673162815131464, "adr": "Kaféheia 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10832462", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bU312AE", "r": 3}, {"navn": "Trolldalstunet 8 A", "grp": "HP", "lat": 58.38218735119564, "lon": 8.687437784195081, "adr": "Trolldalstunet 8 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10832592", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bU572AE", "r": 3}, {"navn": "Omveien 8", "grp": "HP", "lat": 58.385228112335135, "lon": 8.70468390840633, "adr": "Omveien 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10832951", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUAu2AM", "r": 1}, {"navn": "Hammeneveien 6 A", "grp": "HC", "lat": 58.38013987803541, "lon": 8.68029118175411, "adr": "Hammeneveien 6 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10832956", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUAz2AM", "r": 3}, {"navn": "Ranvigveien 38", "grp": "HC", "lat": 58.37884806883732, "lon": 8.688202570064378, "adr": "Ranvigveien 38, 4870 Fevik", "area": "Fevik", "bnr": "V-10834127", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUTs2AM", "r": 3}, {"navn": "Jordenebakken 11 A", "grp": "HP", "lat": 58.37850684468683, "lon": 8.680938608183721, "adr": "Jordenebakken 11 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10834856", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUfd2AE", "r": 4}, {"navn": "Teisendal 14", "grp": "HC", "lat": 58.38516638986157, "lon": 8.696338663344914, "adr": "Teisendal 14, 4870 Fevik", "area": "Fevik", "bnr": "V-10834860", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUfh2AE", "r": 2}, {"navn": "Trolldalslia 50", "grp": "HC", "lat": 58.38335228481627, "lon": 8.690406491589714, "adr": "Trolldalslia 50, 4870 Fevik", "area": "Fevik", "bnr": "V-10834977", "bol": "H0102", "st": "Ikke hjemme", "sfid": "a4CWS000000bUha2AE", "r": 2}, {"navn": "Ormåsen 6", "grp": "HP", "lat": 58.37550169318022, "lon": 8.66824533450806, "adr": "Ormåsen 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10835346", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUnX2AU", "r": 5}, {"navn": "Hauslandveien 4 A", "grp": "HC", "lat": 58.374293037651135, "lon": 8.658807825001277, "adr": "Hauslandveien 4 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10836086", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUzT2AU", "r": 5}, {"navn": "Skippergada 4", "grp": "HP", "lat": 58.37928795322235, "lon": 8.677238142288223, "adr": "Skippergada 4, 4870 Fevik", "area": "Fevik", "bnr": "V-10836105", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bUzm2AE", "r": 4}, {"navn": "Trolldalstunet 6 B", "grp": "HP", "lat": 58.38237737744848, "lon": 8.68801752479022, "adr": "Trolldalstunet 6 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10836392", "bol": "H0102", "st": "Ikke hjemme", "sfid": "a4CWS000000bV4P2AU", "r": 3}, {"navn": "Svartedabbe 69", "grp": "HC", "lat": 58.37961476468221, "lon": 8.708663649052786, "adr": "Svartedabbe 69, 4870 Fevik", "area": "Fevik", "bnr": "V-10836540", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bV6n2AE", "r": 1}, {"navn": "Skippergada 19", "grp": "HP", "lat": 58.37939425303419, "lon": 8.680229530051264, "adr": "Skippergada 19, 4870 Fevik", "area": "Fevik", "bnr": "V-10836745", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVA62AM", "r": 3}, {"navn": "Teisendal 44", "grp": "HP", "lat": 58.385365973843314, "lon": 8.694530969586554, "adr": "Teisendal 44, 4870 Fevik", "area": "Fevik", "bnr": "V-10836764", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVAP2A2", "r": 2}, {"navn": "Bjønnmyra 2", "grp": "HP", "lat": 58.38086973339438, "lon": 8.674094412764948, "adr": "Bjønnmyra 2, 4870 Fevik", "area": "Fevik", "bnr": "V-10837036", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVEn2AM", "r": 4}, {"navn": "Omveien 13", "grp": "HC", "lat": 58.385659613143545, "lon": 8.70485132398241, "adr": "Omveien 13, 4870 Fevik", "area": "Fevik", "bnr": "V-10837084", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVFZ2A2", "r": 1}, {"navn": "Trolldalslia 44", "grp": "HC", "lat": 58.38367162135462, "lon": 8.691727330695935, "adr": "Trolldalslia 44, 4870 Fevik", "area": "Fevik", "bnr": "V-10837628", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVOL2A2", "r": 2}, {"navn": "Trolldalslia 38 A", "grp": "HC", "lat": 58.38380191299725, "lon": 8.690262321417574, "adr": "Trolldalslia 38 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10838249", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVYM2A2", "r": 2}, {"navn": "Vessøyveien 1", "grp": "HC", "lat": 58.393641175633846, "lon": 8.692109033415631, "adr": "Vessøyveien 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10839043", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVlA2AU", "r": 2}, {"navn": "Vinterly 7", "grp": "HP", "lat": 58.37535787786404, "lon": 8.661339395370307, "adr": "Vinterly 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10839439", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVrY2AU", "r": 5}, {"navn": "Ormåsen 1", "grp": "HP", "lat": 58.375387455700995, "lon": 8.6692209505647, "adr": "Ormåsen 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10839514", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVsl2AE", "r": 5}, {"navn": "Nedre Hausland 33", "grp": "HC", "lat": 58.374187583958005, "lon": 8.660324806161993, "adr": "Nedre Hausland 33, 4870 Fevik", "area": "Fevik", "bnr": "V-10839703", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVvo2AE", "r": 5}, {"navn": "Barlinda 9", "grp": "HC", "lat": 58.38151852132251, "lon": 8.704595207333611, "adr": "Barlinda 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10839906", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bVz52AE", "r": 1}, {"navn": "Trolldalslia 68", "grp": "HC Vula", "lat": 58.382836992122115, "lon": 8.692374183515964, "adr": "Trolldalslia 68, 4870 Fevik", "area": "Fevik", "bnr": "V-10840287", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bW5E2AU", "r": 2}, {"navn": "Omveien 1", "grp": "HC Vula", "lat": 58.384425884769676, "lon": 8.703442195724156, "adr": "Omveien 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10840452", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bW7t2AE", "r": 1}, {"navn": "Nedre Hausland 70", "grp": "HC", "lat": 58.372531306296615, "lon": 8.665760115944318, "adr": "Nedre Hausland 70, 4870 Fevik", "area": "Fevik", "bnr": "V-10841639", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bWR22AM", "r": 5}, {"navn": "Svartedabbe 71", "grp": "HP", "lat": 58.37937957394045, "lon": 8.707930323784462, "adr": "Svartedabbe 71, 4870 Fevik", "area": "Fevik", "bnr": "V-10841826", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bWVf2AM", "r": 1}, {"navn": "Trålum Heia 13", "grp": "HP", "lat": 58.38407669052828, "lon": 8.674304255396441, "adr": "Trålum Heia 13, 4870 Fevik", "area": "Fevik", "bnr": "V-10842308", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bWdR2AU", "r": 3}, {"navn": "Trolldalstunet 8 B", "grp": "HP", "lat": 58.38227770720334, "lon": 8.687659292548076, "adr": "Trolldalstunet 8 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10842360", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bWeH2AU", "r": 3}, {"navn": "Barlinda 57", "grp": "HP", "lat": 58.37913006101182, "lon": 8.704871656892369, "adr": "Barlinda 57, 4870 Fevik", "area": "Fevik", "bnr": "V-10844794", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXHX2A2", "r": 1}, {"navn": "Haugenesveien 37", "grp": "HP", "lat": 58.378836045566494, "lon": 8.702018595129113, "adr": "Haugenesveien 37, 4870 Fevik", "area": "Fevik", "bnr": "V-10845056", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXLl2AM", "r": 1}, {"navn": "Gml. Birketveitveien 8", "grp": "HC Vula", "lat": 58.38782022981376, "lon": 8.680734782181158, "adr": "Gml. Birketveitveien 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10845325", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXQ62AM", "r": 3}, {"navn": "Haugenesveien 33", "grp": "HP", "lat": 58.37922164870891, "lon": 8.701758857628969, "adr": "Haugenesveien 33, 4870 Fevik", "area": "Fevik", "bnr": "V-10845880", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXZ32AM", "r": 1}, {"navn": "Sømsveien 65", "grp": "HC", "lat": 58.385816095001886, "lon": 8.691219495424354, "adr": "Sømsveien 65, 4870 Fevik", "area": "Fevik", "bnr": "V-10845914", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXZb2AM", "r": 2}, {"navn": "Hammeneveien 2 A", "grp": "HC", "lat": 58.379900803171715, "lon": 8.681270235241973, "adr": "Hammeneveien 2 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10845960", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXaL2AU", "r": 3}, {"navn": "Haugenesveien 44", "grp": "HP", "lat": 58.381490268907164, "lon": 8.700166494616148, "adr": "Haugenesveien 44, 4870 Fevik", "area": "Fevik", "bnr": "V-10846035", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXbY2AU", "r": 1}, {"navn": "Teisendal 8", "grp": "HP", "lat": 58.385692300589106, "lon": 8.696709325159674, "adr": "Teisendal 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10846065", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXc22AE", "r": 2}, {"navn": "Barlinda 4", "grp": "HP", "lat": 58.38079498346846, "lon": 8.702429574203196, "adr": "Barlinda 4, 4870 Fevik", "area": "Fevik", "bnr": "V-10846394", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXhL2AU", "r": 1}, {"navn": "Klomra 14", "grp": "HP", "lat": 58.37283784816297, "lon": 8.669672208203327, "adr": "Klomra 14, 4870 Fevik", "area": "Fevik", "bnr": "V-10847087", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bXsW2AU", "r": 5}, {"navn": "Liaveien 9", "grp": "Kun mobil", "lat": 58.38061236127325, "lon": 8.671788315195203, "adr": "Liaveien 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10847163", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bZic2AE", "r": 4}, {"navn": "Vesterveien 949", "grp": "Kun mobil", "lat": 58.39701279637864, "lon": 8.69358511947106, "adr": "Vesterveien 949, 4870 Fevik", "area": "Fevik", "bnr": "V-10847355", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bZli2AE", "r": 2}, {"navn": "Sømsveien 85", "grp": "Kun mobil", "lat": 58.38640628722491, "lon": 8.693882339247258, "adr": "Sømsveien 85, 4870 Fevik", "area": "Fevik", "bnr": "V-10847437", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bZn22AE", "r": 2}, {"navn": "Mellomveien 10", "grp": "Kun mobil", "lat": 58.38500669950595, "lon": 8.702154679240156, "adr": "Mellomveien 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10847538", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bZof2AE", "r": 2}, {"navn": "Kaféheia 6", "grp": "Kun mobil", "lat": 58.38161454209687, "lon": 8.674318189633137, "adr": "Kaféheia 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10848756", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000ba8J2AQ", "r": 3}, {"navn": "Haugenesveien 11", "grp": "Kun mobil", "lat": 58.37944291144885, "lon": 8.700354856135485, "adr": "Haugenesveien 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10849755", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000baOQ2AY", "r": 1}, {"navn": "Lauvåsen 22", "grp": "Kun mobil", "lat": 58.37999325996296, "lon": 8.672033457595592, "adr": "Lauvåsen 22, 4870 Fevik", "area": "Fevik", "bnr": "V-10850401", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000baYq2AI", "r": 4}, {"navn": "Trålum Heia 6", "grp": "Kun mobil", "lat": 58.38442570195497, "lon": 8.673805091166187, "adr": "Trålum Heia 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10850582", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000babl2AA", "r": 3}, {"navn": "Vesterveien 948 A", "grp": "Kun mobil", "lat": 58.397011650543156, "lon": 8.69012081797277, "adr": "Vesterveien 948 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10851253", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bama2AA", "r": 2}, {"navn": "Gml. Birketveitveien 10", "grp": "Kun mobil", "lat": 58.388107974411824, "lon": 8.680869009187962, "adr": "Gml. Birketveitveien 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10851315", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bana2AA", "r": 3}, {"navn": "Lauvåsen 72", "grp": "Kun mobil", "lat": 58.3788943448943, "lon": 8.667324343107568, "adr": "Lauvåsen 72, 4870 Fevik", "area": "Fevik", "bnr": "V-10852631", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bb8o2AA", "r": 5}, {"navn": "Liaveien 19", "grp": "Kun mobil", "lat": 58.381224285060405, "lon": 8.668755917227445, "adr": "Liaveien 19, 4870 Fevik", "area": "Fevik", "bnr": "V-10853149", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bbHA2AY", "r": 4}, {"navn": "Mellomveien 19", "grp": "Kun mobil", "lat": 58.38508589991484, "lon": 8.701452832530485, "adr": "Mellomveien 19, 4870 Fevik", "area": "Fevik", "bnr": "V-10853363", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bbKc2AI", "r": 2}, {"navn": "Klomra 17", "grp": "Kun mobil", "lat": 58.3727922796653, "lon": 8.669416193925917, "adr": "Klomra 17, 4870 Fevik", "area": "Fevik", "bnr": "V-10853602", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bbOT2AY", "r": 5}, {"navn": "Liaveien 3", "grp": "Kun mobil", "lat": 58.38011481961462, "lon": 8.673913279433995, "adr": "Liaveien 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10854859", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bbkL2AQ", "r": 4}, {"navn": "Birketveit 8", "grp": "Kun mobil", "lat": 58.385979645955885, "lon": 8.680990847004411, "adr": "Birketveit 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10855594", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bbwC2AQ", "r": 3}, {"navn": "Trålumbakken 5", "grp": "Kun mobil", "lat": 58.38423569713439, "lon": 8.676799614174817, "adr": "Trålumbakken 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10855799", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bbzV2AQ", "r": 3}, {"navn": "Haugenesveien 27", "grp": "Kun mobil", "lat": 58.379076312240045, "lon": 8.701059024188357, "adr": "Haugenesveien 27, 4870 Fevik", "area": "Fevik", "bnr": "V-10855909", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bc1H2AQ", "r": 1}, {"navn": "Birketveit 88", "grp": "Kun mobil", "lat": 58.39090646987295, "lon": 8.69031976462591, "adr": "Birketveit 88, 4870 Fevik", "area": "Fevik", "bnr": "V-10856464", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bcAE2AY", "r": 2}, {"navn": "Kaféheia 7", "grp": "Kun mobil", "lat": 58.382434185978816, "lon": 8.673651234392876, "adr": "Kaféheia 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10856932", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bcHm2AI", "r": 3}, {"navn": "Vesterveien 954", "grp": "Kun mobil", "lat": 58.396862437344296, "lon": 8.690814986574216, "adr": "Vesterveien 954, 4870 Fevik", "area": "Fevik", "bnr": "V-10856942", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bcHw2AI", "r": 2}, {"navn": "Mellomveien 17", "grp": "Kun mobil", "lat": 58.38480683895843, "lon": 8.701181561652053, "adr": "Mellomveien 17, 4870 Fevik", "area": "Fevik", "bnr": "V-10856968", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bcIM2AY", "r": 2}, {"navn": "Liaveien 8", "grp": "Kun mobil", "lat": 58.38114300645444, "lon": 8.672074087639984, "adr": "Liaveien 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10857239", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bcMj2AI", "r": 4}, {"navn": "Liaveien 27", "grp": "Kun mobil", "lat": 58.38133721838784, "lon": 8.667279116591043, "adr": "Liaveien 27, 4870 Fevik", "area": "Fevik", "bnr": "V-10857274", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CWS000000bcNI2AY", "r": 4}, {"navn": "Svartedabbe 43", "grp": "HC", "lat": 58.38026646190098, "lon": 8.710881223624003, "adr": "Svartedabbe 43, 4870 Fevik", "area": "Fevik", "bnr": "V-10786910", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bHzS2AU", "r": 1}, {"navn": "Movigveien 9", "grp": "HC", "lat": 58.374454255009205, "lon": 8.683796159864293, "adr": "Movigveien 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10787924", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIFo2AM", "r": 4}, {"navn": "Svartedabbe 38", "grp": "HP", "lat": 58.379483675902996, "lon": 8.706322137307096, "adr": "Svartedabbe 38, 4870 Fevik", "area": "Fevik", "bnr": "V-10787962", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIGQ2A2", "r": 1}, {"navn": "Svartedabbe 51", "grp": "HP", "lat": 58.380371570350896, "lon": 8.709700488445701, "adr": "Svartedabbe 51, 4870 Fevik", "area": "Fevik", "bnr": "V-10788749", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIT72AM", "r": 1}, {"navn": "Tykkåsen 9", "grp": "HC", "lat": 58.37405529348515, "lon": 8.668105039558444, "adr": "Tykkåsen 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10788980", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIWq2AM", "r": 5}, {"navn": "Trolldalslia 10", "grp": "HC", "lat": 58.384824582866834, "lon": 8.690869022061722, "adr": "Trolldalslia 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10789294", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIbu2AE", "r": 2}, {"navn": "Furufjell 6", "grp": "HC", "lat": 58.3760160773524, "lon": 8.670610660751823, "adr": "Furufjell 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10789332", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIcW2AU", "r": 5}, {"navn": "Fevikveien 15", "grp": "HC", "lat": 58.37424679890786, "lon": 8.67271935266913, "adr": "Fevikveien 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10789701", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bIiT2AU", "r": 4}, {"navn": "Fevikveien 43", "grp": "HC Vula", "lat": 58.37736116245896, "lon": 8.673246207128646, "adr": "Fevikveien 43, 4870 Fevik", "area": "Fevik", "bnr": "V-10790968", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bJ2u2AE", "r": 4}, {"navn": "Trolldalstunet 23 B", "grp": "HC", "lat": 58.38282669626615, "lon": 8.688116162967523, "adr": "Trolldalstunet 23 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10791142", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bJ5i2AE", "r": 3}, {"navn": "Trolldalstunet 10 C", "grp": "HP", "lat": 58.38206094401763, "lon": 8.687165294638037, "adr": "Trolldalstunet 10 C, 4870 Fevik", "area": "Fevik", "bnr": "V-10792492", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CWS000000bJRU2A2", "r": 3}, {"navn": "Svartedabbe 8", "grp": "HP", "lat": 58.380858300100655, "lon": 8.70651591273949, "adr": "Svartedabbe 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10792665", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bJUH2A2", "r": 1}, {"navn": "Svartedabbe 16", "grp": "HC", "lat": 58.38052782711941, "lon": 8.707322343983432, "adr": "Svartedabbe 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10794014", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bJq22AE", "r": 1}, {"navn": "Svartedabbe 47", "grp": "HC", "lat": 58.380121484664095, "lon": 8.710318125471968, "adr": "Svartedabbe 47, 4870 Fevik", "area": "Fevik", "bnr": "V-10794603", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bJzX2AU", "r": 1}, {"navn": "Strandtoppen 4", "grp": "HC", "lat": 58.37298185646829, "lon": 8.659498682580987, "adr": "Strandtoppen 4, 4870 Fevik", "area": "Fevik", "bnr": "V-10795446", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKD82AM", "r": 5}, {"navn": "Sømsveien 145", "grp": "HP", "lat": 58.39013739848014, "lon": 8.710647236882762, "adr": "Sømsveien 145, 4870 Fevik", "area": "Fevik", "bnr": "V-10796299", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKQt2AM", "r": 1}, {"navn": "Strandtoppen 31", "grp": "HC", "lat": 58.37212069670731, "lon": 8.663302219559723, "adr": "Strandtoppen 31, 4870 Fevik", "area": "Fevik", "bnr": "V-10796414", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKSk2AM", "r": 5}, {"navn": "Tykkåsen 66", "grp": "HC", "lat": 58.37556355910627, "lon": 8.671339373375542, "adr": "Tykkåsen 66, 4870 Fevik", "area": "Fevik", "bnr": "V-10796451", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKTL2A2", "r": 4}, {"navn": "Fløddaveien 3", "grp": "HP", "lat": 58.373929993193485, "lon": 8.682450222359217, "adr": "Fløddaveien 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10796866", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKa22AE", "r": 4}, {"navn": "Trolldalslia 35 C", "grp": "HC", "lat": 58.38363612979473, "lon": 8.69228172032354, "adr": "Trolldalslia 35 C, 4870 Fevik", "area": "Fevik", "bnr": "V-10797189", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKfF2AU", "r": 2}, {"navn": "Strandtoppen 47", "grp": "HC", "lat": 58.37120679590827, "lon": 8.664148590322322, "adr": "Strandtoppen 47, 4870 Fevik", "area": "Fevik", "bnr": "V-10798054", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKtC2AU", "r": 5}, {"navn": "Movigveien 6", "grp": "HC Vula", "lat": 58.3748288520784, "lon": 8.682732796213685, "adr": "Movigveien 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10798299", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKx92AE", "r": 4}, {"navn": "Tykkåsen 50", "grp": "HP", "lat": 58.37457145511985, "lon": 8.67183072926323, "adr": "Tykkåsen 50, 4870 Fevik", "area": "Fevik", "bnr": "V-10798316", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bKxQ2AU", "r": 4}, {"navn": "Strandtoppen 8", "grp": "HC", "lat": 58.372983808637656, "lon": 8.660233796312255, "adr": "Strandtoppen 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10798490", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bL0E2AU", "r": 5}, {"navn": "Tykkåsen 14", "grp": "HC", "lat": 58.374412641396866, "lon": 8.667366522397506, "adr": "Tykkåsen 14, 4870 Fevik", "area": "Fevik", "bnr": "V-10800418", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bLVK2A2", "r": 5}, {"navn": "Barlinda 18", "grp": "HC", "lat": 58.38042769894262, "lon": 8.702843058956528, "adr": "Barlinda 18, 4870 Fevik", "area": "Fevik", "bnr": "V-10800961", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bLe52AE", "r": 1}, {"navn": "Trolldalslia 35 D", "grp": "HC", "lat": 58.38350120365335, "lon": 8.69219738945214, "adr": "Trolldalslia 35 D, 4870 Fevik", "area": "Fevik", "bnr": "V-10801282", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bLks2AE", "r": 2}, {"navn": "Trolldalstunet 19 B", "grp": "HC", "lat": 58.3831173649139, "lon": 8.688717262332759, "adr": "Trolldalstunet 19 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10801508", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bLoW2AU", "r": 3}, {"navn": "Trolldalstunet 10 D", "grp": "HP", "lat": 58.382115249777826, "lon": 8.687335818911805, "adr": "Trolldalstunet 10 D, 4870 Fevik", "area": "Fevik", "bnr": "V-10801781", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CWS000000bLsv2AE", "r": 3}, {"navn": "Tykkåsen 54", "grp": "HP", "lat": 58.37494687282415, "lon": 8.670775775597416, "adr": "Tykkåsen 54, 4870 Fevik", "area": "Fevik", "bnr": "V-10801814", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bLtS2AU", "r": 5}, {"navn": "Svartedabbe 18", "grp": "HP", "lat": 58.38065426955945, "lon": 8.707629092878946, "adr": "Svartedabbe 18, 4870 Fevik", "area": "Fevik", "bnr": "V-10801840", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bLts2AE", "r": 1}, {"navn": "Randulf Hansens Vei 7", "grp": "HP", "lat": 58.37392586844834, "lon": 8.67366263426645, "adr": "Randulf Hansens Vei 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10802466", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bM3y2AE", "r": 4}, {"navn": "Trålum Gården 8", "grp": "HP", "lat": 58.38362707539287, "lon": 8.677643141739704, "adr": "Trålum Gården 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10802538", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bM582AE", "r": 3}, {"navn": "Fevikveien 11", "grp": "HC Vula", "lat": 58.374012452669334, "lon": 8.672396687085273, "adr": "Fevikveien 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10803342", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMI62AM", "r": 4}, {"navn": "Fløddaveien 5", "grp": "HC Vula", "lat": 58.373794678771254, "lon": 8.682212087176215, "adr": "Fløddaveien 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10803966", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMSA2A2", "r": 4}, {"navn": "Klomra 2", "grp": "HP", "lat": 58.3734091246887, "lon": 8.671786811498055, "adr": "Klomra 2, 4870 Fevik", "area": "Fevik", "bnr": "V-10803987", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMSV2A2", "r": 5}, {"navn": "Øvre Ranviga 11", "grp": "HP", "lat": 58.38095828682352, "lon": 8.688385731493984, "adr": "Øvre Ranviga 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10804694", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMdu2AE", "r": 3}, {"navn": "Randulf Hansens Vei 48", "grp": "HP", "lat": 58.37458585363064, "lon": 8.675366228215529, "adr": "Randulf Hansens Vei 48, 4870 Fevik", "area": "Fevik", "bnr": "V-10805101", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMkT2AU", "r": 4}, {"navn": "Lillevei 61", "grp": "HC", "lat": 58.372808479212814, "lon": 8.661859603314033, "adr": "Lillevei 61, 4870 Fevik", "area": "Fevik", "bnr": "V-10805210", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMmE2AU", "r": 5}, {"navn": "Tykkåsen 17", "grp": "HP", "lat": 58.37367108555286, "lon": 8.66887798623538, "adr": "Tykkåsen 17, 4870 Fevik", "area": "Fevik", "bnr": "V-10805458", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bMqE2AU", "r": 5}, {"navn": "Strandtoppen 69", "grp": "HC", "lat": 58.37128240432141, "lon": 8.665583875464206, "adr": "Strandtoppen 69, 4870 Fevik", "area": "Fevik", "bnr": "V-10806164", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bN1c2AE", "r": 5}, {"navn": "Svartedabbe 65", "grp": "HC", "lat": 58.37931040737309, "lon": 8.709110735334676, "adr": "Svartedabbe 65, 4870 Fevik", "area": "Fevik", "bnr": "V-10806318", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bN462AE", "r": 1}, {"navn": "Tykkåsen 68", "grp": "HP", "lat": 58.37538314159744, "lon": 8.671033300268771, "adr": "Tykkåsen 68, 4870 Fevik", "area": "Fevik", "bnr": "V-10807180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bNI02AM", "r": 4}, {"navn": "Svartedabbe 10", "grp": "HC", "lat": 58.38069608626102, "lon": 8.706277862626687, "adr": "Svartedabbe 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10808473", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bNcr2AE", "r": 1}, {"navn": "Heiabakken 3", "grp": "HC Vula", "lat": 58.37406495839002, "lon": 8.678944204430794, "adr": "Heiabakken 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10809935", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bO0R2AU", "r": 4}, {"navn": "Trolldalsveien 103", "grp": "HP", "lat": 58.38359548257412, "lon": 8.69406060055057, "adr": "Trolldalsveien 103, 4870 Fevik", "area": "Fevik", "bnr": "V-10810477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bO9B2AU", "r": 2}, {"navn": "Fevikveien 33", "grp": "HC Vula", "lat": 58.37668271554388, "lon": 8.673466202607047, "adr": "Fevikveien 33, 4870 Fevik", "area": "Fevik", "bnr": "V-10810650", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bOBy2AM", "r": 4}, {"navn": "Fevikveien 27", "grp": "HP", "lat": 58.37576661520556, "lon": 8.673474665536668, "adr": "Fevikveien 27, 4870 Fevik", "area": "Fevik", "bnr": "V-10811246", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bOLa2AM", "r": 4}, {"navn": "Esketveitveien 21", "grp": "HP", "lat": 58.388255588603315, "lon": 8.671751519809407, "adr": "Esketveitveien 21, 4870 Fevik", "area": "Fevik", "bnr": "V-10811365", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bONV2A2", "r": 3}, {"navn": "Tykkåsen 58", "grp": "HP", "lat": 58.37524349849722, "lon": 8.671566322461189, "adr": "Tykkåsen 58, 4870 Fevik", "area": "Fevik", "bnr": "V-10811929", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bOYD2A2", "r": 4}, {"navn": "Krokveien 17", "grp": "HC", "lat": 58.38532785310563, "lon": 8.705093523845864, "adr": "Krokveien 17, 4870 Fevik", "area": "Fevik", "bnr": "V-10813799", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bP2N2AU", "r": 1}, {"navn": "Ole Pedersens Vei 8", "grp": "HC Vula", "lat": 58.37419475855527, "lon": 8.68056720972902, "adr": "Ole Pedersens Vei 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10814019", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bP5v2AE", "r": 4}, {"navn": "Lille Bergen 8 A", "grp": "HC Vula", "lat": 58.37329243077226, "lon": 8.678899931902874, "adr": "Lille Bergen 8 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10814284", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bPAC2A2", "r": 4}, {"navn": "Klomra 10", "grp": "HC", "lat": 58.373048115407876, "lon": 8.671106318185304, "adr": "Klomra 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10814735", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bPHT2A2", "r": 5}, {"navn": "Fevikveien 13", "grp": "HC Vula", "lat": 58.374129691446896, "lon": 8.672583663710082, "adr": "Fevikveien 13, 4870 Fevik", "area": "Fevik", "bnr": "V-10815366", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bPTG2A2", "r": 4}, {"navn": "Fløddaveien 16", "grp": "HP", "lat": 58.37380264149088, "lon": 8.681801699966913, "adr": "Fløddaveien 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10815749", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bPZR2A2", "r": 4}, {"navn": "Ormåsen 10", "grp": "HC", "lat": 58.3758485275126, "lon": 8.666571654944493, "adr": "Ormåsen 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10816177", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bPgL2AU", "r": 5}, {"navn": "Sømsveien 162", "grp": "HP", "lat": 58.388953324083815, "lon": 8.715650510298824, "adr": "Sømsveien 162, 4870 Fevik", "area": "Fevik", "bnr": "V-10816343", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CWS000000bPkd2AE", "r": 1}, {"navn": "Svartedabbe 21", "grp": "HC", "lat": 58.380836546130986, "lon": 8.708790375943373, "adr": "Svartedabbe 21, 4870 Fevik", "area": "Fevik", "bnr": "V-10817453", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQ2X2AU", "r": 1}, {"navn": "Tykkåsen 20", "grp": "HP", "lat": 58.37386539897243, "lon": 8.667611023225044, "adr": "Tykkåsen 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10817459", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQ2d2AE", "r": 5}, {"navn": "Randulf Hansens Vei 21", "grp": "HP", "lat": 58.37478092691823, "lon": 8.674372812845256, "adr": "Randulf Hansens Vei 21, 4870 Fevik", "area": "Fevik", "bnr": "V-10817982", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQB42AM", "r": 4}, {"navn": "Movigveien 12", "grp": "HP", "lat": 58.373808667464324, "lon": 8.684128100113586, "adr": "Movigveien 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10818301", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQHo2AM", "r": 4}, {"navn": "Haugenesplassen 5", "grp": "HC", "lat": 58.38292494577945, "lon": 8.706185531075045, "adr": "Haugenesplassen 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10818694", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQO92AM", "r": 1}, {"navn": "Tykkåsen 15", "grp": "HC", "lat": 58.37448772742634, "lon": 8.668613884163609, "adr": "Tykkåsen 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10818821", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQQC2A2", "r": 5}, {"navn": "Sømsveien 143", "grp": "HP", "lat": 58.3900009798534, "lon": 8.710220014383289, "adr": "Sømsveien 143, 4870 Fevik", "area": "Fevik", "bnr": "V-10818907", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQRa2AM", "r": 1}, {"navn": "Ole Pedersens Vei 3", "grp": "HC", "lat": 58.37501039991438, "lon": 8.679893053263198, "adr": "Ole Pedersens Vei 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10818973", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQSe2AM", "r": 4}, {"navn": "Tykkåsen 25", "grp": "HP", "lat": 58.375039430879305, "lon": 8.670096159003267, "adr": "Tykkåsen 25, 4870 Fevik", "area": "Fevik", "bnr": "V-10819002", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQT72AM", "r": 5}, {"navn": "Tykkåsen 16", "grp": "HP", "lat": 58.37424128463978, "lon": 8.66709458753331, "adr": "Tykkåsen 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10819726", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQen2AE", "r": 5}, {"navn": "Randulf Hansens Vei 29", "grp": "HP", "lat": 58.37569650573095, "lon": 8.67415920944996, "adr": "Randulf Hansens Vei 29, 4870 Fevik", "area": "Fevik", "bnr": "V-10819750", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQfB2AU", "r": 4}, {"navn": "Fevikveien 3", "grp": "HC", "lat": 58.372609036916955, "lon": 8.67150360923971, "adr": "Fevikveien 3, 4870 Fevik", "area": "Fevik", "bnr": "V-10819998", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bQkn2AE", "r": 5}, {"navn": "Furufjell 2", "grp": "HC", "lat": 58.37551510464154, "lon": 8.670308855441217, "adr": "Furufjell 2, 4870 Fevik", "area": "Fevik", "bnr": "V-10821071", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bR262AE", "r": 5}, {"navn": "Snarveien 1", "grp": "HP", "lat": 58.381939067707215, "lon": 8.703907675690132, "adr": "Snarveien 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10821376", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bR712AE", "r": 1}, {"navn": "Trolldalstunet 8 C", "grp": "HP", "lat": 58.382178536690795, "lon": 8.687506264288238, "adr": "Trolldalstunet 8 C, 4870 Fevik", "area": "Fevik", "bnr": "V-10822098", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CWS000000bRIf2AM", "r": 3}, {"navn": "Trolldalen Øst 15", "grp": "HP", "lat": 58.38407973947453, "lon": 8.697528001448655, "adr": "Trolldalen Øst 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10822556", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bRQ32AM", "r": 2}, {"navn": "Trolldalsveien 115 C", "grp": "HP", "lat": 58.38427855759322, "lon": 8.694259904906113, "adr": "Trolldalsveien 115 C, 4870 Fevik", "area": "Fevik", "bnr": "V-10823219", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bRak2AE", "r": 2}, {"navn": "Haugenesplassen 1", "grp": "HP", "lat": 58.38281057897433, "lon": 8.704037179920554, "adr": "Haugenesplassen 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10824192", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bRqR2AU", "r": 1}, {"navn": "Strandtoppen 29", "grp": "HC", "lat": 58.37195844758887, "lon": 8.663081521944479, "adr": "Strandtoppen 29, 4870 Fevik", "area": "Fevik", "bnr": "V-10824230", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bRr32AE", "r": 5}, {"navn": "Furufjell 8", "grp": "HC", "lat": 58.3759489242768, "lon": 8.671010937102372, "adr": "Furufjell 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10824889", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bS1g2AE", "r": 5}, {"navn": "Strandtoppen 20", "grp": "HC", "lat": 58.37212245842866, "lon": 8.660566892818332, "adr": "Strandtoppen 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10825455", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSAo2AM", "r": 5}, {"navn": "Klomra 6", "grp": "HP", "lat": 58.37322892742134, "lon": 8.671566233756042, "adr": "Klomra 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10825563", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSCY2A2", "r": 5}, {"navn": "Fevikveien 30", "grp": "HC", "lat": 58.375390790886506, "lon": 8.67402524952898, "adr": "Fevikveien 30, 4870 Fevik", "area": "Fevik", "bnr": "V-10826027", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSK22AM", "r": 4}, {"navn": "Ruagerveien 25", "grp": "HP", "lat": 58.3841042155846, "lon": 8.712046924734103, "adr": "Ruagerveien 25, 4870 Fevik", "area": "Fevik", "bnr": "V-10826182", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSMX2A2", "r": 1}, {"navn": "Fløddaveien 18 B", "grp": "HC", "lat": 58.37353804934628, "lon": 8.681590260734797, "adr": "Fløddaveien 18 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10826284", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CWS000000bSOB2A2", "r": 4}, {"navn": "Tykkåsen 21", "grp": "HP", "lat": 58.3745361215421, "lon": 8.669964081536587, "adr": "Tykkåsen 21, 4870 Fevik", "area": "Fevik", "bnr": "V-10826508", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSRn2AM", "r": 5}, {"navn": "Trolldalstunet 6 C", "grp": "HP", "lat": 58.38227820736408, "lon": 8.687864495092953, "adr": "Trolldalstunet 6 C, 4870 Fevik", "area": "Fevik", "bnr": "V-10826629", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CWS000000bSTk2AM", "r": 3}, {"navn": "Heiabakken 9", "grp": "HP", "lat": 58.373675073686236, "lon": 8.68106770205973, "adr": "Heiabakken 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10827161", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bScK2AU", "r": 4}, {"navn": "Tykkåsen 48", "grp": "HP", "lat": 58.37445770857874, "lon": 8.67090513819391, "adr": "Tykkåsen 48, 4870 Fevik", "area": "Fevik", "bnr": "V-10827364", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSfb2AE", "r": 5}, {"navn": "Fevikveien 35", "grp": "HC", "lat": 58.376897527251415, "lon": 8.673173552307004, "adr": "Fevikveien 35, 4870 Fevik", "area": "Fevik", "bnr": "V-10827448", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSgx2AE", "r": 4}, {"navn": "Furufjell 4", "grp": "HP", "lat": 58.375732096865725, "lon": 8.670517129845411, "adr": "Furufjell 4, 4870 Fevik", "area": "Fevik", "bnr": "V-10828001", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bSps2AE", "r": 5}, {"navn": "Tykkåsen 1", "grp": "HC", "lat": 58.37481423573927, "lon": 8.669841805997223, "adr": "Tykkåsen 1, 4870 Fevik", "area": "Fevik", "bnr": "V-10828962", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bT5N2AU", "r": 5}, {"navn": "Tykkåsen 5", "grp": "HP", "lat": 58.37397715917184, "lon": 8.66914866447733, "adr": "Tykkåsen 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10829019", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bT6I2AU", "r": 5}, {"navn": "Trolldalslia 31", "grp": "HC", "lat": 58.38432387533024, "lon": 8.691807148134275, "adr": "Trolldalslia 31, 4870 Fevik", "area": "Fevik", "bnr": "V-10829128", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bT832AE", "r": 2}, {"navn": "Tykkåsen 13", "grp": "HP", "lat": 58.374326283825425, "lon": 8.66870088138912, "adr": "Tykkåsen 13, 4870 Fevik", "area": "Fevik", "bnr": "V-10829791", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bTIk2AM", "r": 5}, {"navn": "Tykkåsen 34", "grp": "HP", "lat": 58.37386388286032, "lon": 8.670500350014937, "adr": "Tykkåsen 34, 4870 Fevik", "area": "Fevik", "bnr": "V-10829830", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bTKy2AM", "r": 5}, {"navn": "Trolldalstunet 8 D", "grp": "HP", "lat": 58.38223280030458, "lon": 8.687659689464267, "adr": "Trolldalstunet 8 D, 4870 Fevik", "area": "Fevik", "bnr": "V-10830635", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CWS000000bTXx2AM", "r": 3}, {"navn": "Tykkåsen 8", "grp": "HP", "lat": 58.374838752632115, "lon": 8.66890124227366, "adr": "Tykkåsen 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10830798", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bTaa2AE", "r": 5}, {"navn": "Svartedabbe 20", "grp": "HC", "lat": 58.38088677042469, "lon": 8.707182572156464, "adr": "Svartedabbe 20, 4870 Fevik", "area": "Fevik", "bnr": "V-10831570", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bTn22AE", "r": 1}, {"navn": "Svartedabbe 15", "grp": "HP", "lat": 58.38099758905966, "lon": 8.708515449771939, "adr": "Svartedabbe 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10831574", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bTn62AE", "r": 1}, {"navn": "Tykkåsen 32", "grp": "HC", "lat": 58.37363260707496, "lon": 8.671374422695637, "adr": "Tykkåsen 32, 4870 Fevik", "area": "Fevik", "bnr": "V-10831963", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bTuy2AE", "r": 5}, {"navn": "Ruagerveien 35", "grp": "HP", "lat": 58.38273140556425, "lon": 8.712656638778038, "adr": "Ruagerveien 35, 4870 Fevik", "area": "Fevik", "bnr": "V-10832844", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bU9B2AU", "r": 1}, {"navn": "Trolldalen Øst 10", "grp": "HP", "lat": 58.385249255042574, "lon": 8.698338886538265, "adr": "Trolldalen Øst 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10833141", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUDy2AM", "r": 2}, {"navn": "Trolldalslia 7", "grp": "HC Vula", "lat": 58.384852182988524, "lon": 8.691513519348755, "adr": "Trolldalslia 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10833517", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUK22AM", "r": 2}, {"navn": "Tykkåsen 11", "grp": "HC", "lat": 58.37428903068146, "lon": 8.668188328634997, "adr": "Tykkåsen 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10833553", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUKc2AM", "r": 5}, {"navn": "Strandtoppen 73", "grp": "HC", "lat": 58.37103950536592, "lon": 8.665432316649861, "adr": "Strandtoppen 73, 4870 Fevik", "area": "Fevik", "bnr": "V-10834124", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUTp2AM", "r": 5}, {"navn": "Tykkåsen 60", "grp": "HC", "lat": 58.374907783525735, "lon": 8.67164295893946, "adr": "Tykkåsen 60, 4870 Fevik", "area": "Fevik", "bnr": "V-10834784", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUeT2AU", "r": 4}, {"navn": "Ruagerveien 33", "grp": "HC", "lat": 58.38310881456225, "lon": 8.712738390656273, "adr": "Ruagerveien 33, 4870 Fevik", "area": "Fevik", "bnr": "V-10834819", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUf22AE", "r": 1}, {"navn": "Trolldalslia 51 A", "grp": "HP", "lat": 58.382897846890415, "lon": 8.6915357107614, "adr": "Trolldalslia 51 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10835111", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUjk2AE", "r": 2}, {"navn": "Lille Bergen 6", "grp": "HP", "lat": 58.373373348948704, "lon": 8.678933389451876, "adr": "Lille Bergen 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10835554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUqt2AE", "r": 4}, {"navn": "Trolldalslia 35 A", "grp": "HC", "lat": 58.38386964571534, "lon": 8.692279686777399, "adr": "Trolldalslia 35 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10836080", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bUzN2AU", "r": 2}, {"navn": "Ruagerveien 47", "grp": "HP", "lat": 58.38278942322695, "lon": 8.714503054464556, "adr": "Ruagerveien 47, 4870 Fevik", "area": "Fevik", "bnr": "V-10836244", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bV212AE", "r": 1}, {"navn": "Lille Bergen 12", "grp": "HC", "lat": 58.37276089879218, "lon": 8.678255112541002, "adr": "Lille Bergen 12, 4870 Fevik", "area": "Fevik", "bnr": "V-10838281", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bVYs2AM", "r": 4}, {"navn": "Fevikveien 31 A", "grp": "HP", "lat": 58.376393988677314, "lon": 8.673472084963365, "adr": "Fevikveien 31 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10839054", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CWS000000bVlL2AU", "r": 4}, {"navn": "Lillevei 11", "grp": "HC", "lat": 58.37289989945567, "lon": 8.665893399420154, "adr": "Lillevei 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10839195", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bVnc2AE", "r": 5}, {"navn": "Randulf Hansens Vei 11", "grp": "HP", "lat": 58.37418746019748, "lon": 8.674104732895152, "adr": "Randulf Hansens Vei 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10840566", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bW9j2AE", "r": 4}, {"navn": "Sømsveien 162", "grp": "HP", "lat": 58.388953324083815, "lon": 8.715650510298824, "adr": "Sømsveien 162, 4870 Fevik", "area": "Fevik", "bnr": "V-10840799", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bWDU2A2", "r": 1}, {"navn": "Tykkåsen 46", "grp": "HC", "lat": 58.37432048042775, "lon": 8.66993190138405, "adr": "Tykkåsen 46, 4870 Fevik", "area": "Fevik", "bnr": "V-10842102", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bWa72AE", "r": 5}, {"navn": "Tykkåsen 7", "grp": "HC", "lat": 58.373848987635185, "lon": 8.668209555653515, "adr": "Tykkåsen 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10842103", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bWa82AE", "r": 5}, {"navn": "Tykkåsen 28", "grp": "HP", "lat": 58.37344937506156, "lon": 8.66997422765808, "adr": "Tykkåsen 28, 4870 Fevik", "area": "Fevik", "bnr": "V-10842994", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bWoV2AU", "r": 5}, {"navn": "Trolldalslia 53", "grp": "HC", "lat": 58.3831323504112, "lon": 8.69194408750529, "adr": "Trolldalslia 53, 4870 Fevik", "area": "Fevik", "bnr": "V-10843572", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bWxp2AE", "r": 2}, {"navn": "Fløddaveien 6", "grp": "HC", "lat": 58.37430675879237, "lon": 8.682019716687396, "adr": "Fløddaveien 6, 4870 Fevik", "area": "Fevik", "bnr": "V-10843896", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bX332AE", "r": 4}, {"navn": "Svartedabbe 9", "grp": "HC", "lat": 58.38112149737842, "lon": 8.707710727468529, "adr": "Svartedabbe 9, 4870 Fevik", "area": "Fevik", "bnr": "V-10844863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bXIe2AM", "r": 1}, {"navn": "Lillevei 7", "grp": "HC", "lat": 58.3731057572333, "lon": 8.66561791526091, "adr": "Lillevei 7, 4870 Fevik", "area": "Fevik", "bnr": "V-10844905", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bXJK2A2", "r": 5}, {"navn": "Trolldalstunet 6 D", "grp": "HP", "lat": 58.382332470548874, "lon": 8.688017921252722, "adr": "Trolldalstunet 6 D, 4870 Fevik", "area": "Fevik", "bnr": "V-10845561", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CWS000000bXTu2AM", "r": 3}, {"navn": "Strandtoppen 57", "grp": "HC Vula", "lat": 58.371487233432305, "lon": 8.664915218191574, "adr": "Strandtoppen 57, 4870 Fevik", "area": "Fevik", "bnr": "V-10845897", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bXZK2A2", "r": 5}, {"navn": "Fevikveien 17", "grp": "HC", "lat": 58.37449910708489, "lon": 8.673041856382305, "adr": "Fevikveien 17, 4870 Fevik", "area": "Fevik", "bnr": "V-10845929", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bXZq2AM", "r": 4}, {"navn": "Tykkåsen 18", "grp": "HC", "lat": 58.3740533420705, "lon": 8.667352806752904, "adr": "Tykkåsen 18, 4870 Fevik", "area": "Fevik", "bnr": "V-10846066", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bXc32AE", "r": 5}, {"navn": "Ruagerveien 52", "grp": "HP", "lat": 58.380723777303814, "lon": 8.710949301540746, "adr": "Ruagerveien 52, 4870 Fevik", "area": "Fevik", "bnr": "V-10846677", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bXlu2AE", "r": 1}, {"navn": "Svartedabbe 59", "grp": "Kun mobil", "lat": 58.37973396837156, "lon": 8.709739924461037, "adr": "Svartedabbe 59, 4870 Fevik", "area": "Fevik", "bnr": "V-10847623", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bZq22AE", "r": 1}, {"navn": "Feviktoppen 28 A", "grp": "Kun mobil", "lat": 58.38216039670393, "lon": 8.676579187503599, "adr": "Feviktoppen 28 A, 4870 Fevik", "area": "Fevik", "bnr": "V-10847927", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CWS000000bZuw2AE", "r": 3}, {"navn": "Vessøyveien 5", "grp": "Kun mobil", "lat": 58.39393063179023, "lon": 8.692961821213256, "adr": "Vessøyveien 5, 4870 Fevik", "area": "Fevik", "bnr": "V-10847988", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bZvv2AE", "r": 2}, {"navn": "Snarveien 11", "grp": "Kun mobil", "lat": 58.38249155247619, "lon": 8.702021972462395, "adr": "Snarveien 11, 4870 Fevik", "area": "Fevik", "bnr": "V-10849271", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000baGc2AI", "r": 1}, {"navn": "Ruagerveien 45", "grp": "Kun mobil", "lat": 58.383039643541565, "lon": 8.713936702168903, "adr": "Ruagerveien 45, 4870 Fevik", "area": "Fevik", "bnr": "V-10849551", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000baL82AI", "r": 1}, {"navn": "Trolldalsveien 121", "grp": "Kun mobil", "lat": 58.38352611848353, "lon": 8.695104373046652, "adr": "Trolldalsveien 121, 4870 Fevik", "area": "Fevik", "bnr": "V-10849597", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000baLs2AI", "r": 2}, {"navn": "Ruagerveien 22", "grp": "Kun mobil", "lat": 58.38431211336538, "lon": 8.708659123869332, "adr": "Ruagerveien 22, 4870 Fevik", "area": "Fevik", "bnr": "V-10850108", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000baU72AI", "r": 1}, {"navn": "Svartedabbe 23", "grp": "Kun mobil", "lat": 58.380693504239936, "lon": 8.709082251210893, "adr": "Svartedabbe 23, 4870 Fevik", "area": "Fevik", "bnr": "V-10852082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bazx2AA", "r": 1}, {"navn": "Vessøyveien 10", "grp": "Kun mobil", "lat": 58.39211536982581, "lon": 8.692549966077642, "adr": "Vessøyveien 10, 4870 Fevik", "area": "Fevik", "bnr": "V-10852256", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bb2l2AA", "r": 2}, {"navn": "Ormåsen 21", "grp": "Kun mobil", "lat": 58.37532891895173, "lon": 8.667426288877458, "adr": "Ormåsen 21, 4870 Fevik", "area": "Fevik", "bnr": "V-10853386", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bbKz2AI", "r": 5}, {"navn": "Skoleveien 16", "grp": "Kun mobil", "lat": 58.38281520313324, "lon": 8.683430633752586, "adr": "Skoleveien 16, 4870 Fevik", "area": "Fevik", "bnr": "V-10854358", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bbcG2AQ", "r": 3}, {"navn": "Trolldalen Øst 8", "grp": "Kun mobil", "lat": 58.385008687941344, "lon": 8.699161831260593, "adr": "Trolldalen Øst 8, 4870 Fevik", "area": "Fevik", "bnr": "V-10855283", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bbrB2AQ", "r": 2}, {"navn": "Feviktoppen 28 B", "grp": "Kun mobil", "lat": 58.381998732037374, "lon": 8.676580667078095, "adr": "Feviktoppen 28 B, 4870 Fevik", "area": "Fevik", "bnr": "V-10855529", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CWS000000bbv92AA", "r": 3}, {"navn": "Vessøyveien 15", "grp": "Kun mobil", "lat": 58.39375337805246, "lon": 8.693955517623815, "adr": "Vessøyveien 15, 4870 Fevik", "area": "Fevik", "bnr": "V-10855837", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CWS000000bc072AA", "r": 2}];
+var AREAS = ["Fevik"];
+var STORE_KEY = "dorkart_Elliot_20.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Elliot";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":67,"m":7,"h":[[[58.386813,8.703906],[58.386901,8.704017],[58.38696,8.704184],[58.386981,8.704381],[58.38696,8.704577],[58.384296,8.71241],[58.382981,8.714867],[58.382893,8.714978],[58.382789,8.715017],[58.382686,8.714978],[58.382598,8.714867],[58.380075,8.711245],[58.379119,8.709474],[58.37906,8.709307],[58.378565,8.702019],[58.378599,8.701215],[58.378619,8.701018],[58.378922,8.699938],[58.378981,8.699771],[58.379069,8.69966],[58.379173,8.699621],[58.38149,8.699652],[58.381594,8.699692],[58.383453,8.701192],[58.383426,8.702768],[58.383477,8.702881],[58.384302,8.702273],[58.384524,8.70241],[58.384668,8.702958],[58.384996,8.702653],[58.385342,8.702718]],[[58.389809,8.709857],[58.389897,8.709745],[58.390001,8.709706],[58.390105,8.709745],[58.390193,8.709857],[58.390388,8.710451],[58.390409,8.710647],[58.390388,8.710844],[58.389204,8.715847],[58.389145,8.716014],[58.389057,8.716125],[58.388953,8.716165],[58.388849,8.716125],[58.388761,8.716014],[58.388703,8.715847],[58.388682,8.715651],[58.388703,8.715454],[58.38975,8.710023]]],"b":[[58.386981,8.704381],[58.390409,8.710647]],"g":["Svartedabbe","Haugenesveien","Barlinda"]},{"n":2,"c":"#7b2cbf","s":50,"m":13,"h":[[[58.384167,8.702373],[58.383988,8.702166],[58.383929,8.701999],[58.383429,8.699284],[58.382331,8.691761],[58.382351,8.691564],[58.38241,8.691397],[58.383599,8.689078],[58.383687,8.688967],[58.383791,8.688928],[58.383895,8.688967],[58.386008,8.690856],[58.38736,8.694706],[58.387381,8.694902],[58.38736,8.695099],[58.385538,8.701797],[58.385199,8.702518],[58.385075,8.702668],[58.384996,8.702653],[58.384719,8.70291],[58.384645,8.702871],[58.384524,8.70241],[58.384302,8.702273]],[[58.397116,8.689646],[58.397204,8.689757],[58.397262,8.689924],[58.397283,8.690121],[58.397284,8.693585],[58.397264,8.693782],[58.397205,8.693949],[58.397117,8.69406],[58.397013,8.694099],[58.393753,8.69447],[58.39365,8.69443],[58.391923,8.692913],[58.390715,8.690683],[58.390656,8.690516],[58.390635,8.69032],[58.390656,8.690123],[58.390715,8.689956],[58.390803,8.689845],[58.390906,8.689806],[58.397012,8.689607]]],"b":[[58.387381,8.694902],[58.397284,8.693585]],"g":["Trolldalslia","Teisendal","Sømsveien"]},{"n":3,"c":"#0b7285","s":51,"m":9,"h":[[[58.383596,8.688684],[58.383221,8.689192],[58.383117,8.689231],[58.378464,8.689558],[58.37836,8.689519],[58.378272,8.689407],[58.378213,8.689241],[58.378193,8.689044],[58.377968,8.685267],[58.377988,8.68507],[58.378436,8.683117],[58.379061,8.683255],[58.379172,8.681579],[58.378983,8.680732],[58.379144,8.680033],[58.379368,8.679411],[58.379701,8.679517],[58.380667,8.677569],[58.380693,8.677467],[58.380626,8.676654],[58.381103,8.675877],[58.381235,8.674289],[58.381778,8.672799],[58.381866,8.672688],[58.38197,8.672649],[58.38453,8.67333],[58.389972,8.678891],[58.39006,8.679003],[58.390119,8.679169],[58.390139,8.679366],[58.390119,8.679563],[58.39006,8.67973],[58.384741,8.687097],[58.384197,8.687386],[58.383922,8.687742]],[[58.388359,8.671277],[58.388447,8.671388],[58.388506,8.671555],[58.388527,8.671752],[58.388506,8.671948],[58.388447,8.672115],[58.388359,8.672226],[58.388256,8.672266],[58.388152,8.672226],[58.388064,8.672115],[58.388005,8.671948],[58.387984,8.671752],[58.388005,8.671555],[58.388064,8.671388],[58.388152,8.671277],[58.388256,8.671237]]],"b":[[58.390139,8.679366],[58.388527,8.671752]],"g":["Trolldalstunet","Gml. Birketveitveien","Kaféheia"]},{"n":4,"c":"#a61e4d","s":55,"m":6,"h":[[[58.378699,8.681302],[58.378611,8.681414],[58.374558,8.684271],[58.373913,8.684603],[58.373809,8.684642],[58.373705,8.684603],[58.373617,8.684492],[58.373558,8.684325],[58.37251,8.678452],[58.37249,8.678255],[58.37251,8.678058],[58.373762,8.6722],[58.373821,8.672033],[58.373909,8.671922],[58.374411,8.671414],[58.374671,8.6713],[58.374727,8.671177],[58.375052,8.67123],[58.375128,8.671126],[58.37521,8.670626],[58.375278,8.670559],[58.375538,8.670729],[58.375609,8.6709],[58.375708,8.670973],[58.375897,8.671765],[58.376469,8.671747],[58.377216,8.670955],[58.377494,8.670106],[58.377599,8.66942],[58.378973,8.669727],[58.379459,8.669667],[58.379835,8.669352],[58.380118,8.667698],[58.380117,8.667508],[58.381233,8.666804],[58.381337,8.666765],[58.381441,8.666804],[58.381529,8.666916],[58.381588,8.667082],[58.381609,8.667279],[58.381853,8.671591],[58.381833,8.671788],[58.381627,8.672509],[58.381582,8.67255],[58.381323,8.673239],[58.381282,8.673722],[58.379726,8.679019],[58.379527,8.679462],[58.378646,8.679218],[58.378974,8.68069]]],"b":[[58.381853,8.671591]],"g":["Fevikveien","Liaveien","Lauvåsen"]},{"n":5,"c":"#343a40","s":67,"m":3,"h":[[[58.373409,8.672301],[58.372505,8.671979],[58.372417,8.671867],[58.370789,8.665629],[58.370768,8.665432],[58.370956,8.663952],[58.371931,8.660203],[58.372878,8.659024],[58.374293,8.658294],[58.374397,8.658333],[58.374485,8.658444],[58.378993,8.665474],[58.379051,8.665641],[58.379072,8.665838],[58.379166,8.667324],[58.379145,8.667521],[58.379086,8.667688],[58.377688,8.66944],[58.377599,8.66942],[58.377575,8.669581],[58.376053,8.671486],[58.375847,8.671556],[58.375708,8.670973],[58.375609,8.6709],[58.375538,8.670729],[58.375236,8.670532],[58.375128,8.671126],[58.375052,8.67123],[58.374727,8.671177],[58.374671,8.6713],[58.374129,8.671537],[58.374104,8.67151],[58.373736,8.672],[58.373674,8.67222]]],"b":[[58.379166,8.667324]],"g":["Tykkåsen","Strandtoppen","Nedre Hausland"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
