@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Joakim 22.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Joakim</div>
+<div class="date">22.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Askerjordet 73", "grp": "HP", "lat": 59.8422845805, "lon": 10.432689328768248, "adr": "Askerjordet 73, 1383 Asker", "area": "Asker", "bnr": "V-10939230", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeIrMAK", "r": 5}, {"navn": "Askerjordet 2 A", "grp": "HP", "lat": 59.837052668626185, "lon": 10.432245070067413, "adr": "Askerjordet 2 A, 1383 Asker", "area": "Asker", "bnr": "V-10940224", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EedjMAC", "r": 3}, {"navn": "Askerjordet 59", "grp": "HP", "lat": 59.841313158751795, "lon": 10.432826043184106, "adr": "Askerjordet 59, 1383 Asker", "area": "Asker", "bnr": "V-10942935", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfTWMA0", "r": 5}, {"navn": "Askerjordet 2 B", "grp": "HP", "lat": 59.837091442992644, "lon": 10.432230676323112, "adr": "Askerjordet 2 B, 1383 Asker", "area": "Asker", "bnr": "V-10945089", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eg5UMAS", "r": 3}, {"navn": "Askerjordet 40", "grp": "HP", "lat": 59.839325719177324, "lon": 10.431420137222785, "adr": "Askerjordet 40, 1383 Asker", "area": "Asker", "bnr": "V-10945485", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgBsMAK", "r": 5}, {"navn": "Askerjordet 66 B", "grp": "HP", "lat": 59.84183758107017, "lon": 10.430849831130017, "adr": "Askerjordet 66 B, 1383 Asker", "area": "Asker", "bnr": "V-10945916", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000EgIpMAK", "r": 5}, {"navn": "Askerjordet 69", "grp": "HP", "lat": 59.84188455909238, "lon": 10.433136135387315, "adr": "Askerjordet 69, 1383 Asker", "area": "Asker", "bnr": "V-10946692", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgYaMAK", "r": 5}, {"navn": "Dæliveien 13", "grp": "HP", "lat": 59.839184102212336, "lon": 10.429576069163893, "adr": "Dæliveien 13, 1383 Asker", "area": "Asker", "bnr": "V-10946833", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ege5MAC", "r": 4}, {"navn": "Kirkeveien 161 B", "grp": "HP", "lat": 59.8410372966628, "lon": 10.434241832547857, "adr": "Kirkeveien 161 B, 1384 Asker", "area": "Asker", "bnr": "V-10947820", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgvcMAC", "r": 5}, {"navn": "Kirkeveien 167 C", "grp": "HP", "lat": 59.84050001584446, "lon": 10.433272921918471, "adr": "Kirkeveien 167 C, 1384 Asker", "area": "Asker", "bnr": "V-10948404", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh52MAC", "r": 5}, {"navn": "Høgtunveien 9", "grp": "HP", "lat": 59.83760486095354, "lon": 10.426135907424287, "adr": "Høgtunveien 9, 1383 Asker", "area": "Asker", "bnr": "V-10948476", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh6CMAS", "r": 3}, {"navn": "Kirkeveien 159", "grp": "HP", "lat": 59.841084353637136, "lon": 10.43486845216867, "adr": "Kirkeveien 159, 1384 Asker", "area": "Asker", "bnr": "V-10948523", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh6xMAC", "r": 5}, {"navn": "Askerjordet 50", "grp": "HP", "lat": 59.83990158421398, "lon": 10.431319944389061, "adr": "Askerjordet 50, 1383 Asker", "area": "Asker", "bnr": "V-10949043", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhFLMA0", "r": 5}, {"navn": "Askerjordet 2 A", "grp": "HP", "lat": 59.837052668626185, "lon": 10.432245070067413, "adr": "Askerjordet 2 A, 1383 Asker", "area": "Asker", "bnr": "V-10949790", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhRPMA0", "r": 3}, {"navn": "Askerjordet 66 A", "grp": "HP", "lat": 59.841791728293195, "lon": 10.43093709304725, "adr": "Askerjordet 66 A, 1383 Asker", "area": "Asker", "bnr": "V-10949887", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhSyMAK", "r": 5}, {"navn": "Kirkeveien 169 A", "grp": "HP", "lat": 59.84022911671107, "lon": 10.432583162525317, "adr": "Kirkeveien 169 A, 1384 Asker", "area": "Asker", "bnr": "V-10949950", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhTzMAK", "r": 5}, {"navn": "Gamle Drammensvei 249 B", "grp": "HP", "lat": 59.83617554313167, "lon": 10.42526649802709, "adr": "Gamle Drammensvei 249 B, 1383 Asker", "area": "Asker", "bnr": "V-10951436", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhtYMAS", "r": 3}, {"navn": "Askerjordet 63", "grp": "HP", "lat": 59.841703426121555, "lon": 10.432450205003882, "adr": "Askerjordet 63, 1383 Asker", "area": "Asker", "bnr": "V-10952010", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei2oMAC", "r": 5}, {"navn": "Askerjordet 54", "grp": "HP", "lat": 59.84026317230547, "lon": 10.431103479729698, "adr": "Askerjordet 54, 1383 Asker", "area": "Asker", "bnr": "V-10953880", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiaCMAS", "r": 5}, {"navn": "Askerjordet 51", "grp": "HP", "lat": 59.840172684065635, "lon": 10.431991850049808, "adr": "Askerjordet 51, 1383 Asker", "area": "Asker", "bnr": "V-10955355", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EixzMAC", "r": 5}, {"navn": "Askerjordet 71", "grp": "HP", "lat": 59.84203420428967, "lon": 10.432589339263911, "adr": "Askerjordet 71, 1383 Asker", "area": "Asker", "bnr": "V-10957950", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjdqMAC", "r": 5}, {"navn": "Ekornsporet 6", "grp": "HC Vula", "lat": 59.83446205556937, "lon": 10.417776355450835, "adr": "Ekornsporet 6, 1383 Asker", "area": "Asker", "bnr": "V-10939511", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeNOMA0", "r": 1}, {"navn": "Dælitoppen 4", "grp": "HC Vula", "lat": 59.836497020658705, "lon": 10.421449327518644, "adr": "Dælitoppen 4, 1383 Asker", "area": "Asker", "bnr": "V-10940836", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eem0MAC", "r": 2}, {"navn": "Hogstadveien 35", "grp": "HC Vula", "lat": 59.838329951077874, "lon": 10.419707367337965, "adr": "Hogstadveien 35, 1383 Asker", "area": "Asker", "bnr": "V-10942324", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfEpMAK", "r": 2}, {"navn": "Dæliveien 27", "grp": "HC Vula", "lat": 59.839408894464256, "lon": 10.425410056699379, "adr": "Dæliveien 27, 1383 Asker", "area": "Asker", "bnr": "V-10942543", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfNCMA0", "r": 4}, {"navn": "Gamle Drammensvei 250", "grp": "HC Vula", "lat": 59.835745713827, "lon": 10.42490197974735, "adr": "Gamle Drammensvei 250, 1383 Asker", "area": "Asker", "bnr": "V-10942837", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfRwMAK", "r": 2}, {"navn": "Dæliveien 18", "grp": "HC Vula", "lat": 59.839064777916455, "lon": 10.42650170339721, "adr": "Dæliveien 18, 1383 Asker", "area": "Asker", "bnr": "V-10943242", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfbhMAC", "r": 4}, {"navn": "Dæliveien 6", "grp": "HC Vula", "lat": 59.83858336890217, "lon": 10.42865810314869, "adr": "Dæliveien 6, 1383 Asker", "area": "Asker", "bnr": "V-10944260", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Efs7MAC", "r": 4}, {"navn": "Dæliveien 8", "grp": "HC Vula", "lat": 59.83882361014518, "lon": 10.428864684153817, "adr": "Dæliveien 8, 1383 Asker", "area": "Asker", "bnr": "V-10946980", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EggSMAS", "r": 4}, {"navn": "Dæliveien 49", "grp": "HC Vula", "lat": 59.837731570477914, "lon": 10.421894514550488, "adr": "Dæliveien 49, 1383 Asker", "area": "Asker", "bnr": "V-10947312", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgloMAC", "r": 2}, {"navn": "Øvre Askerhagen 22", "grp": "HC Vula", "lat": 59.83383645528266, "lon": 10.419159250756682, "adr": "Øvre Askerhagen 22, 1383 Asker", "area": "Asker", "bnr": "V-10947410", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Egp0MAC", "r": 1}, {"navn": "Dælifaret 47", "grp": "HC Vula", "lat": 59.836585554022754, "lon": 10.422398786945788, "adr": "Dælifaret 47, 1383 Asker", "area": "Asker", "bnr": "V-10948204", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh1oMAC", "r": 2}, {"navn": "Askerbrubakken 8 A", "grp": "HC Vula", "lat": 59.83719108370281, "lon": 10.429508471379247, "adr": "Askerbrubakken 8 A, 1383 Asker", "area": "Asker", "bnr": "V-10948586", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh7yMAC", "r": 3}, {"navn": "Solvangveien 27", "grp": "HC Vula", "lat": 59.84043488983324, "lon": 10.428523293633662, "adr": "Solvangveien 27, 1383 Asker", "area": "Asker", "bnr": "V-10951366", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhsQMAS", "r": 4}, {"navn": "Gamle Drammensvei 266 A", "grp": "HC Vula", "lat": 59.83504767398558, "lon": 10.420102906964345, "adr": "Gamle Drammensvei 266 A, 1383 Asker", "area": "Asker", "bnr": "V-10951425", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhtNMAS", "r": 1}, {"navn": "Smedsletta 6", "grp": "HC Vula", "lat": 59.8347073907742, "lon": 10.419178469466981, "adr": "Smedsletta 6, 1383 Asker", "area": "Asker", "bnr": "V-10952780", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiISMA0", "r": 1}, {"navn": "Dæliveien 43 A", "grp": "HC Vula", "lat": 59.83802658658183, "lon": 10.423016984812975, "adr": "Dæliveien 43 A, 1383 Asker", "area": "Asker", "bnr": "V-10954486", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EijyMAC", "r": 2}, {"navn": "Dæliveien 29", "grp": "HC Vula", "lat": 59.83946449275537, "lon": 10.425251831336771, "adr": "Dæliveien 29, 1383 Asker", "area": "Asker", "bnr": "V-10956043", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej7VMAS", "r": 4}, {"navn": "Dælifaret 7", "grp": "HC Vula", "lat": 59.83834771290494, "lon": 10.42537718513837, "adr": "Dælifaret 7, 1383 Asker", "area": "Asker", "bnr": "V-10957274", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjSwMAK", "r": 4}, {"navn": "Solvangveien 5", "grp": "HC Vula", "lat": 59.83788318693849, "lon": 10.428628104796687, "adr": "Solvangveien 5, 1383 Asker", "area": "Asker", "bnr": "V-10958832", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ejs4MAC", "r": 3}, {"navn": "Solvangveien 39", "grp": "HC Vula", "lat": 59.840678228185745, "lon": 10.428444492566868, "adr": "Solvangveien 39, 1383 Asker", "area": "Asker", "bnr": "V-10960633", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkL7MAK", "r": 4}, {"navn": "Hukenbekken 28 A", "grp": "HC Vula", "lat": 59.83670022473967, "lon": 10.416511860615854, "adr": "Hukenbekken 28 A, 1383 Asker", "area": "Asker", "bnr": "V-10960696", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkM8MAK", "r": 1}, {"navn": "Ekornsporet 5", "grp": "HC Vula", "lat": 59.8343893303805, "lon": 10.41702390260285, "adr": "Ekornsporet 5, 1383 Asker", "area": "Asker", "bnr": "V-10961180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkTwMAK", "r": 1}, {"navn": "Dæliveien 34", "grp": "HC Vula", "lat": 59.83847425660989, "lon": 10.424970394529117, "adr": "Dæliveien 34, 1383 Asker", "area": "Asker", "bnr": "V-10961352", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkWiMAK", "r": 4}, {"navn": "Solvangveien 6", "grp": "HC Vula", "lat": 59.83877369016614, "lon": 10.426594532004895, "adr": "Solvangveien 6, 1383 Asker", "area": "Asker", "bnr": "V-10961542", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkZmMAK", "r": 3}, {"navn": "Smedsletta 9", "grp": "HC Vula", "lat": 59.83415833005211, "lon": 10.41845927456636, "adr": "Smedsletta 9, 1383 Asker", "area": "Asker", "bnr": "V-10961639", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkbLMAS", "r": 1}, {"navn": "Hukenveien 6", "grp": "HC Vula", "lat": 59.83644541521326, "lon": 10.419573608028387, "adr": "Hukenveien 6, 1383 Asker", "area": "Asker", "bnr": "V-10963292", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El20MAC", "r": 1}, {"navn": "Gamle Drammensvei 247 B", "grp": "HC Vula", "lat": 59.83658151677899, "lon": 10.426092143280206, "adr": "Gamle Drammensvei 247 B, 1383 Asker", "area": "Asker", "bnr": "V-10963298", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El26MAC", "r": 3}, {"navn": "Hukenveien 20 B", "grp": "HC Vula", "lat": 59.83532970479682, "lon": 10.414762185358324, "adr": "Hukenveien 20 B, 1383 Asker", "area": "Asker", "bnr": "V-10963385", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El3VMAS", "r": 1}, {"navn": "Dælifaret 35", "grp": "HC Vula", "lat": 59.83702976395467, "lon": 10.422845975143185, "adr": "Dælifaret 35, 1383 Asker", "area": "Asker", "bnr": "V-10963616", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El7EMAS", "r": 2}, {"navn": "Gamle Drammensvei 265", "grp": "HC Vula", "lat": 59.83589020419451, "lon": 10.419425074781262, "adr": "Gamle Drammensvei 265, 1383 Asker", "area": "Asker", "bnr": "V-10963798", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElAAMA0", "r": 2}, {"navn": "Ekornsporet 9", "grp": "HC", "lat": 59.83412425112548, "lon": 10.416620120516676, "adr": "Ekornsporet 9, 1383 Asker", "area": "Asker", "bnr": "V-10940441", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EScrMAG", "r": 1}, {"navn": "Askerjordet 74", "grp": "HC", "lat": 59.84235318680774, "lon": 10.431335961773666, "adr": "Askerjordet 74, 1383 Asker", "area": "Asker", "bnr": "V-10937787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdvaMAC", "r": 5}, {"navn": "Solvangveien 19 C", "grp": "HC", "lat": 59.840023001204266, "lon": 10.429237291689125, "adr": "Solvangveien 19 C, 1383 Asker", "area": "Asker", "bnr": "V-10938233", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee2mMAC", "r": 4}, {"navn": "Øvre Askerhagen 9 A", "grp": "HC", "lat": 59.835171546540494, "lon": 10.421107354144738, "adr": "Øvre Askerhagen 9 A, 1383 Asker", "area": "Asker", "bnr": "V-10939073", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeGKMA0", "r": 1}, {"navn": "Dæliveien 5 B", "grp": "HC", "lat": 59.83827651087318, "lon": 10.428962580273858, "adr": "Dæliveien 5 B, 1383 Asker", "area": "Asker", "bnr": "V-10939639", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeUIMA0", "r": 4}, {"navn": "Solvangveien 24", "grp": "HC", "lat": 59.839742174192914, "lon": 10.426976804522301, "adr": "Solvangveien 24, 1383 Asker", "area": "Asker", "bnr": "V-10939963", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeZWMA0", "r": 4}, {"navn": "Askerbrubakken 14", "grp": "HC", "lat": 59.836575758729026, "lon": 10.42910738817701, "adr": "Askerbrubakken 14, 1383 Asker", "area": "Asker", "bnr": "V-10941047", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EepPMAS", "r": 3}, {"navn": "Askerjordet 58", "grp": "HC", "lat": 59.84084665643905, "lon": 10.431128523951527, "adr": "Askerjordet 58, 1383 Asker", "area": "Asker", "bnr": "V-10941115", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeqVMAS", "r": 5}, {"navn": "Ekornsporet 17", "grp": "HC", "lat": 59.8339192757401, "lon": 10.417307239609691, "adr": "Ekornsporet 17, 1383 Asker", "area": "Asker", "bnr": "V-10941448", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef0hMAC", "r": 1}, {"navn": "Solvangveien 45", "grp": "HC", "lat": 59.84062835330828, "lon": 10.42724671988535, "adr": "Solvangveien 45, 1383 Asker", "area": "Asker", "bnr": "V-10941686", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef4XMAS", "r": 4}, {"navn": "Høgtunveien 16 A", "grp": "HC", "lat": 59.83669483837169, "lon": 10.423920119430727, "adr": "Høgtunveien 16 A, 1383 Asker", "area": "Asker", "bnr": "V-10941856", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef7HMAS", "r": 2}, {"navn": "Høgtunveien 10 A", "grp": "HC", "lat": 59.837093961752245, "lon": 10.426042684354798, "adr": "Høgtunveien 10 A, 1383 Asker", "area": "Asker", "bnr": "V-10942366", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfFVMA0", "r": 3}, {"navn": "Nedre Askerhagen 10", "grp": "HC", "lat": 59.83378393151971, "lon": 10.421529951411774, "adr": "Nedre Askerhagen 10, 1383 Asker", "area": "Asker", "bnr": "V-10943970", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfnRMAS", "r": 1}, {"navn": "Askerbrubakken 4", "grp": "HC", "lat": 59.83767563125101, "lon": 10.429547086966068, "adr": "Askerbrubakken 4, 1383 Asker", "area": "Asker", "bnr": "V-10945101", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eg5gMAC", "r": 3}, {"navn": "Smedsletta 3", "grp": "HC", "lat": 59.8347164251084, "lon": 10.418340274549752, "adr": "Smedsletta 3, 1383 Asker", "area": "Asker", "bnr": "V-10945973", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgJkMAK", "r": 1}, {"navn": "Solvangveien 49", "grp": "HC", "lat": 59.84043047927304, "lon": 10.427273940179637, "adr": "Solvangveien 49, 1383 Asker", "area": "Asker", "bnr": "V-10946709", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgYrMAK", "r": 4}, {"navn": "Øvre Askerhagen 12", "grp": "HC", "lat": 59.83433177693531, "lon": 10.420696890431136, "adr": "Øvre Askerhagen 12, 1383 Asker", "area": "Asker", "bnr": "V-10947271", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Egl9MAC", "r": 1}, {"navn": "Solvangveien 1 B", "grp": "HC", "lat": 59.83722587817462, "lon": 10.427957578872828, "adr": "Solvangveien 1 B, 1383 Asker", "area": "Asker", "bnr": "V-10947652", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgsuMAC", "r": 3}, {"navn": "Øvre Askerhagen 20", "grp": "HC", "lat": 59.83392372287653, "lon": 10.419394906137756, "adr": "Øvre Askerhagen 20, 1383 Asker", "area": "Asker", "bnr": "V-10947933", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgxRMAS", "r": 1}, {"navn": "Solvangveien 10", "grp": "HC", "lat": 59.83858696903687, "lon": 10.427498383032498, "adr": "Solvangveien 10, 1383 Asker", "area": "Asker", "bnr": "V-10948329", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh3pMAC", "r": 3}, {"navn": "Hukenveien 11 A", "grp": "HC", "lat": 59.83680742785993, "lon": 10.41848273804805, "adr": "Hukenveien 11 A, 1383 Asker", "area": "Asker", "bnr": "V-10948426", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh5OMAS", "r": 1}, {"navn": "Dæliveien 41", "grp": "HC", "lat": 59.83833168645369, "lon": 10.42370451064346, "adr": "Dæliveien 41, 1383 Asker", "area": "Asker", "bnr": "V-10949864", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhSbMAK", "r": 2}, {"navn": "Dæliveien 40", "grp": "HC", "lat": 59.83796933845752, "lon": 10.423992386015897, "adr": "Dæliveien 40, 1383 Asker", "area": "Asker", "bnr": "V-10950071", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhVwMAK", "r": 2}, {"navn": "Dælitoppen 10", "grp": "HC", "lat": 59.835996173655474, "lon": 10.422088163347913, "adr": "Dælitoppen 10, 1383 Asker", "area": "Asker", "bnr": "V-10950180", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhXhMAK", "r": 2}, {"navn": "Dælitoppen 3", "grp": "HC", "lat": 59.836486961273245, "lon": 10.420717332855672, "adr": "Dælitoppen 3, 1383 Asker", "area": "Asker", "bnr": "V-10951942", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei1iMAC", "r": 2}, {"navn": "Solvangveien 4", "grp": "HC", "lat": 59.837892587804305, "lon": 10.426933341974904, "adr": "Solvangveien 4, 1383 Asker", "area": "Asker", "bnr": "V-10952096", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei4CMAS", "r": 3}, {"navn": "Øvre Askerhagen 24", "grp": "HC", "lat": 59.833766564000875, "lon": 10.41897786070865, "adr": "Øvre Askerhagen 24, 1383 Asker", "area": "Asker", "bnr": "V-10952209", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei7dMAC", "r": 1}, {"navn": "Dælijordet 10", "grp": "HC", "lat": 59.83882956100498, "lon": 10.42126325064015, "adr": "Dælijordet 10, 1383 Asker", "area": "Asker", "bnr": "V-10952210", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei7eMAC", "r": 2}, {"navn": "Dælijordet 10", "grp": "HC", "lat": 59.83882956100498, "lon": 10.42126325064015, "adr": "Dælijordet 10, 1383 Asker", "area": "Asker", "bnr": "V-10952285", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei8rMAC", "r": 2}, {"navn": "Dæliveien 47 B", "grp": "HC", "lat": 59.83785403819082, "lon": 10.422279809698308, "adr": "Dæliveien 47 B, 1383 Asker", "area": "Asker", "bnr": "V-10952592", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiFQMA0", "r": 2}, {"navn": "Dælifaret 58", "grp": "HC", "lat": 59.836248789600745, "lon": 10.422812653708654, "adr": "Dælifaret 58, 1383 Asker", "area": "Asker", "bnr": "V-10953038", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiMcMAK", "r": 2}, {"navn": "Askerbrubakken 2 A", "grp": "HC", "lat": 59.83792032594207, "lon": 10.429343450637434, "adr": "Askerbrubakken 2 A, 1383 Asker", "area": "Asker", "bnr": "V-10953939", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eib9MAC", "r": 3}, {"navn": "Gamle Drammensvei 253 B", "grp": "HC", "lat": 59.83631627300317, "lon": 10.424046699086484, "adr": "Gamle Drammensvei 253 B, 1383 Asker", "area": "Asker", "bnr": "V-10954395", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiiVMAS", "r": 2}, {"navn": "Øvre Askerhagen 10 A", "grp": "HC", "lat": 59.83469539499827, "lon": 10.421122748789092, "adr": "Øvre Askerhagen 10 A, 1383 Asker", "area": "Asker", "bnr": "V-10957636", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjYmMAK", "r": 1}, {"navn": "Askerjordet 48", "grp": "HC", "lat": 59.8395954074423, "lon": 10.431396025194035, "adr": "Askerjordet 48, 1383 Asker", "area": "Asker", "bnr": "V-10957648", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjYyMAK", "r": 5}, {"navn": "Dælifaret 25", "grp": "HC", "lat": 59.837424266996166, "lon": 10.423737143337704, "adr": "Dælifaret 25, 1383 Asker", "area": "Asker", "bnr": "V-10958960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eju8MAC", "r": 2}, {"navn": "Øvre Askerhagen 14", "grp": "HC", "lat": 59.83418244437249, "lon": 10.420387217914655, "adr": "Øvre Askerhagen 14, 1383 Asker", "area": "Asker", "bnr": "V-10959381", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek0vMAC", "r": 1}, {"navn": "Hukenveien 26 A", "grp": "HC", "lat": 59.83625929299356, "lon": 10.4143377058488, "adr": "Hukenveien 26 A, 1383 Asker", "area": "Asker", "bnr": "V-10959530", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek3KMAS", "r": 1}, {"navn": "Askerjordet 67", "grp": "HC", "lat": 59.841762618642186, "lon": 10.433612734238192, "adr": "Askerjordet 67, 1383 Asker", "area": "Asker", "bnr": "V-10960057", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkBpMAK", "r": 5}, {"navn": "Dælitoppen 12", "grp": "HC", "lat": 59.835823381279226, "lon": 10.421456299855963, "adr": "Dælitoppen 12, 1383 Asker", "area": "Asker", "bnr": "V-10960079", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkCBMA0", "r": 2}, {"navn": "Gamle Drammensvei 256", "grp": "HC", "lat": 59.835650542121556, "lon": 10.423322408734537, "adr": "Gamle Drammensvei 256, 1383 Asker", "area": "Asker", "bnr": "V-10960228", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkEaMAK", "r": 2}, {"navn": "Dælitoppen 1", "grp": "HC", "lat": 59.836646953396034, "lon": 10.420538580213869, "adr": "Dælitoppen 1, 1383 Asker", "area": "Asker", "bnr": "V-10960337", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkGLMA0", "r": 2}, {"navn": "Hukenveien 10", "grp": "HC", "lat": 59.836243238845185, "lon": 10.418333839455915, "adr": "Hukenveien 10, 1383 Asker", "area": "Asker", "bnr": "V-10960442", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkI2MAK", "r": 1}, {"navn": "Dæliveien 37", "grp": "HC", "lat": 59.83872695549596, "lon": 10.424524379780799, "adr": "Dæliveien 37, 1383 Asker", "area": "Asker", "bnr": "V-10961029", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkRVMA0", "r": 4}, {"navn": "Nedre Askerhagen 11", "grp": "HC", "lat": 59.833942697643735, "lon": 10.420965783768052, "adr": "Nedre Askerhagen 11, 1383 Asker", "area": "Asker", "bnr": "V-10961279", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkVXMA0", "r": 1}, {"navn": "Dæliveien 46", "grp": "HC", "lat": 59.837587091436376, "lon": 10.42279838080595, "adr": "Dæliveien 46, 1383 Asker", "area": "Asker", "bnr": "V-10961796", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkdsMAC", "r": 2}, {"navn": "Askerbrubakken 15", "grp": "Kun mobil", "lat": 59.83701399608355, "lon": 10.428448120493346, "adr": "Askerbrubakken 15, 1383 Asker", "area": "Asker", "bnr": "V-10965720", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElmGMAS", "r": 3}, {"navn": "Kirkeveien 163 B", "grp": "Kun mobil", "lat": 59.84101910902992, "lon": 10.433438000658146, "adr": "Kirkeveien 163 B, 1384 Asker", "area": "Asker", "bnr": "V-10966519", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elz9MAC", "r": 5}, {"navn": "Askerjordet 70", "grp": "Kun mobil", "lat": 59.84209699072141, "lon": 10.431771115801288, "adr": "Askerjordet 70, 1383 Asker", "area": "Asker", "bnr": "V-10966604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em0WMAS", "r": 5}, {"navn": "Askerjordet 55", "grp": "Kun mobil", "lat": 59.840847098857274, "lon": 10.431913742474032, "adr": "Askerjordet 55, 1383 Asker", "area": "Asker", "bnr": "V-10967553", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmFpMAK", "r": 5}, {"navn": "Askerjordet 68", "grp": "Kun mobil", "lat": 59.842084856182765, "lon": 10.431235211500706, "adr": "Askerjordet 68, 1383 Asker", "area": "Asker", "bnr": "V-10967583", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmGJMA0", "r": 5}];
+var AREAS = ["Asker"];
+var STORE_KEY = "dorkart_Joakim_22.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Joakim";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":23,"m":0,"h":[[[59.835275,10.421603],[59.833784,10.422066],[59.83368,10.422025],[59.833592,10.421909],[59.833533,10.421735],[59.833513,10.42153],[59.833495,10.418978],[59.833669,10.417102],[59.833932,10.416241],[59.835226,10.414267],[59.836259,10.413801],[59.836363,10.413842],[59.836451,10.413958],[59.83651,10.414132],[59.836951,10.416307],[59.837079,10.418483],[59.837058,10.418688],[59.836637,10.419953],[59.83643,10.420151],[59.836121,10.420195],[59.836199,10.419046],[59.835479,10.418139],[59.835326,10.418786],[59.835314,10.419012],[59.835617,10.42041],[59.835489,10.421346]]],"b":[[59.837079,10.418483]],"g":["Øvre Askerhagen","Hukenveien","Ekornsporet"]},{"n":2,"c":"#7b2cbf","s":23,"m":0,"h":[[[59.837572,10.419083],[59.838434,10.419212],[59.838522,10.419328],[59.83908,10.421058],[59.839101,10.421263],[59.83908,10.421469],[59.838582,10.42391],[59.838524,10.424084],[59.838073,10.424488],[59.837188,10.42485],[59.837123,10.424813],[59.83675,10.425029],[59.836576,10.424806],[59.836071,10.424578],[59.835897,10.425378],[59.835746,10.425438],[59.835642,10.425398],[59.835554,10.425281],[59.835495,10.425107],[59.835474,10.424902],[59.835379,10.423322],[59.835511,10.421185],[59.835617,10.42041],[59.835568,10.420246],[59.835619,10.419425],[59.835639,10.41922],[59.835698,10.419046],[59.835786,10.41893],[59.83589,10.418889],[59.836093,10.418912],[59.836199,10.419046],[59.836121,10.420195],[59.83643,10.420151],[59.837082,10.419619],[59.837439,10.419728]]],"b":[[59.839101,10.421263]],"g":["Dæliveien","Dælitoppen","Gamle Drammensvei"]},{"n":3,"c":"#0b7285","s":16,"m":1,"h":[[[59.838229,10.42963],[59.837283,10.43261],[59.837195,10.432726],[59.837053,10.432781],[59.836949,10.432741],[59.836861,10.432624],[59.836802,10.43245],[59.836325,10.429313],[59.835909,10.425319],[59.836011,10.424851],[59.836072,10.424771],[59.836176,10.42473],[59.836279,10.424771],[59.83794,10.42562],[59.838063,10.426091],[59.838292,10.426353],[59.838587,10.42595],[59.838883,10.426106],[59.838964,10.427094],[59.838838,10.427704],[59.838719,10.42808],[59.838238,10.428069],[59.838045,10.428956]]],"b":[[59.838964,10.427094]],"g":["Askerbrubakken","Solvangveien","Askerjordet"]},{"n":4,"c":"#a61e4d","s":16,"m":0,"h":[[[59.838062,10.426087],[59.838097,10.425172],[59.838282,10.424591],[59.838623,10.424029],[59.838727,10.423988],[59.838831,10.424029],[59.839568,10.424756],[59.84082,10.426867],[59.840879,10.427041],[59.8409,10.427247],[59.84095,10.428444],[59.840929,10.42865],[59.84087,10.428824],[59.840127,10.429733],[59.839184,10.430112],[59.838184,10.429466],[59.838045,10.428956],[59.838238,10.428069],[59.838853,10.428081],[59.839232,10.427825],[59.839223,10.427744],[59.838979,10.427288],[59.838844,10.425624],[59.838292,10.426353]]],"b":[[59.84095,10.428444]],"g":["Dæliveien","Solvangveien","Dælifaret"]},{"n":5,"c":"#343a40","s":19,"m":4,"h":[[[59.841941,10.430354],[59.842457,10.43084],[59.842545,10.430957],[59.842604,10.431131],[59.842625,10.431336],[59.842535,10.432895],[59.842476,10.433069],[59.841188,10.435364],[59.841084,10.435405],[59.84098,10.435364],[59.840892,10.435248],[59.839134,10.431799],[59.839075,10.431625],[59.839054,10.43142],[59.839075,10.431215],[59.839134,10.431041],[59.839222,10.430925],[59.840263,10.430567],[59.841838,10.430313]]],"b":[[59.842625,10.431336]],"g":["Askerjordet","Kirkeveien"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
