@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Saad 26.10.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Saad</div>
+<div class="date">26.10.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Stolpstuvegen 44", "grp": "HP", "lat": 63.38977577736981, "lon": 10.32918861090648, "adr": "Stolpstuvegen 44, 7026 Trondheim", "area": "Stavset", "bnr": "V-10938321", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee4CMAS", "r": 4}, {"navn": "Øvre Stavsetvegen 34", "grp": "HP", "lat": 63.389503719848726, "lon": 10.333338656501816, "adr": "Øvre Stavsetvegen 34, 7026 Trondheim", "area": "Stavset", "bnr": "V-10941057", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EepZMAS", "r": 3}, {"navn": "Brannhaugen 11", "grp": "HP", "lat": 63.38362685491366, "lon": 10.320500704167667, "adr": "Brannhaugen 11, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10941217", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ees9MAC", "r": 5}, {"navn": "Leirbruvegen 62", "grp": "HP", "lat": 63.38452795160553, "lon": 10.318181023785495, "adr": "Leirbruvegen 62, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10942119", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfBWMA0", "r": 5}, {"navn": "Rittmestervegen 23", "grp": "HP", "lat": 63.38775270858637, "lon": 10.343943539011459, "adr": "Rittmestervegen 23, 7026 Trondheim", "area": "Kystad", "bnr": "V-10942449", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfLgMAK", "r": 2}, {"navn": "Rittmestervegen 31", "grp": "HP", "lat": 63.38806322408524, "lon": 10.343377720164423, "adr": "Rittmestervegen 31, 7026 Trondheim", "area": "Kystad", "bnr": "V-10943785", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfkSMAS", "r": 2}, {"navn": "Leirbruvegen 44", "grp": "HP", "lat": 63.38358916936584, "lon": 10.317777822285855, "adr": "Leirbruvegen 44, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10945237", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eg7sMAC", "r": 5}, {"navn": "Leirbruvegen 64", "grp": "HP", "lat": 63.38448179735723, "lon": 10.318318970785098, "adr": "Leirbruvegen 64, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10945771", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgGUMA0", "r": 5}, {"navn": "Laura Hangerås' Veg 33", "grp": "HP", "lat": 63.38931112174748, "lon": 10.345922013996711, "adr": "Laura Hangerås' Veg 33, 7026 Trondheim", "area": "Kystad", "bnr": "V-10946346", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgRNMA0", "r": 1}, {"navn": "Øvre Stavsetvegen 40", "grp": "HP", "lat": 63.38886723683224, "lon": 10.333865066168283, "adr": "Øvre Stavsetvegen 40, 7026 Trondheim", "area": "Stavset", "bnr": "V-10947084", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Egi8MAC", "r": 3}, {"navn": "Rittmestervegen 21", "grp": "HP", "lat": 63.38737367183553, "lon": 10.34320541126781, "adr": "Rittmestervegen 21, 7026 Trondheim", "area": "Kystad", "bnr": "V-10947088", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgiCMAS", "r": 2}, {"navn": "Kystadbrinken 1 B", "grp": "HP", "lat": 63.38701816283425, "lon": 10.34569016822318, "adr": "Kystadbrinken 1 B, 7027 Trondheim", "area": "Kystad", "bnr": "V-10947900", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgwuMAC", "r": 1}, {"navn": "Rittmestervegen 3", "grp": "HP", "lat": 63.38749851935546, "lon": 10.339469134702872, "adr": "Rittmestervegen 3, 7026 Trondheim", "area": "Kystad", "bnr": "V-10948146", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh0sMAC", "r": 2}, {"navn": "Laura Hangerås' Veg 59", "grp": "HP", "lat": 63.38868834483602, "lon": 10.3446260795718, "adr": "Laura Hangerås' Veg 59, 7026 Trondheim", "area": "Kystad", "bnr": "V-10948164", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh1AMAS", "r": 1}, {"navn": "Øvre Stavsetvegen 4", "grp": "HP", "lat": 63.39040949700587, "lon": 10.330538797653402, "adr": "Øvre Stavsetvegen 4, 7026 Trondheim", "area": "Stavset", "bnr": "V-10948210", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh1uMAC", "r": 3}, {"navn": "Rittmestervegen 6", "grp": "HP", "lat": 63.38785291037203, "lon": 10.339965928078055, "adr": "Rittmestervegen 6, 7026 Trondheim", "area": "Kystad", "bnr": "V-10948810", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhBaMAK", "r": 2}, {"navn": "Rittmestervegen 34", "grp": "HP", "lat": 63.38769790189304, "lon": 10.34117939810121, "adr": "Rittmestervegen 34, 7026 Trondheim", "area": "Kystad", "bnr": "V-10949195", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhHnMAK", "r": 2}, {"navn": "Leirbruvegen 5", "grp": "HP", "lat": 63.38405371147803, "lon": 10.31984601685999, "adr": "Leirbruvegen 5, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10950059", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhVkMAK", "r": 5}, {"navn": "Kystadbrinken 11", "grp": "HP", "lat": 63.38717898085952, "lon": 10.344817210040665, "adr": "Kystadbrinken 11, 7027 Trondheim", "area": "Kystad", "bnr": "V-10950712", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhhsMAC", "r": 1}, {"navn": "Rittmestervegen 25", "grp": "HP", "lat": 63.38782580446454, "lon": 10.343806876369918, "adr": "Rittmestervegen 25, 7026 Trondheim", "area": "Kystad", "bnr": "V-10951029", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhmzMAC", "r": 2}, {"navn": "Kystadbrinken 7", "grp": "HP", "lat": 63.38754119509404, "lon": 10.345434498677944, "adr": "Kystadbrinken 7, 7027 Trondheim", "area": "Kystad", "bnr": "V-10951072", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhngMAC", "r": 1}, {"navn": "Stolpstuvegen 22", "grp": "HP", "lat": 63.38948102771362, "lon": 10.329995495495757, "adr": "Stolpstuvegen 22, 7026 Trondheim", "area": "Stavset", "bnr": "V-10951201", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhplMAC", "r": 4}, {"navn": "Øvre Stavsetvegen 60", "grp": "HP", "lat": 63.38859418570614, "lon": 10.334200802453246, "adr": "Øvre Stavsetvegen 60, 7026 Trondheim", "area": "Stavset", "bnr": "V-10952073", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei3pMAC", "r": 3}, {"navn": "Stolpstuvegen 63", "grp": "HP", "lat": 63.38884140945307, "lon": 10.331206649831199, "adr": "Stolpstuvegen 63, 7026 Trondheim", "area": "Stavset", "bnr": "V-10952305", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei9BMAS", "r": 3}, {"navn": "Stolpstuvegen 65", "grp": "HP", "lat": 63.38891188342028, "lon": 10.331349999792305, "adr": "Stolpstuvegen 65, 7026 Trondheim", "area": "Stavset", "bnr": "V-10952877", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiK1MAK", "r": 3}, {"navn": "Stolpstuvegen 47", "grp": "HP", "lat": 63.388800989757236, "lon": 10.329763903174705, "adr": "Stolpstuvegen 47, 7026 Trondheim", "area": "Stavset", "bnr": "V-10953827", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiZLMA0", "r": 4}, {"navn": "Øvre Stavsetvegen 32", "grp": "HP", "lat": 63.38958185680377, "lon": 10.333622459581473, "adr": "Øvre Stavsetvegen 32, 7026 Trondheim", "area": "Stavset", "bnr": "V-10954686", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EinCMAS", "r": 3}, {"navn": "Kystadbrinken 9", "grp": "HP", "lat": 63.38736852942473, "lon": 10.34470601190157, "adr": "Kystadbrinken 9, 7027 Trondheim", "area": "Kystad", "bnr": "V-10954802", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eip4MAC", "r": 1}, {"navn": "Stolpstuvegen 53", "grp": "HP", "lat": 63.3889391463618, "lon": 10.330350650632539, "adr": "Stolpstuvegen 53, 7026 Trondheim", "area": "Stavset", "bnr": "V-10955139", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiuVMAS", "r": 4}, {"navn": "Laura Hangerås' Veg 25", "grp": "HP", "lat": 63.38956215339975, "lon": 10.346249571997031, "adr": "Laura Hangerås' Veg 25, 7026 Trondheim", "area": "Kystad", "bnr": "V-10956038", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej7QMAS", "r": 1}, {"navn": "Stolpstuvegen 51", "grp": "HP", "lat": 63.38900344322021, "lon": 10.330193528708033, "adr": "Stolpstuvegen 51, 7026 Trondheim", "area": "Stavset", "bnr": "V-10956589", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjHtMAK", "r": 4}, {"navn": "Stolpstuvegen 25", "grp": "HP", "lat": 63.38816544084401, "lon": 10.329574403501846, "adr": "Stolpstuvegen 25, 7026 Trondheim", "area": "Stavset", "bnr": "V-10956622", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjIQMA0", "r": 4}, {"navn": "Stolpstuvegen 6", "grp": "HP", "lat": 63.38924283149556, "lon": 10.328583600772161, "adr": "Stolpstuvegen 6, 7026 Trondheim", "area": "Stavset", "bnr": "V-10958017", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjevMAC", "r": 4}, {"navn": "Stolpstuvegen 29", "grp": "HP", "lat": 63.38864358300391, "lon": 10.329316355347865, "adr": "Stolpstuvegen 29, 7026 Trondheim", "area": "Stavset", "bnr": "V-10958020", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjeyMAC", "r": 4}, {"navn": "Laura Hangerås' Veg 73", "grp": "HP", "lat": 63.3883616651222, "lon": 10.343908041068914, "adr": "Laura Hangerås' Veg 73, 7026 Trondheim", "area": "Kystad", "bnr": "V-10958169", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjhNMAS", "r": 1}, {"navn": "Laura Hangerås' Veg 17", "grp": "HP", "lat": 63.389773906423486, "lon": 10.346639736826942, "adr": "Laura Hangerås' Veg 17, 7026 Trondheim", "area": "Kystad", "bnr": "V-10959207", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ejy7MAC", "r": 1}, {"navn": "Leirbruvegen 66", "grp": "HP", "lat": 63.384426670557524, "lon": 10.318456505797515, "adr": "Leirbruvegen 66, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10960274", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkFKMA0", "r": 5}, {"navn": "Stolpstuvegen 13", "grp": "HP", "lat": 63.388017025326945, "lon": 10.329337404204454, "adr": "Stolpstuvegen 13, 7026 Trondheim", "area": "Stavset", "bnr": "V-10960415", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkHbMAK", "r": 4}, {"navn": "Øvre Stavsetvegen 44", "grp": "HP", "lat": 63.38927923100619, "lon": 10.3343088534477, "adr": "Øvre Stavsetvegen 44, 7026 Trondheim", "area": "Stavset", "bnr": "V-10960774", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkNOMA0", "r": 3}, {"navn": "Øvre Stavsetvegen 7", "grp": "HP", "lat": 63.38941607282159, "lon": 10.331312118540732, "adr": "Øvre Stavsetvegen 7, 7026 Trondheim", "area": "Stavset", "bnr": "V-10960902", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkPSMA0", "r": 3}, {"navn": "Øvre Stavsetvegen 26", "grp": "HP", "lat": 63.38946781705611, "lon": 10.332376384982807, "adr": "Øvre Stavsetvegen 26, 7026 Trondheim", "area": "Stavset", "bnr": "V-10961487", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkYtMAK", "r": 3}, {"navn": "Laura Hangerås' Veg 57", "grp": "HP", "lat": 63.38873635010205, "lon": 10.344742394963765, "adr": "Laura Hangerås' Veg 57, 7026 Trondheim", "area": "Kystad", "bnr": "V-10962469", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkojMAC", "r": 1}, {"navn": "Stolpstuvegen 69", "grp": "HC Vula", "lat": 63.389043858550835, "lon": 10.331636286084223, "adr": "Stolpstuvegen 69, 7026 Trondheim", "area": "Stavset", "bnr": "V-10941384", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeuqMAC", "r": 3}, {"navn": "Laura Hangerås' Veg 41", "grp": "HC Vula", "lat": 63.38910681069352, "lon": 10.345523003558585, "adr": "Laura Hangerås' Veg 41, 7026 Trondheim", "area": "Kystad", "bnr": "V-10941999", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef9aMAC", "r": 1}, {"navn": "Øvre Stavsetvegen 8 A", "grp": "HC Vula", "lat": 63.39067020072635, "lon": 10.33102658806111, "adr": "Øvre Stavsetvegen 8 A, 7026 Trondheim", "area": "Stavset", "bnr": "V-10942883", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfSgMAK", "r": 3}, {"navn": "Kystadbrinken 23", "grp": "HC Vula", "lat": 63.38648973677825, "lon": 10.342703858357016, "adr": "Kystadbrinken 23, 7027 Trondheim", "area": "Kystad", "bnr": "V-10945561", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgD6MAK", "r": 2}, {"navn": "Rittmestervegen 15", "grp": "HC Vula", "lat": 63.38723775446171, "lon": 10.341908342301245, "adr": "Rittmestervegen 15, 7026 Trondheim", "area": "Kystad", "bnr": "V-10948477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh6DMAS", "r": 2}, {"navn": "Brannhaugen 10", "grp": "HC Vula", "lat": 63.3843462364212, "lon": 10.321021970936322, "adr": "Brannhaugen 10, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10949761", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhQwMAK", "r": 5}, {"navn": "Stolpstuvegen 28", "grp": "HC Vula", "lat": 63.38974447684453, "lon": 10.330526019422242, "adr": "Stolpstuvegen 28, 7026 Trondheim", "area": "Stavset", "bnr": "V-10949804", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhRdMAK", "r": 4}, {"navn": "Øvre Stavsetvegen 27", "grp": "HC Vula", "lat": 63.38843224583359, "lon": 10.331768042455868, "adr": "Øvre Stavsetvegen 27, 7026 Trondheim", "area": "Stavset", "bnr": "V-10953684", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiX2MAK", "r": 3}, {"navn": "Øvre Stavsetvegen 48", "grp": "HC Vula", "lat": 63.38889614390856, "lon": 10.33451820612341, "adr": "Øvre Stavsetvegen 48, 7026 Trondheim", "area": "Stavset", "bnr": "V-10957014", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjOkMAK", "r": 3}, {"navn": "Laura Hangerås' Veg 23", "grp": "HC Vula", "lat": 63.38961504462362, "lon": 10.346352113654039, "adr": "Laura Hangerås' Veg 23, 7026 Trondheim", "area": "Kystad", "bnr": "V-10957615", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjYRMA0", "r": 1}, {"navn": "Laura Hangerås' Veg 39", "grp": "HC Vula", "lat": 63.389173206868236, "lon": 10.345611765581445, "adr": "Laura Hangerås' Veg 39, 7026 Trondheim", "area": "Kystad", "bnr": "V-10958181", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjhZMAS", "r": 1}, {"navn": "Rittmestervegen 17", "grp": "HC Vula", "lat": 63.387237823977486, "lon": 10.342378606701498, "adr": "Rittmestervegen 17, 7026 Trondheim", "area": "Kystad", "bnr": "V-10959204", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ejy4MAC", "r": 2}, {"navn": "Rittmestervegen 47", "grp": "HC", "lat": 63.387649700874654, "lon": 10.340576806995385, "adr": "Rittmestervegen 47, 7026 Trondheim", "area": "Kystad", "bnr": "V-10937663", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdtaMAC", "r": 2}, {"navn": "Leirbruvegen 26", "grp": "HC", "lat": 63.384041849431085, "lon": 10.317358381642986, "adr": "Leirbruvegen 26, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10937749", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EduyMAC", "r": 5}, {"navn": "Leirbruvegen 56", "grp": "HC", "lat": 63.38417034679766, "lon": 10.318024562869226, "adr": "Leirbruvegen 56, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10938080", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee0JMAS", "r": 5}, {"navn": "Kystadbrinken 3 B", "grp": "HC", "lat": 63.38757550165593, "lon": 10.346556741219109, "adr": "Kystadbrinken 3 B, 7027 Trondheim", "area": "Kystad", "bnr": "V-10938462", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee6TMAS", "r": 1}, {"navn": "Rittmestervegen 7", "grp": "HC", "lat": 63.38726633061424, "lon": 10.34029878072735, "adr": "Rittmestervegen 7, 7026 Trondheim", "area": "Kystad", "bnr": "V-10939123", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeH8MAK", "r": 2}, {"navn": "Stolpstuvegen 40", "grp": "HC", "lat": 63.38966401330889, "lon": 10.32962372191547, "adr": "Stolpstuvegen 40, 7026 Trondheim", "area": "Stavset", "bnr": "V-10941334", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eeu2MAC", "r": 4}, {"navn": "Leirbruvegen 6", "grp": "HC", "lat": 63.3835879445359, "lon": 10.316937411163611, "adr": "Leirbruvegen 6, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10941940", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef8dMAC", "r": 5}, {"navn": "Leirbruvegen 20", "grp": "HC", "lat": 63.38389116275311, "lon": 10.317151389297955, "adr": "Leirbruvegen 20, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10943355", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfdWMAS", "r": 5}, {"navn": "Øvre Stavsetvegen 5", "grp": "HC", "lat": 63.38947465486029, "lon": 10.33123858429262, "adr": "Øvre Stavsetvegen 5, 7026 Trondheim", "area": "Stavset", "bnr": "V-10943743", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfjmMAC", "r": 3}, {"navn": "Øvre Stavsetvegen 3", "grp": "HC", "lat": 63.39010720215625, "lon": 10.33049758375818, "adr": "Øvre Stavsetvegen 3, 7026 Trondheim", "area": "Stavset", "bnr": "V-10944040", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfoZMAS", "r": 3}, {"navn": "Laura Hangerås' Veg 53", "grp": "HC", "lat": 63.38883551979687, "lon": 10.34491593854548, "adr": "Laura Hangerås' Veg 53, 7026 Trondheim", "area": "Kystad", "bnr": "V-10944653", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfySMAS", "r": 1}, {"navn": "Leirbruvegen 42", "grp": "HC", "lat": 63.38364226577472, "lon": 10.317860290320239, "adr": "Leirbruvegen 42, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10947216", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgkGMAS", "r": 5}, {"navn": "Stolpstuvegen 37", "grp": "HC", "lat": 63.38837630854509, "lon": 10.330064443056049, "adr": "Stolpstuvegen 37, 7026 Trondheim", "area": "Stavset", "bnr": "V-10949085", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhG1MAK", "r": 4}, {"navn": "Stolpstuvegen 12", "grp": "HC", "lat": 63.38953687318728, "lon": 10.328817333540387, "adr": "Stolpstuvegen 12, 7026 Trondheim", "area": "Stavset", "bnr": "V-10949206", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhHyMAK", "r": 4}, {"navn": "Leirbruvegen 8", "grp": "HC", "lat": 63.38362494063517, "lon": 10.316819055219577, "adr": "Leirbruvegen 8, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10950685", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhhRMAS", "r": 5}, {"navn": "Stolpstuvegen 21", "grp": "HC", "lat": 63.38835721158416, "lon": 10.329223062336526, "adr": "Stolpstuvegen 21, 7026 Trondheim", "area": "Stavset", "bnr": "V-10950882", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhkcMAC", "r": 4}, {"navn": "Stolpstuvegen 15", "grp": "HC", "lat": 63.388540939487044, "lon": 10.328771284862475, "adr": "Stolpstuvegen 15, 7026 Trondheim", "area": "Stavset", "bnr": "V-10951617", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhwTMAS", "r": 4}, {"navn": "Rittmestervegen 4", "grp": "HC", "lat": 63.38788508017123, "lon": 10.339407104491638, "adr": "Rittmestervegen 4, 7026 Trondheim", "area": "Kystad", "bnr": "V-10954329", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EihRMAS", "r": 2}, {"navn": "Rittmestervegen 12", "grp": "HC", "lat": 63.387486466451264, "lon": 10.34170983616574, "adr": "Rittmestervegen 12, 7026 Trondheim", "area": "Kystad", "bnr": "V-10957386", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjUkMAK", "r": 2}, {"navn": "Øvre Stavsetvegen 42", "grp": "HC", "lat": 63.38915754121858, "lon": 10.333882942905134, "adr": "Øvre Stavsetvegen 42, 7026 Trondheim", "area": "Stavset", "bnr": "V-10958152", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ejh6MAC", "r": 3}, {"navn": "Øvre Stavsetvegen 58", "grp": "HC", "lat": 63.38857573916039, "lon": 10.334474710940297, "adr": "Øvre Stavsetvegen 58, 7026 Trondheim", "area": "Stavset", "bnr": "V-10958395", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ejl1MAC", "r": 3}, {"navn": "Stolpstuvegen 57", "grp": "HC", "lat": 63.38908869556767, "lon": 10.33067777092616, "adr": "Stolpstuvegen 57, 7026 Trondheim", "area": "Stavset", "bnr": "V-10958435", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjlfMAC", "r": 4}, {"navn": "Stolpstuvegen 48", "grp": "HC", "lat": 63.389961963393, "lon": 10.32943737779612, "adr": "Stolpstuvegen 48, 7026 Trondheim", "area": "Stavset", "bnr": "V-10959952", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkA8MAK", "r": 4}, {"navn": "Rittmestervegen 18", "grp": "HC", "lat": 63.38750605389905, "lon": 10.342491191250387, "adr": "Rittmestervegen 18, 7026 Trondheim", "area": "Kystad", "bnr": "V-10960398", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkHKMA0", "r": 2}, {"navn": "Øvre Stavsetvegen 36 B", "grp": "HC", "lat": 63.38918027995748, "lon": 10.332648831604105, "adr": "Øvre Stavsetvegen 36 B, 7026 Trondheim", "area": "Stavset", "bnr": "V-10960710", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkMMMA0", "r": 3}, {"navn": "Leirbruvegen 32", "grp": "HC", "lat": 63.38392170255879, "lon": 10.31773304051745, "adr": "Leirbruvegen 32, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10960745", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkMvMAK", "r": 5}, {"navn": "Leirbruvegen 74", "grp": "HC", "lat": 63.38419109363, "lon": 10.318985940256269, "adr": "Leirbruvegen 74, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10962355", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkmtMAC", "r": 5}, {"navn": "Stolpstuvegen 39", "grp": "HC", "lat": 63.3883303291181, "lon": 10.330182386042509, "adr": "Stolpstuvegen 39, 7026 Trondheim", "area": "Stavset", "bnr": "V-10963269", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El1dMAC", "r": 4}, {"navn": "Stolpstuvegen 27", "grp": "HC", "lat": 63.388055724169234, "lon": 10.329789455640874, "adr": "Stolpstuvegen 27, 7026 Trondheim", "area": "Stavset", "bnr": "V-10963671", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El87MAC", "r": 4}, {"navn": "Laura Hangerås' Veg 55", "grp": "Kun mobil", "lat": 63.38879170462977, "lon": 10.344812226092872, "adr": "Laura Hangerås' Veg 55, 7026 Trondheim", "area": "Kystad", "bnr": "V-10964077", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElLlMAK", "r": 1}, {"navn": "Leirbruvegen 4", "grp": "Kun mobil", "lat": 63.38356926203235, "lon": 10.317016589009127, "adr": "Leirbruvegen 4, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10964086", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElLuMAK", "r": 5}, {"navn": "Rittmestervegen 19", "grp": "Kun mobil", "lat": 63.38727892554327, "lon": 10.342780749263294, "adr": "Rittmestervegen 19, 7026 Trondheim", "area": "Kystad", "bnr": "V-10964205", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElNpMAK", "r": 2}, {"navn": "Øvre Stavsetvegen 6", "grp": "Kun mobil", "lat": 63.39041478363773, "lon": 10.330877066547417, "adr": "Øvre Stavsetvegen 6, 7026 Trondheim", "area": "Stavset", "bnr": "V-10964235", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElOJMA0", "r": 3}, {"navn": "Øvre Stavsetvegen 52", "grp": "Kun mobil", "lat": 63.388649857811835, "lon": 10.335380296244324, "adr": "Øvre Stavsetvegen 52, 7026 Trondheim", "area": "Stavset", "bnr": "V-10964727", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElWFMA0", "r": 3}, {"navn": "Leirbruvegen 22", "grp": "Kun mobil", "lat": 63.38392649912242, "lon": 10.31721303451183, "adr": "Leirbruvegen 22, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10965000", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElaeMAC", "r": 5}, {"navn": "Stolpstuvegen 10", "grp": "Kun mobil", "lat": 63.38942331478503, "lon": 10.32877005639751, "adr": "Stolpstuvegen 10, 7026 Trondheim", "area": "Stavset", "bnr": "V-10965200", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EldsMAC", "r": 4}, {"navn": "Øvre Stavsetvegen 12", "grp": "Kun mobil", "lat": 63.390401109641665, "lon": 10.331439006077538, "adr": "Øvre Stavsetvegen 12, 7026 Trondheim", "area": "Stavset", "bnr": "V-10965466", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EliAMAS", "r": 3}, {"navn": "Øvre Stavsetvegen 50", "grp": "Kun mobil", "lat": 63.3887790232149, "lon": 10.335006067072902, "adr": "Øvre Stavsetvegen 50, 7026 Trondheim", "area": "Stavset", "bnr": "V-10965624", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElkiMAC", "r": 3}, {"navn": "Rittmestervegen 38", "grp": "Kun mobil", "lat": 63.38750163737181, "lon": 10.34105017172553, "adr": "Rittmestervegen 38, 7026 Trondheim", "area": "Kystad", "bnr": "V-10965704", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elm0MAC", "r": 2}, {"navn": "Øvre Stavsetvegen 29", "grp": "Kun mobil", "lat": 63.388441795592264, "lon": 10.332669020611034, "adr": "Øvre Stavsetvegen 29, 7026 Trondheim", "area": "Stavset", "bnr": "V-10965706", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elm2MAC", "r": 3}, {"navn": "Kystadbrinken 18", "grp": "Kun mobil", "lat": 63.38629994497284, "lon": 10.343795567767938, "adr": "Kystadbrinken 18, 7027 Trondheim", "area": "Kystad", "bnr": "V-10965821", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElntMAC", "r": 2}, {"navn": "Rittmestervegen 13", "grp": "Kun mobil", "lat": 63.38724502588428, "lon": 10.34151646392945, "adr": "Rittmestervegen 13, 7026 Trondheim", "area": "Kystad", "bnr": "V-10965988", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElqaMAC", "r": 2}, {"navn": "Laura Hangerås' Veg 69", "grp": "Kun mobil", "lat": 63.38846495731357, "lon": 10.344117857554162, "adr": "Laura Hangerås' Veg 69, 7026 Trondheim", "area": "Kystad", "bnr": "V-10966343", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElwJMAS", "r": 1}, {"navn": "Øvre Stavsetvegen 22", "grp": "Kun mobil", "lat": 63.38977530267777, "lon": 10.332130474066629, "adr": "Øvre Stavsetvegen 22, 7026 Trondheim", "area": "Stavset", "bnr": "V-10966471", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElyNMAS", "r": 3}, {"navn": "Leirbruvegen 30", "grp": "Kun mobil", "lat": 63.38398653906563, "lon": 10.317515916687215, "adr": "Leirbruvegen 30, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10966516", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elz6MAC", "r": 5}, {"navn": "Kystadbrinken 32", "grp": "Kun mobil", "lat": 63.38634045015335, "lon": 10.341396202674849, "adr": "Kystadbrinken 32, 7027 Trondheim", "area": "Kystad", "bnr": "V-10967099", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em8VMAS", "r": 2}, {"navn": "Laura Hangerås' Veg 75", "grp": "Kun mobil", "lat": 63.38831494810069, "lon": 10.343797207067272, "adr": "Laura Hangerås' Veg 75, 7026 Trondheim", "area": "Kystad", "bnr": "V-10967794", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmJiMAK", "r": 1}, {"navn": "Øvre Stavsetvegen 24", "grp": "Kun mobil", "lat": 63.38961678448443, "lon": 10.33180292259352, "adr": "Øvre Stavsetvegen 24, 7026 Trondheim", "area": "Stavset", "bnr": "V-10968015", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmNHMA0", "r": 3}, {"navn": "Stolpstuvegen 4", "grp": "Kun mobil", "lat": 63.389063942094076, "lon": 10.328515293859985, "adr": "Stolpstuvegen 4, 7026 Trondheim", "area": "Stavset", "bnr": "V-10968025", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmNRMA0", "r": 4}, {"navn": "Brannhaugen 8", "grp": "Kun mobil", "lat": 63.3841939955598, "lon": 10.320808882911821, "adr": "Brannhaugen 8, 7026 Trondheim", "area": "Brannhaugen", "bnr": "V-10968318", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmSAMA0", "r": 5}, {"navn": "Stolpstuvegen 50", "grp": "Kun mobil", "lat": 63.390056214131626, "lon": 10.329533797803697, "adr": "Stolpstuvegen 50, 7026 Trondheim", "area": "Stavset", "bnr": "V-10968472", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmUeMAK", "r": 4}, {"navn": "Kystadbrinken 29", "grp": "Kun mobil", "lat": 63.38661708967375, "lon": 10.34156919895891, "adr": "Kystadbrinken 29, 7027 Trondheim", "area": "Kystad", "bnr": "V-10968525", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmVVMA0", "r": 2}, {"navn": "Kystadbrinken 27", "grp": "Kun mobil", "lat": 63.38653182922733, "lon": 10.342045474192982, "adr": "Kystadbrinken 27, 7027 Trondheim", "area": "Kystad", "bnr": "V-10968660", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmXgMAK", "r": 2}, {"navn": "Stolpstuvegen 26", "grp": "Kun mobil", "lat": 63.3896305777115, "lon": 10.330322620151238, "adr": "Stolpstuvegen 26, 7026 Trondheim", "area": "Stavset", "bnr": "V-10968767", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmZPMA0", "r": 4}];
+var AREAS = ["Stavset", "Kystad", "Brannhaugen"];
+var STORE_KEY = "dorkart_Saad_26.10.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Saad";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":15,"m":3,"h":[[[63.388419,10.343241],[63.389966,10.346214],[63.390025,10.34641],[63.390045,10.34664],[63.390025,10.34687],[63.389966,10.347065],[63.389878,10.347196],[63.389774,10.347241],[63.387576,10.347158],[63.387472,10.347113],[63.386826,10.346116],[63.386767,10.34592],[63.386747,10.34569],[63.386767,10.34546],[63.386987,10.344392],[63.387413,10.343958],[63.387732,10.344748],[63.388062,10.344978],[63.388071,10.343935],[63.388321,10.343198]]],"b":[[63.390045,10.34664]],"g":["Laura Hangerås' Veg","Kystadbrinken"]},{"n":2,"c":"#7b2cbf","s":15,"m":7,"h":[[[63.386708,10.344439],[63.386196,10.344351],[63.386108,10.344221],[63.386049,10.344026],[63.386029,10.343796],[63.386069,10.341396],[63.38609,10.341166],[63.386149,10.340971],[63.387395,10.338913],[63.387885,10.338805],[63.387989,10.338851],[63.388077,10.338982],[63.388136,10.339177],[63.388156,10.339407],[63.388326,10.343183],[63.388071,10.343935],[63.388072,10.344137],[63.387857,10.344499],[63.387645,10.344534],[63.387412,10.343956],[63.387176,10.343952],[63.386867,10.343768]]],"b":[[63.388326,10.343183]],"g":["Rittmestervegen","Kystadbrinken"]},{"n":3,"c":"#0b7285","s":19,"m":7,"h":[[[63.390299,10.329922],[63.390513,10.329983],[63.390601,10.330113],[63.390862,10.330601],[63.390921,10.330796],[63.390942,10.331027],[63.390921,10.331257],[63.390862,10.331452],[63.389471,10.334734],[63.388754,10.335936],[63.38865,10.335982],[63.388546,10.335936],[63.388458,10.335806],[63.388399,10.335611],[63.38817,10.332669],[63.388161,10.331768],[63.388182,10.331538],[63.38824,10.331343],[63.388716,10.330681],[63.388895,10.330781],[63.38899,10.331],[63.389178,10.331182],[63.389378,10.330634],[63.389556,10.330783],[63.38979,10.331218],[63.389939,10.331291],[63.389918,10.330058]]],"b":[[63.390942,10.331027]],"g":["Øvre Stavsetvegen","Stolpstuvegen"]},{"n":4,"c":"#a61e4d","s":19,"m":4,"h":[[[63.388226,10.330738],[63.387864,10.330215],[63.387805,10.33002],[63.387746,10.329337],[63.387766,10.329107],[63.387825,10.328912],[63.388437,10.328215],[63.389064,10.327914],[63.389347,10.328028],[63.389641,10.328262],[63.390248,10.329108],[63.390307,10.329304],[63.390328,10.329534],[63.390307,10.329764],[63.390244,10.329973],[63.389918,10.330058],[63.389933,10.330957],[63.389848,10.331082],[63.389741,10.331128],[63.389556,10.330783],[63.389378,10.330634],[63.389178,10.331182],[63.38899,10.331],[63.388895,10.330781],[63.388614,10.330624],[63.388496,10.330914]]],"b":[[63.390328,10.329534]],"g":["Stolpstuvegen"]},{"n":5,"c":"#343a40","s":15,"m":4,"h":[[[63.383995,10.316596],[63.38472,10.317756],[63.384779,10.317951],[63.384799,10.318181],[63.384597,10.321252],[63.384538,10.321447],[63.38445,10.321578],[63.384346,10.321624],[63.383523,10.321057],[63.383435,10.320926],[63.383376,10.320731],[63.383355,10.320501],[63.383298,10.317017],[63.383319,10.316786],[63.383433,10.316394],[63.383521,10.316263],[63.383625,10.316217],[63.383729,10.316263]]],"b":[[63.384799,10.318181]],"g":["Leirbruvegen","Brannhaugen"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
