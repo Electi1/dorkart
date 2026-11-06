@@ -96,9 +96,16 @@ font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:non
 .btn-done{background:var(--ink); color:#fff;}
 .btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
 .actions{flex-wrap:wrap;}
-.actions a[hidden], .actions button[hidden]{display:none!important;}
-.btn-sf{background:var(--ink); color:#fff;}
+.actions a[hidden], .actions button[hidden], .apptbox[hidden]{display:none!important;}
+.btn-appt{background:#fff7e6; color:#8a6d1a; border:1px solid #f0d488!important;}
+.btn-sf{background:var(--ink); color:#fff; flex-basis:100%!important; font-size:17px!important; letter-spacing:.04em; padding:17px 8px!important;}
 .btn-ih{background:#f3f5f8; color:var(--ink); border:1px solid var(--line)!important; flex-basis:100%!important;}
+.btn-ih:disabled{opacity:.6; cursor:default;}
+.actions .btn-undo{flex-basis:100%;}
+.ihline{margin-top:8px; font-size:13px; color:var(--ink); background:#f3f5f8; border-radius:10px; padding:8px 11px; display:flex; align-items:center; gap:8px;}
+.ihline[hidden]{display:none;}
+.ihline b{font-weight:800;}
+.ihline button{margin-left:auto; font:inherit; font-size:12.5px; font-weight:700; color:#b3261e; background:none; border:none; cursor:pointer; padding:2px 0;}
 .sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
 .scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
 .scrim.open{opacity:1; pointer-events:auto;}
@@ -214,11 +221,13 @@ opacity:0; pointer-events:none; transition:opacity .2s;
 <div class="sub" id="sSub"></div>
 <div class="badges" id="sBadges"></div>
 <div class="meta" id="sMeta"></div>
+<div class="ihline" id="sIH" hidden></div>
 <div class="stackbox" id="sStack" hidden></div>
 <div class="apptbox" id="sAppt"></div>
 <div class="actions">
 <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
-<a class="btn-sf" id="sSF" target="_blank" rel="noopener" hidden>Registrer i Salesforce ↗</a>
+<button class="btn-appt" id="sApptBtn">📅 Avtale</button>
+<a class="btn-sf" id="sSF" target="_blank" rel="noopener" hidden>SALG eller NEI ↗</a>
 <button class="btn-done" id="sDone"></button>
 </div>
 </div>
@@ -246,6 +255,17 @@ var GROUPS = {
 function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
 function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
 var done = loadDone();
+// Ikke hjemme: inntil IH_MAX forsøk samme dag med minst IH_GAP_MS mellom; skjult for dagen etter siste.
+var IH_MAX = 3, IH_GAP_MS = 90*60*1000, IH_PREFIX = "dorkart_ih_" + APPT_KEY.replace("dorkart_appt_", "") + "_";
+function ihDay(){ var n = new Date(); return n.getFullYear() + "-" + (n.getMonth() < 9 ? "0" : "") + (n.getMonth()+1) + "-" + (n.getDate() < 10 ? "0" : "") + n.getDate(); }
+var ihMem = {};
+function ihAll(){ try{ return JSON.parse(localStorage.getItem(IH_PREFIX + ihDay()) || "{}") || {}; }catch(e){ return ihMem[ihDay()] || {}; } }
+function ihGet(bnr){ return (ihAll()[bnr] || []).slice(); }
+function ihSet(bnr, arr){ var all = ihAll(); if(arr.length) all[bnr] = arr; else delete all[bnr]; ihMem[ihDay()] = all; try{ localStorage.setItem(IH_PREFIX + ihDay(), JSON.stringify(all)); }catch(e){} }
+function ihDone(d){ return ihGet(d.bnr).length >= IH_MAX; }
+function ihWaitUntil(d){ var a = ihGet(d.bnr); if(!a.length || a.length >= IH_MAX) return 0; var u = a[a.length-1] + IH_GAP_MS; return u > Date.now() ? u : 0; }
+function hhmm(ts){ var x = new Date(ts); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); }
+try{ for(var __i = localStorage.length - 1; __i >= 0; __i--){ var __k = localStorage.key(__i); if(__k && __k.indexOf(IH_PREFIX) === 0 && __k !== IH_PREFIX + ihDay()) localStorage.removeItem(__k); } }catch(e){}
 function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
 function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
 var appts = loadAppts();
@@ -394,7 +414,7 @@ return pts.length ? L.latLngBounds(pts) : null;
 function visible(d){
 if(!activeGroups.has(d.grp)) return false;
 if(area !== "alle" && d.area !== area) return false;
-if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+if((done.has(d.bnr) || ihDone(d)) && !showDone && !appts[d.bnr]) return false;
 return true;
 }
 function refresh(){
@@ -403,7 +423,7 @@ var m = d._m, on = visible(d);
 if(on){
 if(!group.hasLayer(m)) group.addLayer(m);
 if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
-else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+else { var __off = done.has(d.bnr) || ihDone(d), __wait = !__off && ihWaitUntil(d) > 0; m.setStyle({color:"#ffffff", fillOpacity: __off ? 0.30 : (__wait ? 0.38 : 1), weight: (__off || __wait) ? 1 : 2}); }
 } else { if(group.hasLayer(m)) group.removeLayer(m); }
 });
 updateCounts();
@@ -411,7 +431,7 @@ updateCounts();
 function updateCounts(){
 var rem = 0;
 Object.keys(GROUPS).forEach(function(k){
-var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && !ihDone(d) && (area==="alle" || d.area===area); }).length;
 var el = document.getElementById("cnt-"+cssKey(k));
 if(el) el.textContent = n;
 if(activeGroups.has(k)) rem += n;
@@ -567,24 +587,23 @@ catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
 }
 function renderAppt(d){
 var box=document.getElementById("sAppt"), a=appts[d.bnr];
+var __ab=document.getElementById("sApptBtn"); if(__ab) __ab.textContent = a ? "📅 Endre avtale" : "📅 Avtale";
 if(a){
-box.className="apptbox has";
+box.className="apptbox has"; box.hidden=false;
 box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
 '<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
 document.getElementById("aCal").href=icsUri(d,a);
 document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
 document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
 } else {
-box.className="apptbox";
-box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
-document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+box.className="apptbox"; box.hidden=true; box.innerHTML="";
 }
 }
 function showApptForm(d,a){
 var box=document.getElementById("sAppt");
 var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
 var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
-box.className="apptbox";
+box.className="apptbox"; box.hidden=false;
 box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
 '<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
 '<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
@@ -607,7 +626,7 @@ if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'
 if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
 document.getElementById("sBadges").innerHTML = badges;
 if(d.sfid){
-document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
 } else {
 document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
 }
@@ -621,7 +640,7 @@ var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
 var isCur = String(sd.bnr) === String(d.bnr);
 var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
 var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
-var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+var link = '';
 return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
 '<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
 '<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
@@ -639,19 +658,30 @@ if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
 renderAppt(d);
 document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
 var db = document.getElementById("sDone");
-var sfb = document.getElementById("sSF");
+var sfb = document.getElementById("sSF"), ihA = ihGet(d.bnr), ihW = ihWaitUntil(d), ihl = document.getElementById("sIH");
+db.disabled = false;
 if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; sfb.hidden = true; }
-else if(d.sfid){ db.textContent = "Ikke hjemme – skjul for i dag"; db.className = "btn-ih"; sfb.hidden = false; sfb.href = SF_BASE + "/lightning/r/" + d.sfid + "/view"; }
-else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; sfb.hidden = true; }
+else if(!d.sfid){ db.textContent = "Ferdig – fjern"; db.className = "btn-done"; sfb.hidden = true; }
+else {
+sfb.hidden = false; sfb.href = SF_BASE + "/lightning/r/" + d.sfid + "/view";
+if(ihA.length >= IH_MAX){ db.textContent = "Angre siste «ikke hjemme»"; db.className = "btn-undo"; }
+else if(ihW){ db.textContent = "Ikke hjemme – neste forsøk fra " + hhmm(ihW); db.className = "btn-ih"; db.disabled = true; }
+else { db.textContent = "Ikke hjemme – forsøk " + (ihA.length + 1) + " av " + IH_MAX; db.className = "btn-ih"; }
+}
+if(ihA.length && !done.has(d.bnr)){
+ihl.hidden = false;
+ihl.innerHTML = '<span>Ikke hjemme i dag: <b>' + ihA.map(hhmm).join(", ") + '</b> (' + ihA.length + ' av ' + IH_MAX + ')</span>' + (ihA.length < IH_MAX ? '<button id="ihUndo">Angre siste</button>' : '');
+var __u = document.getElementById("ihUndo"); if(__u) __u.onclick = function(){ ihUndo(d); };
+} else { ihl.hidden = true; ihl.innerHTML = ""; }
 sheet.classList.add("open"); scrim.classList.add("open");
 }
 function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
 document.getElementById("sheetClose").addEventListener("click", closeSheet);
 document.getElementById("apptClose").addEventListener("click", closeApptList);
 scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
-// Fjerne-flyt: «Registrer i Salesforce» må brukes for å fjerne en dør (unntatt «Ikke hjemme – skjul for i dag»).
+// Fjerne-flyt: «SALG eller NEI» (via Salesforce) er eneste måte å fjerne en dør for godt; «Ikke hjemme» gir 3 forsøk per kveld.
 // Hver handling logges til ledelsens kontrollrapport (aldri synlig i kartet). Ingen kundenavn/adresse i loggen.
-var SF_MIN_MS = 5000, SF_WAIT_MS = 4000, PEND_KEY = STORE_KEY + "_sfpend", LOGQ_KEY = "dorkart_logq";
+var SF_MIN_MS = 10000, SF_WAIT_MS = 4000, PEND_KEY = STORE_KEY + "_sfpend", LOGQ_KEY = "dorkart_logq";
 var LOG_URL = ICS_ENDPOINT ? ICS_ENDPOINT.replace(/\/?$/, "/") + "logg" : "";
 var LOG_SELGER = APPT_KEY.replace("dorkart_appt_", ""), LOG_KART = location.pathname.split("/").pop() || "";
 var memQ = [], flushing = false, sfPending = null, sfWaitT = null;
@@ -680,9 +710,15 @@ function finishPending(){
 if(!sfPending) return;
 var away = sfPending.th ? (Date.now() - sfPending.th) : 0, bnr = sfPending.bnr;
 clearPend();
-if(away < SF_MIN_MS){ toast("Døra står fortsatt i kartet. Registrer status i Salesforce for å fjerne den."); return; }
+if(away < SF_MIN_MS){ toast("Døra står fortsatt i kartet. Registrer salg eller nei i Salesforce for å fjerne den."); return; }
 done.add(bnr); saveDone(); refresh();
-toast("Døra er fjernet fra kartet. Statusen du registrerte i Salesforce er fasit.");
+toast("Døra er fjernet fra kartet. Det du registrerte i Salesforce er fasit.");
+}
+function ihUndo(d){
+var a = ihGet(d.bnr); if(!a.length) return;
+a.pop(); ihSet(d.bnr, a); logEvent(d, "angre"); refresh();
+if(cur && cur.bnr === d.bnr) openSheet(d);
+toast("Siste «ikke hjemme» er angret.");
 }
 document.getElementById("sSF").addEventListener("click", function(){
 if(!cur || !cur.sfid) return;
@@ -698,13 +734,24 @@ if(!sfPending) return;
 if(document.visibilityState === "hidden"){ if(!sfPending.th){ sfPending.th = Date.now(); savePend(); } return; }
 if(sfPending.th) finishPending();
 });
+document.getElementById("sApptBtn").addEventListener("click", function(){
+if(!cur) return;
+showApptForm(cur, appts[cur.bnr] || null);
+var bx = document.getElementById("sAppt"); if(bx && bx.scrollIntoView) bx.scrollIntoView({block:"nearest"});
+});
 document.getElementById("sDone").addEventListener("click", function(){
 if(!cur) return;
 var d = cur;
-if(done.has(d.bnr)){ done.delete(d.bnr); logEvent(d, "angre"); }
-else { done.add(d.bnr); logEvent(d, d.sfid ? "ih" : "fjern"); }
-saveDone(); refresh(); closeSheet();
+if(done.has(d.bnr)){ done.delete(d.bnr); saveDone(); logEvent(d, "angre"); refresh(); closeSheet(); return; }
+if(!d.sfid){ done.add(d.bnr); saveDone(); logEvent(d, "fjern"); refresh(); closeSheet(); return; }
+var a = ihGet(d.bnr);
+if(a.length >= IH_MAX){ ihUndo(d); return; }
+if(ihWaitUntil(d)) return;
+a.push(Date.now()); ihSet(d.bnr, a); logEvent(d, "ih"); refresh(); closeSheet();
+toast(a.length >= IH_MAX ? "3. forsøk registrert – døra er skjult resten av kvelden." : "Ikke hjemme, forsøk " + a.length + " av " + IH_MAX + ". Prøv igjen fra kl " + hhmm(a[a.length-1] + IH_GAP_MS) + ".");
 });
+// bleke «ikke hjemme»-dører kommer tilbake når 1,5 t har gått
+setInterval(function(){ try{ refresh(); }catch(e){} }, 60000);
 setTimeout(function(){
 // iPaden kan ha lastet kartet på nytt mens selgeren var i Salesforce
 try{ sfPending = JSON.parse(localStorage.getItem(PEND_KEY) || "null"); }catch(e){ sfPending = null; }
@@ -750,7 +797,7 @@ DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fill
 Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
 Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
 var rs = document.getElementById("remRound");
-if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr) && !ihDone(d); }).length; if(rs) rs.textContent = " i runde "+f; }
 else if(rs) rs.textContent = "";
 }
 var refresh0 = refresh;
