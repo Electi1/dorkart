@@ -228,6 +228,7 @@ opacity:0; pointer-events:none; transition:opacity .2s;
 <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
 <button class="btn-appt" id="sApptBtn">📅 Avtale</button>
 <a class="btn-sf" id="sSF" target="_blank" rel="noopener" hidden>SALG eller NEI ↗</a>
+<a class="btn-ih" id="sIHA" target="_blank" rel="noopener" hidden></a>
 <button class="btn-done" id="sDone"></button>
 </div>
 </div>
@@ -658,15 +659,15 @@ if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
 renderAppt(d);
 document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
 var db = document.getElementById("sDone");
-var sfb = document.getElementById("sSF"), ihA = ihGet(d.bnr), ihW = ihWaitUntil(d), ihl = document.getElementById("sIH");
-db.disabled = false;
+var sfb = document.getElementById("sSF"), iha = document.getElementById("sIHA"), ihA = ihGet(d.bnr), ihW = ihWaitUntil(d), ihl = document.getElementById("sIH");
+db.disabled = false; db.hidden = false; iha.hidden = true;
 if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; sfb.hidden = true; }
 else if(!d.sfid){ db.textContent = "Ferdig – fjern"; db.className = "btn-done"; sfb.hidden = true; }
 else {
 sfb.hidden = false; sfb.href = SF_BASE + "/lightning/r/" + d.sfid + "/view";
 if(ihA.length >= IH_MAX){ db.textContent = "Angre siste «ikke hjemme»"; db.className = "btn-undo"; }
 else if(ihW){ db.textContent = "Ikke hjemme – neste forsøk fra " + hhmm(ihW); db.className = "btn-ih"; db.disabled = true; }
-else { db.textContent = "Ikke hjemme – forsøk " + (ihA.length + 1) + " av " + IH_MAX; db.className = "btn-ih"; }
+else { iha.textContent = "Ikke hjemme – forsøk " + (ihA.length + 1) + " av " + IH_MAX + " ↗"; iha.href = SF_BASE + "/lightning/action/quick/Visit__c.Register_Visit_Action?objectApiName=Visit__c&context=RECORD_DETAIL&recordId=" + d.sfid + "&backgroundContext=" + encodeURIComponent("/lightning/r/Visit__c/" + d.sfid + "/view"); iha.hidden = false; db.hidden = true; }
 }
 if(ihA.length && !done.has(d.bnr)){
 ihl.hidden = false;
@@ -708,8 +709,16 @@ function savePend(){ try{ localStorage.setItem(PEND_KEY, JSON.stringify(sfPendin
 function clearPend(){ sfPending = null; if(sfWaitT){ clearTimeout(sfWaitT); sfWaitT = null; } try{ localStorage.removeItem(PEND_KEY); }catch(e){} }
 function finishPending(){
 if(!sfPending) return;
-var away = sfPending.th ? (Date.now() - sfPending.th) : 0, bnr = sfPending.bnr;
+var away = sfPending.th ? (Date.now() - sfPending.th) : 0, bnr = sfPending.bnr, kind = sfPending.kind || "sf", t0 = sfPending.t;
 clearPend();
+if(kind === "ih"){
+if(away < SF_MIN_MS){ toast("Forsøket ble ikke registrert. Registrer «Ikke hjemme» i Salesforce for å telle forsøket."); return; }
+var a = ihGet(bnr);
+if(a.length >= IH_MAX || (a.length && t0 - a[a.length-1] < IH_GAP_MS)) return;
+a.push(t0); ihSet(bnr, a); refresh();
+toast(a.length >= IH_MAX ? "3. forsøk registrert – døra er skjult resten av kvelden." : "Ikke hjemme, forsøk " + a.length + " av " + IH_MAX + ". Prøv igjen fra kl " + hhmm(t0 + IH_GAP_MS) + ".");
+return;
+}
 if(away < SF_MIN_MS){ toast("Døra står fortsatt i kartet. Registrer salg eller nei i Salesforce for å fjerne den."); return; }
 done.add(bnr); saveDone(); refresh();
 toast("Døra er fjernet fra kartet. Det du registrerte i Salesforce er fasit.");
@@ -720,15 +729,18 @@ a.pop(); ihSet(d.bnr, a); logEvent(d, "angre"); refresh();
 if(cur && cur.bnr === d.bnr) openSheet(d);
 toast("Siste «ikke hjemme» er angret.");
 }
-document.getElementById("sSF").addEventListener("click", function(){
+function startSF(kind){
 if(!cur || !cur.sfid) return;
-logEvent(cur, "sf");
-sfPending = {bnr:cur.bnr, t:Date.now(), th:0}; savePend();
+if(kind === "ih" && (ihDone(cur) || ihWaitUntil(cur))) return;
+logEvent(cur, kind);
+sfPending = {bnr:cur.bnr, t:Date.now(), th:0, kind:kind}; savePend();
 if(sfWaitT) clearTimeout(sfWaitT);
-// åpnet ikke Salesforce (f.eks. blokkert) → ingen fjerning
-sfWaitT = setTimeout(function(){ sfWaitT = null; if(sfPending && !sfPending.th){ clearPend(); toast("Salesforce ble ikke åpnet – døra står fortsatt."); } }, SF_WAIT_MS);
+// åpnet ikke Salesforce (f.eks. blokkert) → ingenting registreres
+sfWaitT = setTimeout(function(){ sfWaitT = null; if(sfPending && !sfPending.th){ clearPend(); toast("Salesforce ble ikke åpnet – ingenting er registrert."); } }, SF_WAIT_MS);
 closeSheet();
-});
+}
+document.getElementById("sSF").addEventListener("click", function(){ startSF("sf"); });
+document.getElementById("sIHA").addEventListener("click", function(){ startSF("ih"); });
 document.addEventListener("visibilitychange", function(){
 if(!sfPending) return;
 if(document.visibilityState === "hidden"){ if(!sfPending.th){ sfPending.th = Date.now(); savePend(); } return; }
@@ -746,9 +758,6 @@ if(done.has(d.bnr)){ done.delete(d.bnr); saveDone(); logEvent(d, "angre"); refre
 if(!d.sfid){ done.add(d.bnr); saveDone(); logEvent(d, "fjern"); refresh(); closeSheet(); return; }
 var a = ihGet(d.bnr);
 if(a.length >= IH_MAX){ ihUndo(d); return; }
-if(ihWaitUntil(d)) return;
-a.push(Date.now()); ihSet(d.bnr, a); logEvent(d, "ih"); refresh(); closeSheet();
-toast(a.length >= IH_MAX ? "3. forsøk registrert – døra er skjult resten av kvelden." : "Ikke hjemme, forsøk " + a.length + " av " + IH_MAX + ". Prøv igjen fra kl " + hhmm(a[a.length-1] + IH_GAP_MS) + ".");
 });
 // bleke «ikke hjemme»-dører kommer tilbake når 1,5 t har gått
 setInterval(function(){ try{ refresh(); }catch(e){} }, 60000);
