@@ -415,7 +415,7 @@ return pts.length ? L.latLngBounds(pts) : null;
 function visible(d){
 if(!activeGroups.has(d.grp)) return false;
 if(area !== "alle" && d.area !== area) return false;
-if((done.has(d.bnr) || ihDone(d)) && !showDone && !appts[d.bnr]) return false;
+if((done.has(d.bnr) || ihDone(d) || ihWaitUntil(d)) && !showDone && !appts[d.bnr]) return false;
 return true;
 }
 function refresh(){
@@ -716,7 +716,7 @@ if(away < IH_MIN_MS){ toast("Forsøket ble ikke registrert. Registrer «Ikke hje
 var a = ihGet(bnr);
 if(a.length >= IH_MAX || (a.length && t0 - a[a.length-1] < IH_GAP_MS)) return;
 a.push(t0); ihSet(bnr, a); refresh();
-toast(a.length >= IH_MAX ? "3. forsøk registrert – døra er skjult resten av kvelden." : "Ikke hjemme, forsøk " + a.length + " av " + IH_MAX + ". Prøv igjen fra kl " + hhmm(t0 + IH_GAP_MS) + ".");
+toast(a.length >= IH_MAX ? "3. forsøk registrert – døra er skjult resten av kvelden." : "Ikke hjemme, forsøk " + a.length + " av " + IH_MAX + ". Døra kommer tilbake på kartet kl " + hhmm(t0 + IH_GAP_MS) + ".");
 return;
 }
 if(away < SF_MIN_MS){ toast("Døra står fortsatt i kartet. Registrer salg eller nei i Salesforce for å fjerne den."); return; }
@@ -759,8 +759,10 @@ if(!d.sfid){ done.add(d.bnr); saveDone(); logEvent(d, "fjern"); refresh(); close
 var a = ihGet(d.bnr);
 if(a.length >= IH_MAX){ ihUndo(d); return; }
 });
-// bleke «ikke hjemme»-dører kommer tilbake når 1,5 t har gått
+// «ikke hjemme»-dører kommer tilbake av seg selv når 1,5 t har gått (sjekkes hvert minutt og når iPaden våkner)
 setInterval(function(){ try{ refresh(); }catch(e){} }, 60000);
+document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible"){ try{ refresh(); }catch(e){} } });
+window.addEventListener("pageshow", function(){ try{ refresh(); }catch(e){} });
 setTimeout(function(){
 // iPaden kan ha lastet kartet på nytt mens selgeren var i Salesforce
 try{ sfPending = JSON.parse(localStorage.getItem(PEND_KEY) || "null"); }catch(e){ sfPending = null; }
