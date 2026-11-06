@@ -95,6 +95,10 @@ font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:non
 .btn-nav{background:var(--electi); color:#fff;}
 .btn-done{background:var(--ink); color:#fff;}
 .btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.actions{flex-wrap:wrap;}
+.actions a[hidden], .actions button[hidden]{display:none!important;}
+.btn-sf{background:var(--ink); color:#fff;}
+.btn-ih{background:#f3f5f8; color:var(--ink); border:1px solid var(--line)!important; flex-basis:100%!important;}
 .sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
 .scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
 .scrim.open{opacity:1; pointer-events:auto;}
@@ -214,6 +218,7 @@ opacity:0; pointer-events:none; transition:opacity .2s;
 <div class="apptbox" id="sAppt"></div>
 <div class="actions">
 <a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<a class="btn-sf" id="sSF" target="_blank" rel="noopener" hidden>Registrer i Salesforce ↗</a>
 <button class="btn-done" id="sDone"></button>
 </div>
 </div>
@@ -634,19 +639,78 @@ if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
 renderAppt(d);
 document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
 var db = document.getElementById("sDone");
-if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
-else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+var sfb = document.getElementById("sSF");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; sfb.hidden = true; }
+else if(d.sfid){ db.textContent = "Ikke hjemme – skjul for i dag"; db.className = "btn-ih"; sfb.hidden = false; sfb.href = SF_BASE + "/lightning/r/" + d.sfid + "/view"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; sfb.hidden = true; }
 sheet.classList.add("open"); scrim.classList.add("open");
 }
 function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
 document.getElementById("sheetClose").addEventListener("click", closeSheet);
 document.getElementById("apptClose").addEventListener("click", closeApptList);
 scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+// Fjerne-flyt: «Registrer i Salesforce» må brukes for å fjerne en dør (unntatt «Ikke hjemme – skjul for i dag»).
+// Hver handling logges til ledelsens kontrollrapport (aldri synlig i kartet). Ingen kundenavn/adresse i loggen.
+var SF_MIN_MS = 5000, SF_WAIT_MS = 4000, PEND_KEY = STORE_KEY + "_sfpend", LOGQ_KEY = "dorkart_logq";
+var LOG_URL = ICS_ENDPOINT ? ICS_ENDPOINT.replace(/\/?$/, "/") + "logg" : "";
+var LOG_SELGER = APPT_KEY.replace("dorkart_appt_", ""), LOG_KART = location.pathname.split("/").pop() || "";
+var memQ = [], flushing = false, sfPending = null, sfWaitT = null;
+function readQ(){ try{ return JSON.parse(localStorage.getItem(LOGQ_KEY) || "[]") || []; }catch(e){ return memQ; } }
+function writeQ(q){ memQ = q; try{ localStorage.setItem(LOGQ_KEY, JSON.stringify(q)); }catch(e){} }
+function logEvent(d, type){
+if(!LOG_URL || !d) return;
+var q = readQ();
+q.push({b:d.bnr, s:LOG_SELGER, k:LOG_KART, t:type, st:d.st || "", r:d.r || null, ts:Date.now()});
+if(q.length > 500) q = q.slice(-500);
+writeQ(q); flushQ();
+}
+function flushQ(){
+if(flushing || !LOG_URL) return;
+var q = readQ(); if(!q.length) return;
+var item = q[0]; flushing = true;
+fetch(LOG_URL, {method:"POST", mode:"no-cors", keepalive:true, headers:{"Content-Type":"text/plain"}, body:JSON.stringify(item)}).then(function(){
+var q2 = readQ(); if(q2.length && q2[0].ts === item.ts && q2[0].b === item.b) q2.shift();
+writeQ(q2); flushing = false; flushQ();
+}, function(){ flushing = false; });
+}
+window.addEventListener("online", flushQ);
+function savePend(){ try{ localStorage.setItem(PEND_KEY, JSON.stringify(sfPending)); }catch(e){} }
+function clearPend(){ sfPending = null; if(sfWaitT){ clearTimeout(sfWaitT); sfWaitT = null; } try{ localStorage.removeItem(PEND_KEY); }catch(e){} }
+function finishPending(){
+if(!sfPending) return;
+var away = sfPending.th ? (Date.now() - sfPending.th) : 0, bnr = sfPending.bnr;
+clearPend();
+if(away < SF_MIN_MS){ toast("Døra står fortsatt i kartet. Registrer status i Salesforce for å fjerne den."); return; }
+done.add(bnr); saveDone(); refresh();
+toast("Døra er fjernet fra kartet. Statusen du registrerte i Salesforce er fasit.");
+}
+document.getElementById("sSF").addEventListener("click", function(){
+if(!cur || !cur.sfid) return;
+logEvent(cur, "sf");
+sfPending = {bnr:cur.bnr, t:Date.now(), th:0}; savePend();
+if(sfWaitT) clearTimeout(sfWaitT);
+// åpnet ikke Salesforce (f.eks. blokkert) → ingen fjerning
+sfWaitT = setTimeout(function(){ sfWaitT = null; if(sfPending && !sfPending.th){ clearPend(); toast("Salesforce ble ikke åpnet – døra står fortsatt."); } }, SF_WAIT_MS);
+closeSheet();
+});
+document.addEventListener("visibilitychange", function(){
+if(!sfPending) return;
+if(document.visibilityState === "hidden"){ if(!sfPending.th){ sfPending.th = Date.now(); savePend(); } return; }
+if(sfPending.th) finishPending();
+});
 document.getElementById("sDone").addEventListener("click", function(){
 if(!cur) return;
-if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+var d = cur;
+if(done.has(d.bnr)){ done.delete(d.bnr); logEvent(d, "angre"); }
+else { done.add(d.bnr); logEvent(d, d.sfid ? "ih" : "fjern"); }
 saveDone(); refresh(); closeSheet();
 });
+setTimeout(function(){
+// iPaden kan ha lastet kartet på nytt mens selgeren var i Salesforce
+try{ sfPending = JSON.parse(localStorage.getItem(PEND_KEY) || "null"); }catch(e){ sfPending = null; }
+if(sfPending && sfPending.th && Date.now() - sfPending.t < 2*3600*1000) finishPending(); else clearPend();
+flushQ();
+}, 600);
 // Min posisjon (GPS)
 var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
 var toastEl=document.getElementById("toast"), toastT=null;
