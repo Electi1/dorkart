@@ -682,7 +682,7 @@ document.getElementById("apptClose").addEventListener("click", closeApptList);
 scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
 // Fjerne-flyt: «SALG eller NEI» (via Salesforce) er eneste måte å fjerne en dør for godt; «Ikke hjemme» gir 3 forsøk per kveld.
 // Hver handling logges til ledelsens kontrollrapport (aldri synlig i kartet). Ingen kundenavn/adresse i loggen.
-var SF_MIN_MS = 10000, SF_WAIT_MS = 4000, PEND_KEY = STORE_KEY + "_sfpend", LOGQ_KEY = "dorkart_logq";
+var SF_MIN_MS = 10000, IH_MIN_MS = 5000, SF_WAIT_MS = 4000, PEND_KEY = STORE_KEY + "_sfpend", LOGQ_KEY = "dorkart_logq";
 var LOG_URL = ICS_ENDPOINT ? ICS_ENDPOINT.replace(/\/?$/, "/") + "logg" : "";
 var LOG_SELGER = APPT_KEY.replace("dorkart_appt_", ""), LOG_KART = location.pathname.split("/").pop() || "";
 var memQ = [], flushing = false, sfPending = null, sfWaitT = null;
@@ -712,7 +712,7 @@ if(!sfPending) return;
 var away = sfPending.th ? (Date.now() - sfPending.th) : 0, bnr = sfPending.bnr, kind = sfPending.kind || "sf", t0 = sfPending.t;
 clearPend();
 if(kind === "ih"){
-if(away < SF_MIN_MS){ toast("Forsøket ble ikke registrert. Registrer «Ikke hjemme» i Salesforce for å telle forsøket."); return; }
+if(away < IH_MIN_MS){ toast("Forsøket ble ikke registrert. Registrer «Ikke hjemme» i Salesforce for å telle forsøket."); return; }
 var a = ihGet(bnr);
 if(a.length >= IH_MAX || (a.length && t0 - a[a.length-1] < IH_GAP_MS)) return;
 a.push(t0); ihSet(bnr, a); refresh();
