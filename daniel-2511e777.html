@@ -256,15 +256,14 @@ var GROUPS = {
 function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
 function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
 var done = loadDone();
-// Ikke hjemme: inntil IH_MAX forsøk samme dag med minst IH_GAP_MS mellom; skjult for dagen etter siste.
-var IH_MAX = 3, IH_GAP_MS = 90*60*1000, IH_PREFIX = "dorkart_ih_" + APPT_KEY.replace("dorkart_appt_", "") + "_";
+// Ikke hjemme: etter et forsøk er døra blek og knappen sperret i IH_GAP_MS; forsøkene nullstilles ved midnatt.
+var IH_GAP_MS = 2*60*60*1000, IH_PREFIX = "dorkart_ih_" + APPT_KEY.replace("dorkart_appt_", "") + "_";
 function ihDay(){ var n = new Date(); return n.getFullYear() + "-" + (n.getMonth() < 9 ? "0" : "") + (n.getMonth()+1) + "-" + (n.getDate() < 10 ? "0" : "") + n.getDate(); }
 var ihMem = {};
 function ihAll(){ try{ return JSON.parse(localStorage.getItem(IH_PREFIX + ihDay()) || "{}") || {}; }catch(e){ return ihMem[ihDay()] || {}; } }
 function ihGet(bnr){ return (ihAll()[bnr] || []).slice(); }
 function ihSet(bnr, arr){ var all = ihAll(); if(arr.length) all[bnr] = arr; else delete all[bnr]; ihMem[ihDay()] = all; try{ localStorage.setItem(IH_PREFIX + ihDay(), JSON.stringify(all)); }catch(e){} }
-function ihDone(d){ return ihGet(d.bnr).length >= IH_MAX; }
-function ihWaitUntil(d){ var a = ihGet(d.bnr); if(!a.length || a.length >= IH_MAX) return 0; var u = a[a.length-1] + IH_GAP_MS; return u > Date.now() ? u : 0; }
+function ihWaitUntil(d){ var a = ihGet(d.bnr); if(!a.length) return 0; var u = a[a.length-1] + IH_GAP_MS; return u > Date.now() ? u : 0; }
 function hhmm(ts){ var x = new Date(ts); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); }
 try{ for(var __i = localStorage.length - 1; __i >= 0; __i--){ var __k = localStorage.key(__i); if(__k && __k.indexOf(IH_PREFIX) === 0 && __k !== IH_PREFIX + ihDay()) localStorage.removeItem(__k); } }catch(e){}
 function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
@@ -415,7 +414,7 @@ return pts.length ? L.latLngBounds(pts) : null;
 function visible(d){
 if(!activeGroups.has(d.grp)) return false;
 if(area !== "alle" && d.area !== area) return false;
-if((done.has(d.bnr) || ihDone(d)) && !showDone && !appts[d.bnr]) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
 return true;
 }
 function refresh(){
@@ -424,7 +423,7 @@ var m = d._m, on = visible(d);
 if(on){
 if(!group.hasLayer(m)) group.addLayer(m);
 if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
-else { var __off = done.has(d.bnr) || ihDone(d), __wait = !__off && ihWaitUntil(d) > 0; m.setStyle({color:"#ffffff", fillOpacity: __off ? 0.30 : (__wait ? 0.38 : 1), weight: (__off || __wait) ? 1 : 2}); }
+else { var __off = done.has(d.bnr), __wait = !__off && ihWaitUntil(d) > 0; m.setStyle({color:"#ffffff", fillOpacity: __off ? 0.30 : (__wait ? 0.38 : 1), weight: (__off || __wait) ? 1 : 2}); }
 } else { if(group.hasLayer(m)) group.removeLayer(m); }
 });
 updateCounts();
@@ -432,7 +431,7 @@ updateCounts();
 function updateCounts(){
 var rem = 0;
 Object.keys(GROUPS).forEach(function(k){
-var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && !ihDone(d) && (area==="alle" || d.area===area); }).length;
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
 var el = document.getElementById("cnt-"+cssKey(k));
 if(el) el.textContent = n;
 if(activeGroups.has(k)) rem += n;
@@ -665,13 +664,12 @@ if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; sfb.hi
 else if(!d.sfid){ db.textContent = "Ferdig – fjern"; db.className = "btn-done"; sfb.hidden = true; }
 else {
 sfb.hidden = false; sfb.href = SF_BASE + "/lightning/r/" + d.sfid + "/view";
-if(ihA.length >= IH_MAX){ db.textContent = "Angre siste «ikke hjemme»"; db.className = "btn-undo"; }
-else if(ihW){ db.textContent = "Ikke hjemme – neste forsøk fra " + hhmm(ihW); db.className = "btn-ih"; db.disabled = true; }
-else { iha.textContent = "Ikke hjemme – forsøk " + (ihA.length + 1) + " av " + IH_MAX + " ↗"; iha.href = SF_BASE + "/lightning/action/quick/Visit__c.Register_Visit_Action?objectApiName=Visit__c&context=RECORD_DETAIL&recordId=" + d.sfid + "&backgroundContext=" + encodeURIComponent("/lightning/r/Visit__c/" + d.sfid + "/view"); iha.hidden = false; db.hidden = true; }
+if(ihW){ db.textContent = "Ikke hjemme – neste forsøk fra " + hhmm(ihW); db.className = "btn-ih"; db.disabled = true; }
+else { iha.textContent = "Ikke hjemme ↗"; iha.href = SF_BASE + "/lightning/action/quick/Visit__c.Register_Visit_Action?objectApiName=Visit__c&context=RECORD_DETAIL&recordId=" + d.sfid + "&backgroundContext=" + encodeURIComponent("/lightning/r/Visit__c/" + d.sfid + "/view"); iha.hidden = false; db.hidden = true; }
 }
 if(ihA.length && !done.has(d.bnr)){
 ihl.hidden = false;
-ihl.innerHTML = '<span>Ikke hjemme i dag: <b>' + ihA.map(hhmm).join(", ") + '</b> (' + ihA.length + ' av ' + IH_MAX + ')</span>' + (ihA.length < IH_MAX ? '<button id="ihUndo">Angre siste</button>' : '');
+ihl.innerHTML = '<span>Ikke hjemme i dag: <b>' + ihA.map(hhmm).join(", ") + '</b></span><button id="ihUndo">Angre siste</button>';
 var __u = document.getElementById("ihUndo"); if(__u) __u.onclick = function(){ ihUndo(d); };
 } else { ihl.hidden = true; ihl.innerHTML = ""; }
 sheet.classList.add("open"); scrim.classList.add("open");
@@ -680,7 +678,7 @@ function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("o
 document.getElementById("sheetClose").addEventListener("click", closeSheet);
 document.getElementById("apptClose").addEventListener("click", closeApptList);
 scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
-// Fjerne-flyt: «SALG eller NEI» (via Salesforce) er eneste måte å fjerne en dør for godt; «Ikke hjemme» gir 3 forsøk per kveld.
+// Fjerne-flyt: «SALG eller NEI» (via Salesforce) er eneste måte å fjerne en dør; «Ikke hjemme» gjør den blek i 2 t.
 // Hver handling logges til ledelsens kontrollrapport (aldri synlig i kartet). Ingen kundenavn/adresse i loggen.
 var SF_MIN_MS = 10000, IH_MIN_MS = 5000, SF_WAIT_MS = 4000, PEND_KEY = STORE_KEY + "_sfpend", LOGQ_KEY = "dorkart_logq";
 var LOG_URL = ICS_ENDPOINT ? ICS_ENDPOINT.replace(/\/?$/, "/") + "logg" : "";
@@ -714,9 +712,9 @@ clearPend();
 if(kind === "ih"){
 if(away < IH_MIN_MS){ toast("Forsøket ble ikke registrert. Registrer «Ikke hjemme» i Salesforce for å telle forsøket."); return; }
 var a = ihGet(bnr);
-if(a.length >= IH_MAX || (a.length && t0 - a[a.length-1] < IH_GAP_MS)) return;
+if(a.length && t0 - a[a.length-1] < IH_GAP_MS) return;
 a.push(t0); ihSet(bnr, a); refresh();
-toast(a.length >= IH_MAX ? "3. forsøk registrert – døra er skjult resten av kvelden." : "Ikke hjemme, forsøk " + a.length + " av " + IH_MAX + ". Prøv igjen fra kl " + hhmm(t0 + IH_GAP_MS) + ".");
+toast("Ikke hjemme registrert. Prøv igjen fra kl " + hhmm(t0 + IH_GAP_MS) + ".");
 return;
 }
 if(away < SF_MIN_MS){ toast("Døra står fortsatt i kartet. Registrer salg eller nei i Salesforce for å fjerne den."); return; }
@@ -731,7 +729,7 @@ toast("Siste «ikke hjemme» er angret.");
 }
 function startSF(kind){
 if(!cur || !cur.sfid) return;
-if(kind === "ih" && (ihDone(cur) || ihWaitUntil(cur))) return;
+if(kind === "ih" && ihWaitUntil(cur)) return;
 logEvent(cur, kind);
 sfPending = {bnr:cur.bnr, t:Date.now(), th:0, kind:kind}; savePend();
 if(sfWaitT) clearTimeout(sfWaitT);
@@ -756,10 +754,8 @@ if(!cur) return;
 var d = cur;
 if(done.has(d.bnr)){ done.delete(d.bnr); saveDone(); logEvent(d, "angre"); refresh(); closeSheet(); return; }
 if(!d.sfid){ done.add(d.bnr); saveDone(); logEvent(d, "fjern"); refresh(); closeSheet(); return; }
-var a = ihGet(d.bnr);
-if(a.length >= IH_MAX){ ihUndo(d); return; }
 });
-// bleke «ikke hjemme»-dører får full farge igjen når 1,5 t har gått (sjekkes hvert minutt og når iPaden våkner)
+// bleke «ikke hjemme»-dører får full farge igjen når 2 t har gått (sjekkes hvert minutt og når iPaden våkner)
 setInterval(function(){ try{ refresh(); }catch(e){} }, 60000);
 document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible"){ try{ refresh(); }catch(e){} } });
 window.addEventListener("pageshow", function(){ try{ refresh(); }catch(e){} });
@@ -808,7 +804,7 @@ DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fill
 Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
 Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
 var rs = document.getElementById("remRound");
-if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr) && !ihDone(d); }).length; if(rs) rs.textContent = " i runde "+f; }
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
 else if(rs) rs.textContent = "";
 }
 var refresh0 = refresh;
