@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Olav 16.11.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Olav</div>
+<div class="date">16.11.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Bøen 12", "grp": "Kun mobil", "lat": 62.358041, "lon": 5.827498, "adr": "Bøen 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973629", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FznPMAS", "r": 4}, {"navn": "Osbergvegen 2", "grp": "Kun mobil", "lat": 62.34632, "lon": 5.833935, "adr": "Osbergvegen 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994029", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5G3MAK", "r": 1}, {"navn": "Fløvegen 221", "grp": "Kun mobil", "lat": 62.360917, "lon": 5.822823, "adr": "Fløvegen 221, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988549", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3kqMAC", "r": 4}, {"navn": "Fløvegen 371", "grp": "Kun mobil", "lat": 62.374087, "lon": 5.820442, "adr": "Fløvegen 371, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10970863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fz4nMAC", "r": 5}, {"navn": "Skeidsvegen 40", "grp": "Kun mobil", "lat": 62.353553, "lon": 5.829635, "adr": "Skeidsvegen 40, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10983135", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2LWMA0", "r": 3}, {"navn": "Bøen 30", "grp": "Kun mobil", "lat": 62.356625, "lon": 5.829252, "adr": "Bøen 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11015520", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAtsMAG", "r": 3}, {"navn": "Kolbeinhaugane 46", "grp": "Kun mobil", "lat": 62.364016, "lon": 5.826961, "adr": "Kolbeinhaugane 46, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10998472", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6PiMAK", "r": 4}, {"navn": "Kolbeinhaugane 31", "grp": "Kun mobil", "lat": 62.363235, "lon": 5.827181, "adr": "Kolbeinhaugane 31, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10971845", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzKdMAK", "r": 4}, {"navn": "Osbergvegen 23", "grp": "Kun mobil", "lat": 62.34714, "lon": 5.834467, "adr": "Osbergvegen 23, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012690", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GA8dMAG", "r": 1}, {"navn": "Vollane 31", "grp": "Kun mobil", "lat": 62.348242, "lon": 5.827992, "adr": "Vollane 31, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10999929", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6nDMAS", "r": 2}, {"navn": "Kolbeinhaugane 34", "grp": "Kun mobil", "lat": 62.364107, "lon": 5.826855, "adr": "Kolbeinhaugane 34, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989071", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3usMAC", "r": 4}, {"navn": "Osbergvegen 21", "grp": "Kun mobil", "lat": 62.347069, "lon": 5.834881, "adr": "Osbergvegen 21, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11004397", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7xHMAS", "r": 1}, {"navn": "Ivagarden 10", "grp": "Kun mobil", "lat": 62.367089, "lon": 5.822559, "adr": "Ivagarden 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980370", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G1cvMAC", "r": 5}, {"navn": "Ivagarden 12", "grp": "Kun mobil", "lat": 62.366932, "lon": 5.822978, "adr": "Ivagarden 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996746", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5xsMAC", "r": 5}, {"navn": "Skeidsbakkane 1", "grp": "Kun mobil", "lat": 62.352949, "lon": 5.831286, "adr": "Skeidsbakkane 1, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11005923", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8LtMAK", "r": 2}, {"navn": "Iverbakken 16", "grp": "Kun mobil", "lat": 62.354346, "lon": 5.833321, "adr": "Iverbakken 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10991399", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4Y2MAK", "r": 3}, {"navn": "Skeidsreina 18", "grp": "Kun mobil", "lat": 62.354944, "lon": 5.827612, "adr": "Skeidsreina 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988933", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3seMAC", "r": 3}, {"navn": "Kolbeinhaugane 41", "grp": "Kun mobil", "lat": 62.363357, "lon": 5.825814, "adr": "Kolbeinhaugane 41, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024756", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDIqMAO", "r": 4}, {"navn": "Vollane 29", "grp": "Kun mobil", "lat": 62.348125, "lon": 5.82841, "adr": "Vollane 29, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021009", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCKPMA4", "r": 2}, {"navn": "Osbergvegen 60", "grp": "Kun mobil", "lat": 62.34857, "lon": 5.827802, "adr": "Osbergvegen 60, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11022680", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GClMMAW", "r": 2}, {"navn": "Osbergvegen 4", "grp": "Kun mobil", "lat": 62.346425, "lon": 5.833665, "adr": "Osbergvegen 4, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997369", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G67vMAC", "r": 1}, {"navn": "Fløvegen 315", "grp": "Kun mobil", "lat": 62.369496, "lon": 5.821644, "adr": "Fløvegen 315, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976440", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0YLMA0", "r": 5}, {"navn": "Fløvegen 267", "grp": "Kun mobil", "lat": 62.364871, "lon": 5.820935, "adr": "Fløvegen 267, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11022647", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCkpMAG", "r": 5}, {"navn": "Fløvegen 227", "grp": "Kun mobil", "lat": 62.362, "lon": 5.825822, "adr": "Fløvegen 227, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10972311", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzS9MAK", "r": 4}, {"navn": "Ivagarden 6", "grp": "Kun mobil", "lat": 62.36708, "lon": 5.821242, "adr": "Ivagarden 6, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11026704", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDprMAG", "r": 5}, {"navn": "Skeidsreina 5", "grp": "Kun mobil", "lat": 62.355383, "lon": 5.826367, "adr": "Skeidsreina 5, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11019793", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GC0nMAG", "r": 3}, {"navn": "Skeidsreina 22", "grp": "Kun mobil", "lat": 62.354515, "lon": 5.828102, "adr": "Skeidsreina 22, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996661", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5wVMAS", "r": 3}, {"navn": "Bøen 6", "grp": "Kun mobil", "lat": 62.356642, "lon": 5.824475, "adr": "Bøen 6, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988407", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3iYMAS", "r": 3}, {"navn": "Skeidsbakkane 28", "grp": "Kun mobil", "lat": 62.353754, "lon": 5.832504, "adr": "Skeidsbakkane 28, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11008825", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G96hMAC", "r": 3}, {"navn": "Kolbeinhaugane 18", "grp": "Kun mobil", "lat": 62.364147, "lon": 5.824203, "adr": "Kolbeinhaugane 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11008443", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G90XMAS", "r": 5}, {"navn": "Fløvegen 14", "grp": "Kun mobil", "lat": 62.345896, "lon": 5.832279, "adr": "Fløvegen 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987117", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3NkMAK", "r": 1}, {"navn": "Bøen 32", "grp": "Kun mobil", "lat": 62.35651, "lon": 5.829728, "adr": "Bøen 32, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978637", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G19NMAS", "r": 3}, {"navn": "Fløvegen 18", "grp": "Kun mobil", "lat": 62.346075, "lon": 5.833459, "adr": "Fløvegen 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10986851", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3JSMA0", "r": 1}, {"navn": "Osbergvegen 30", "grp": "Kun mobil", "lat": 62.347101, "lon": 5.83295, "adr": "Osbergvegen 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987607", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3VeMAK", "r": 1}, {"navn": "Skeidsbakkane 16", "grp": "Kun mobil", "lat": 62.353783, "lon": 5.831372, "adr": "Skeidsbakkane 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11013980", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GATRMA4", "r": 3}, {"navn": "Ivagarden 13", "grp": "Kun mobil", "lat": 62.366646, "lon": 5.823756, "adr": "Ivagarden 13, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002132", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7MkMAK", "r": 5}, {"navn": "Osbergvegen 8", "grp": "Kun mobil", "lat": 62.34652, "lon": 5.833321, "adr": "Osbergvegen 8, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10986258", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G39tMAC", "r": 1}, {"navn": "Jarbryggjevegen 5", "grp": "Kun mobil", "lat": 62.35047, "lon": 5.827319, "adr": "Jarbryggjevegen 5, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11020566", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCDGMA4", "r": 2}, {"navn": "Osbergvegen 33", "grp": "Kun mobil", "lat": 62.347562, "lon": 5.832451, "adr": "Osbergvegen 33, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11023206", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCtqMAG", "r": 1}, {"navn": "Kolbeinhaugane 14", "grp": "Kun mobil", "lat": 62.363824, "lon": 5.824256, "adr": "Kolbeinhaugane 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994478", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5NIMA0", "r": 5}, {"navn": "Fløvegen 35", "grp": "Kun mobil", "lat": 62.347191, "lon": 5.831563, "adr": "Fløvegen 35, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10977504", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0pVMAS", "r": 1}, {"navn": "Fløvegen 273", "grp": "Kun mobil", "lat": 62.365677, "lon": 5.821629, "adr": "Fløvegen 273, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10999373", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6eFMAS", "r": 5}, {"navn": "Fløvegen 193", "grp": "Kun mobil", "lat": 62.358132, "lon": 5.822847, "adr": "Fløvegen 193, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989927", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4AIMA0", "r": 4}, {"navn": "Bøen 13", "grp": "Kun mobil", "lat": 62.356214, "lon": 5.827768, "adr": "Bøen 13, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997029", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G62RMAS", "r": 3}, {"navn": "Skeidsbakkane 67", "grp": "Kun mobil", "lat": 62.352175, "lon": 5.832833, "adr": "Skeidsbakkane 67, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11005936", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8M6MAK", "r": 2}, {"navn": "Osbergvegen 20", "grp": "Kun mobil", "lat": 62.346597, "lon": 5.834293, "adr": "Osbergvegen 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11018474", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBfWMAW", "r": 1}, {"navn": "Fløvegen 225", "grp": "Kun mobil", "lat": 62.362159, "lon": 5.826904, "adr": "Fløvegen 225, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11006683", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8Y9MAK", "r": 4}, {"navn": "Kolbeinhaugane 48", "grp": "Kun mobil", "lat": 62.364072, "lon": 5.826955, "adr": "Kolbeinhaugane 48, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003913", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7pTMAS", "r": 4}, {"navn": "Osbergvegen 62", "grp": "Kun mobil", "lat": 62.348541, "lon": 5.827322, "adr": "Osbergvegen 62, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11025839", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDbuMAG", "r": 2}, {"navn": "Iverbakken 18", "grp": "Kun mobil", "lat": 62.354169, "lon": 5.833823, "adr": "Iverbakken 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976959", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0giMAC", "r": 3}, {"navn": "Fløvegen 189", "grp": "Kun mobil", "lat": 62.358412, "lon": 5.824075, "adr": "Fløvegen 189, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11023963", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD63MAG", "r": 4}, {"navn": "Skeidsvegen 44", "grp": "Kun mobil", "lat": 62.353718, "lon": 5.828712, "adr": "Skeidsvegen 44, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024306", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDBaMAO", "r": 3}, {"navn": "Osbergvegen 61", "grp": "Kun mobil", "lat": 62.349, "lon": 5.827351, "adr": "Osbergvegen 61, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10983965", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2YuMAK", "r": 2}, {"navn": "Vollane 15", "grp": "Kun mobil", "lat": 62.347751, "lon": 5.830498, "adr": "Vollane 15, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984754", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2ldMAC", "r": 1}, {"navn": "Skeidsreina 24", "grp": "Kun mobil", "lat": 62.354303, "lon": 5.82826, "adr": "Skeidsreina 24, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976203", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0SvMAK", "r": 3}, {"navn": "Fløvegen 29", "grp": "Kun mobil", "lat": 62.346949, "lon": 5.832727, "adr": "Fløvegen 29, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10998081", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6JPMA0", "r": 1}, {"navn": "Osbergvegen 26", "grp": "Kun mobil", "lat": 62.347039, "lon": 5.833589, "adr": "Osbergvegen 26, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987484", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3TfMAK", "r": 1}, {"navn": "Osbergvegen 25", "grp": "Kun mobil", "lat": 62.347213, "lon": 5.834092, "adr": "Osbergvegen 25, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007087", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8efMAC", "r": 1}, {"navn": "Skeidsreina 26", "grp": "Kun mobil", "lat": 62.354033, "lon": 5.828513, "adr": "Skeidsreina 26, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994316", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5KgMAK", "r": 3}, {"navn": "Oshaugen 14", "grp": "Kun mobil", "lat": 62.345769, "lon": 5.828311, "adr": "Oshaugen 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10990072", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4CdMAK", "r": 1}, {"navn": "Skeidsbakkane 8", "grp": "Kun mobil", "lat": 62.354138, "lon": 5.830377, "adr": "Skeidsbakkane 8, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021470", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCRqMAO", "r": 3}, {"navn": "Fløvegen 235", "grp": "Kun mobil", "lat": 62.361864, "lon": 5.823767, "adr": "Fløvegen 235, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11023849", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD4DMAW", "r": 4}, {"navn": "Skeidsbakkane 4", "grp": "Kun mobil", "lat": 62.353824, "lon": 5.830882, "adr": "Skeidsbakkane 4, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973563", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzmLMAS", "r": 3}, {"navn": "Skeidsreina 11", "grp": "Kun mobil", "lat": 62.354761, "lon": 5.827071, "adr": "Skeidsreina 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11009438", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9GaMAK", "r": 3}, {"navn": "Kolbeinhaugane 28", "grp": "Kun mobil", "lat": 62.364042, "lon": 5.825142, "adr": "Kolbeinhaugane 28, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11019690", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBz8MAG", "r": 5}, {"navn": "Fløvegen 176", "grp": "Kun mobil", "lat": 62.35672, "lon": 5.823171, "adr": "Fløvegen 176, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027314", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDzhMAG", "r": 3}, {"navn": "Skeidsreina 2", "grp": "Kun mobil", "lat": 62.355949, "lon": 5.826503, "adr": "Skeidsreina 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984871", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2nWMAS", "r": 3}, {"navn": "Fløvegen 191", "grp": "Kun mobil", "lat": 62.357959, "lon": 5.823117, "adr": "Fløvegen 191, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024290", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDBKMA4", "r": 4}, {"navn": "Fløvegen 325", "grp": "Kun mobil", "lat": 62.370458, "lon": 5.822045, "adr": "Fløvegen 325, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10995074", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5WuMAK", "r": 5}, {"navn": "Skeidsvegen 30", "grp": "Kun mobil", "lat": 62.352908, "lon": 5.828257, "adr": "Skeidsvegen 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000463", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6vpMAC", "r": 2}, {"navn": "Bøen 19", "grp": "Kun mobil", "lat": 62.355996, "lon": 5.829222, "adr": "Bøen 19, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988525", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3kSMAS", "r": 3}, {"navn": "Osbergvegen 36", "grp": "Kun mobil", "lat": 62.347503, "lon": 5.831557, "adr": "Osbergvegen 36, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997509", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G6ABMA0", "r": 1}, {"navn": "Kolbeinhaugane 24", "grp": "Kun mobil", "lat": 62.363744, "lon": 5.825058, "adr": "Kolbeinhaugane 24, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11014520", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAc9MAG", "r": 4}, {"navn": "Skeidsvegen 18", "grp": "Kun mobil", "lat": 62.35221, "lon": 5.829533, "adr": "Skeidsvegen 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981830", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G20TMAS", "r": 2}, {"navn": "Kolbeinhaugane 42", "grp": "Kun mobil", "lat": 62.363751, "lon": 5.825772, "adr": "Kolbeinhaugane 42, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11010229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9TLMA0", "r": 4}, {"navn": "Fløvegen 203", "grp": "Kun mobil", "lat": 62.359684, "lon": 5.824453, "adr": "Fløvegen 203, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981834", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G20XMAS", "r": 4}, {"navn": "Fløvegen 195", "grp": "Kun mobil", "lat": 62.358389, "lon": 5.822685, "adr": "Fløvegen 195, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11019490", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBvuMAG", "r": 4}, {"navn": "Bøen 17", "grp": "Kun mobil", "lat": 62.356149, "lon": 5.828838, "adr": "Bøen 17, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989234", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3xVMAS", "r": 3}, {"navn": "Fløvegen 259", "grp": "Kun mobil", "lat": 62.36414, "lon": 5.821573, "adr": "Fløvegen 259, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981895", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G21WMAS", "r": 5}, {"navn": "Oshaugen 18", "grp": "Kun mobil", "lat": 62.345438, "lon": 5.827573, "adr": "Oshaugen 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984722", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2l7MAC", "r": 1}, {"navn": "Osbergvegen 67", "grp": "Kun mobil", "lat": 62.349282, "lon": 5.826714, "adr": "Osbergvegen 67, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11014940", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAkWMAW", "r": 2}, {"navn": "Kolbeinhaugane 37", "grp": "Kun mobil", "lat": 62.362995, "lon": 5.826491, "adr": "Kolbeinhaugane 37, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021220", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCNoMAO", "r": 4}, {"navn": "Osbergvegen 43", "grp": "Kun mobil", "lat": 62.34809, "lon": 5.830811, "adr": "Osbergvegen 43, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989019", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3u2MAC", "r": 2}, {"navn": "Fløvegen 229", "grp": "Kun mobil", "lat": 62.361918, "lon": 5.824961, "adr": "Fløvegen 229, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989174", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3wXMAS", "r": 4}, {"navn": "Vollane 27", "grp": "Kun mobil", "lat": 62.34807, "lon": 5.828744, "adr": "Vollane 27, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001458", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7BsMAK", "r": 2}, {"navn": "Fløvegen 255", "grp": "Kun mobil", "lat": 62.36375, "lon": 5.821015, "adr": "Fløvegen 255, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11025166", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDPSMA4", "r": 5}, {"navn": "Osbergvegen 57", "grp": "Kun mobil", "lat": 62.349035, "lon": 5.828101, "adr": "Osbergvegen 57, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10979340", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1KiMAK", "r": 2}, {"navn": "Skeidsvegen 16", "grp": "Kun mobil", "lat": 62.352064, "lon": 5.829432, "adr": "Skeidsvegen 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980958", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1mPMAS", "r": 2}, {"navn": "Kolbeinhaugane 36", "grp": "Kun mobil", "lat": 62.363982, "lon": 5.82686, "adr": "Kolbeinhaugane 36, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11025123", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDOlMAO", "r": 4}, {"navn": "Skeidsreina 13", "grp": "Kun mobil", "lat": 62.354515, "lon": 5.82731, "adr": "Skeidsreina 13, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012824", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAAnMAO", "r": 3}, {"navn": "Fløvegen 385", "grp": "Kun mobil", "lat": 62.375265, "lon": 5.820485, "adr": "Fløvegen 385, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978911", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1DnMAK", "r": 5}, {"navn": "Fløvegen 185", "grp": "Kun mobil", "lat": 62.358476, "lon": 5.824938, "adr": "Fløvegen 185, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11016582", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBB0MAO", "r": 4}, {"navn": "Bøen 8", "grp": "Kun mobil", "lat": 62.356832, "lon": 5.824145, "adr": "Bøen 8, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976238", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0TUMA0", "r": 3}, {"navn": "Fløvegen 329", "grp": "Kun mobil", "lat": 62.370075, "lon": 5.820345, "adr": "Fløvegen 329, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11005364", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8CsMAK", "r": 5}, {"navn": "Fløvegen 233", "grp": "Kun mobil", "lat": 62.361529, "lon": 5.822507, "adr": "Fløvegen 233, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981560", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1w7MAC", "r": 4}, {"navn": "Fløvegen 359", "grp": "Kun mobil", "lat": 62.373263, "lon": 5.819986, "adr": "Fløvegen 359, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001977", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7KFMA0", "r": 5}, {"navn": "Skeidsreina 9", "grp": "Kun mobil", "lat": 62.354954, "lon": 5.826877, "adr": "Skeidsreina 9, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997013", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G62BMAS", "r": 3}, {"navn": "Fløvegen 339", "grp": "Kun mobil", "lat": 62.370656, "lon": 5.82127, "adr": "Fløvegen 339, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11004726", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G82aMAC", "r": 5}, {"navn": "Kolbeinhaugane 10", "grp": "Kun mobil", "lat": 62.363295, "lon": 5.824293, "adr": "Kolbeinhaugane 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980956", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1mNMAS", "r": 4}, {"navn": "Bøen 45", "grp": "Kun mobil", "lat": 62.355191, "lon": 5.830177, "adr": "Bøen 45, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10998003", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6I9MAK", "r": 3}, {"navn": "Skeidsreina 7", "grp": "Kun mobil", "lat": 62.355173, "lon": 5.826641, "adr": "Skeidsreina 7, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10971905", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzLbMAK", "r": 3}, {"navn": "Iverbakken 20", "grp": "Kun mobil", "lat": 62.354025, "lon": 5.834205, "adr": "Iverbakken 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11016467", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GB99MAG", "r": 3}, {"navn": "Osbergvegen 59", "grp": "Kun mobil", "lat": 62.349207, "lon": 5.827793, "adr": "Osbergvegen 59, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984328", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2elMAC", "r": 2}, {"navn": "Fløvegen 211", "grp": "Kun mobil", "lat": 62.360497, "lon": 5.824105, "adr": "Fløvegen 211, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024621", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDGfMAO", "r": 4}, {"navn": "Kolbeinhaugane 50", "grp": "Kun mobil", "lat": 62.363844, "lon": 5.827484, "adr": "Kolbeinhaugane 50, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7EEMA0", "r": 4}, {"navn": "Skeidsvegen 56", "grp": "Kun mobil", "lat": 62.355086, "lon": 5.828143, "adr": "Skeidsvegen 56, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984211", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2csMAC", "r": 3}, {"navn": "Osnesvegen 59", "grp": "Kun mobil", "lat": 62.34501, "lon": 5.832817, "adr": "Osnesvegen 59, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10982062", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G24DMAS", "r": 1}, {"navn": "Skeidsbakkane 12", "grp": "Kun mobil", "lat": 62.354315, "lon": 5.831159, "adr": "Skeidsbakkane 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11018650", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBiMMAW", "r": 3}, {"navn": "Osbergvegen 10", "grp": "Kun mobil", "lat": 62.34658, "lon": 5.833142, "adr": "Osbergvegen 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973363", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fzj7MAC", "r": 1}, {"navn": "Skeidsreina 17", "grp": "Kun mobil", "lat": 62.354119, "lon": 5.827699, "adr": "Skeidsreina 17, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000504", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6wUMAS", "r": 3}, {"navn": "Ivagarden 4", "grp": "Kun mobil", "lat": 62.366797, "lon": 5.82106, "adr": "Ivagarden 4, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987205", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3PAMA0", "r": 5}, {"navn": "Skeidsvegen 34", "grp": "Kun mobil", "lat": 62.353238, "lon": 5.828431, "adr": "Skeidsvegen 34, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001513", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7ClMAK", "r": 2}, {"navn": "Osbergvegen 68", "grp": "Kun mobil", "lat": 62.348543, "lon": 5.82622, "adr": "Osbergvegen 68, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10993035", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G501MAC", "r": 2}, {"navn": "Ottavikvegen 1", "grp": "Kun mobil", "lat": 62.342423, "lon": 5.827553, "adr": "Ottavikvegen 1, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988537", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3keMAC", "r": 1}, {"navn": "Fløvegen 271", "grp": "Kun mobil", "lat": 62.36531, "lon": 5.821256, "adr": "Fløvegen 271, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007524", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8liMAC", "r": 5}, {"navn": "Skeidsvegen 9", "grp": "Kun mobil", "lat": 62.352488, "lon": 5.831218, "adr": "Skeidsvegen 9, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980934", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1m1MAC", "r": 2}, {"navn": "Osbergvegen 49", "grp": "Kun mobil", "lat": 62.348608, "lon": 5.829499, "adr": "Osbergvegen 49, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11004041", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G7rXMAS", "r": 2}, {"navn": "Osbergvegen 70", "grp": "Kun mobil", "lat": 62.348753, "lon": 5.825985, "adr": "Osbergvegen 70, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11016859", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBFTMA4", "r": 2}, {"navn": "Kolbeinhaugane 38", "grp": "Kun mobil", "lat": 62.364086, "lon": 5.826259, "adr": "Kolbeinhaugane 38, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002803", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7XZMA0", "r": 5}, {"navn": "Sjøgata 91", "grp": "Kun mobil", "lat": 62.344888, "lon": 5.835362, "adr": "Sjøgata 91, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11025418", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDTWMA4", "r": 1}, {"navn": "Osbergvegen 45", "grp": "Kun mobil", "lat": 62.348219, "lon": 5.830565, "adr": "Osbergvegen 45, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973280", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzhmMAC", "r": 2}, {"navn": "Kolbeinhaugane 5", "grp": "Kun mobil", "lat": 62.362776, "lon": 5.823182, "adr": "Kolbeinhaugane 5, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11023537", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCzBMAW", "r": 4}, {"navn": "Oshaugen 12", "grp": "Kun mobil", "lat": 62.345144, "lon": 5.827681, "adr": "Oshaugen 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11020222", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GC7iMAG", "r": 1}, {"navn": "Fløvegen 259", "grp": "Kun mobil", "lat": 62.36414, "lon": 5.821573, "adr": "Fløvegen 259, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021000", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GCKGMA4", "r": 5}, {"navn": "Osbergvegen 28", "grp": "Kun mobil", "lat": 62.347115, "lon": 5.833059, "adr": "Osbergvegen 28, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10972443", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzUHMA0", "r": 1}, {"navn": "Skeidsvegen 10", "grp": "Kun mobil", "lat": 62.35169, "lon": 5.829522, "adr": "Skeidsvegen 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994294", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5KKMA0", "r": 2}, {"navn": "Kolbeinhaugane 12", "grp": "Kun mobil", "lat": 62.363527, "lon": 5.82421, "adr": "Kolbeinhaugane 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10986675", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3GcMAK", "r": 4}, {"navn": "Osbergvegen 6", "grp": "Kun mobil", "lat": 62.346454, "lon": 5.833548, "adr": "Osbergvegen 6, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989092", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3vDMAS", "r": 1}, {"navn": "Fløvegen 207", "grp": "Kun mobil", "lat": 62.359699, "lon": 5.822623, "adr": "Fløvegen 207, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000360", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6uAMAS", "r": 4}, {"navn": "Vollane 5", "grp": "Kun mobil", "lat": 62.347346, "lon": 5.830889, "adr": "Vollane 5, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11014489", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAbeMAG", "r": 1}, {"navn": "Kolbeinhaugane 20", "grp": "Kun mobil", "lat": 62.363527, "lon": 5.825003, "adr": "Kolbeinhaugane 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001162", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G776MAC", "r": 4}, {"navn": "Osbergvegen 49", "grp": "Kun mobil", "lat": 62.348608, "lon": 5.829499, "adr": "Osbergvegen 49, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10985263", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2tqMAC", "r": 2}, {"navn": "Fløvegen 277", "grp": "Kun mobil", "lat": 62.365848, "lon": 5.823578, "adr": "Fløvegen 277, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11005056", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G87uMAC", "r": 5}, {"navn": "Osnesvegen 54", "grp": "Kun mobil", "lat": 62.345135, "lon": 5.835181, "adr": "Osnesvegen 54, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987689", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3WyMAK", "r": 1}, {"navn": "Osbergvegen 48", "grp": "Kun mobil", "lat": 62.348326, "lon": 5.829328, "adr": "Osbergvegen 48, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11014123", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAVkMAO", "r": 2}, {"navn": "Ottavikvegen 21", "grp": "Kun mobil", "lat": 62.34106, "lon": 5.827049, "adr": "Ottavikvegen 21, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978390", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G15OMAS", "r": 1}, {"navn": "Skeidsreina 16", "grp": "Kun mobil", "lat": 62.355198, "lon": 5.827334, "adr": "Skeidsreina 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10999321", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6dPMAS", "r": 3}, {"navn": "Ottavikvegen 27", "grp": "Kun mobil", "lat": 62.340634, "lon": 5.826109, "adr": "Ottavikvegen 27, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11018672", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBiiMAG", "r": 1}, {"navn": "Skeidsvegen 38", "grp": "Kun mobil", "lat": 62.353468, "lon": 5.829083, "adr": "Skeidsvegen 38, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997452", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G69GMAS", "r": 2}, {"navn": "Fløvegen 179", "grp": "Kun mobil", "lat": 62.357825, "lon": 5.825142, "adr": "Fløvegen 179, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007809", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8qJMAS", "r": 4}, {"navn": "Osnesvegen 60", "grp": "Kun mobil", "lat": 62.344815, "lon": 5.833359, "adr": "Osnesvegen 60, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11017879", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBVvMAO", "r": 1}, {"navn": "Myravegen 6", "grp": "Kun mobil", "lat": 62.351466, "lon": 5.828158, "adr": "Myravegen 6, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012415", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GA4CMAW", "r": 2}, {"navn": "Fløvegen 263", "grp": "Kun mobil", "lat": 62.364438, "lon": 5.824365, "adr": "Fløvegen 263, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11008660", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G942MAC", "r": 5}, {"navn": "Bøen 34", "grp": "Kun mobil", "lat": 62.356311, "lon": 5.830039, "adr": "Bøen 34, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994456", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5MwMAK", "r": 3}, {"navn": "Fløvegen 237", "grp": "Kun mobil", "lat": 62.362099, "lon": 5.824632, "adr": "Fløvegen 237, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994671", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5QPMA0", "r": 4}, {"navn": "Osbergvegen 37", "grp": "Kun mobil", "lat": 62.347841, "lon": 5.832113, "adr": "Osbergvegen 37, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007982", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8t6MAC", "r": 1}, {"navn": "Bøen 44", "grp": "Kun mobil", "lat": 62.355979, "lon": 5.830829, "adr": "Bøen 44, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012069", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9ycMAC", "r": 3}, {"navn": "Skeidsreina 20", "grp": "Kun mobil", "lat": 62.354716, "lon": 5.827849, "adr": "Skeidsreina 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980996", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1n1MAC", "r": 3}, {"navn": "Osbergvegen 39", "grp": "Kun mobil", "lat": 62.34806, "lon": 5.831452, "adr": "Osbergvegen 39, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10983841", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2WuMAK", "r": 2}, {"navn": "Fløvegen 263", "grp": "Kun mobil", "lat": 62.364438, "lon": 5.824365, "adr": "Fløvegen 263, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11020017", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000GC4PMAW", "r": 5}, {"navn": "Bøen 26", "grp": "Kun mobil", "lat": 62.356488, "lon": 5.828764, "adr": "Bøen 26, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10998371", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6O5MAK", "r": 3}, {"navn": "Osnesvegen 109", "grp": "Kun mobil", "lat": 62.341906, "lon": 5.821626, "adr": "Osnesvegen 109, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984428", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2gNMAS", "r": 1}, {"navn": "Bøen 50", "grp": "Kun mobil", "lat": 62.354552, "lon": 5.830921, "adr": "Bøen 50, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11019019", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBoJMAW", "r": 3}, {"navn": "Kolbeinhaugane 1", "grp": "Kun mobil", "lat": 62.362829, "lon": 5.821983, "adr": "Kolbeinhaugane 1, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989370", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3zhMAC", "r": 4}, {"navn": "Skeidsbakkane 6", "grp": "Kun mobil", "lat": 62.353953, "lon": 5.830623, "adr": "Skeidsbakkane 6, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000034", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6ouMAC", "r": 3}, {"navn": "Skeidsbakkane 65", "grp": "Kun mobil", "lat": 62.352366, "lon": 5.832652, "adr": "Skeidsbakkane 65, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027312", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDzfMAG", "r": 2}, {"navn": "Kolbeinhaugane 26", "grp": "Kun mobil", "lat": 62.363961, "lon": 5.825131, "adr": "Kolbeinhaugane 26, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10993388", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G55iMAC", "r": 5}, {"navn": "Vollane 15", "grp": "Kun mobil", "lat": 62.347751, "lon": 5.830498, "adr": "Vollane 15, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024762", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GDIwMAO", "r": 1}, {"navn": "Skeidsvegen 42", "grp": "Kun mobil", "lat": 62.353781, "lon": 5.829313, "adr": "Skeidsvegen 42, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10971466", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzEWMA0", "r": 3}, {"navn": "Vollane 1", "grp": "Kun mobil", "lat": 62.347467, "lon": 5.82989, "adr": "Vollane 1, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10971250", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzB2MAK", "r": 1}, {"navn": "Kolbeinhaugane 29", "grp": "Kun mobil", "lat": 62.363302, "lon": 5.827754, "adr": "Kolbeinhaugane 29, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11011964", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9wvMAC", "r": 4}, {"navn": "Vollane 24", "grp": "Kun mobil", "lat": 62.347925, "lon": 5.828276, "adr": "Vollane 24, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11025826", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDbhMAG", "r": 2}, {"navn": "Skeidsvegen 11", "grp": "Kun mobil", "lat": 62.352669, "lon": 5.831306, "adr": "Skeidsvegen 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11008640", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G93iMAC", "r": 2}, {"navn": "Fløvegen 357", "grp": "Kun mobil", "lat": 62.373172, "lon": 5.819978, "adr": "Fløvegen 357, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10985930", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G34bMAC", "r": 5}, {"navn": "Vollane 22", "grp": "Kun mobil", "lat": 62.347798, "lon": 5.828618, "adr": "Vollane 22, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978217", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G110MAC", "r": 2}, {"navn": "Jarbryggjevegen 17", "grp": "Kun mobil", "lat": 62.350599, "lon": 5.828141, "adr": "Jarbryggjevegen 17, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978733", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1AvMAK", "r": 2}, {"navn": "Fløvegen 331", "grp": "Kun mobil", "lat": 62.370269, "lon": 5.820073, "adr": "Fløvegen 331, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997280", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G66UMAS", "r": 5}, {"navn": "Skeidsreina 13", "grp": "Kun mobil", "lat": 62.354515, "lon": 5.82731, "adr": "Skeidsreina 13, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988296", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G3glMAC", "r": 3}, {"navn": "Ottavikvegen 2", "grp": "Kun mobil", "lat": 62.343013, "lon": 5.829162, "adr": "Ottavikvegen 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11022032", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCauMAG", "r": 1}, {"navn": "Vollane 30", "grp": "Kun mobil", "lat": 62.348197, "lon": 5.827223, "adr": "Vollane 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11026066", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDfZMAW", "r": 2}, {"navn": "Fløvegen 201", "grp": "Kun mobil", "lat": 62.360001, "lon": 5.824409, "adr": "Fløvegen 201, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978147", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0zsMAC", "r": 4}, {"navn": "Iverbakken 2", "grp": "Kun mobil", "lat": 62.355666, "lon": 5.83121, "adr": "Iverbakken 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012612", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GA7NMAW", "r": 3}, {"navn": "Vollane 7", "grp": "Kun mobil", "lat": 62.347313, "lon": 5.831059, "adr": "Vollane 7, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11010214", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9T6MAK", "r": 1}, {"navn": "Bøen 15", "grp": "Kun mobil", "lat": 62.356181, "lon": 5.828294, "adr": "Bøen 15, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981459", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1uUMAS", "r": 3}, {"navn": "Ivagarden 5", "grp": "Kun mobil", "lat": 62.366285, "lon": 5.82165, "adr": "Ivagarden 5, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10971185", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fz9zMAC", "r": 5}, {"navn": "Myravegen 14", "grp": "Kun mobil", "lat": 62.352246, "lon": 5.828263, "adr": "Myravegen 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCZkMAO", "r": 2}, {"navn": "Iverbakken 10", "grp": "Kun mobil", "lat": 62.355243, "lon": 5.832453, "adr": "Iverbakken 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987310", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3QrMAK", "r": 3}, {"navn": "Fløvegen 87", "grp": "Kun mobil", "lat": 62.349764, "lon": 5.826344, "adr": "Fløvegen 87, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10995943", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5kvMAC", "r": 2}, {"navn": "Fløvegen 265", "grp": "Kun mobil", "lat": 62.36466, "lon": 5.821112, "adr": "Fløvegen 265, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10977640", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0rhMAC", "r": 5}, {"navn": "Iverbakken 11", "grp": "Kun mobil", "lat": 62.354741, "lon": 5.832119, "adr": "Iverbakken 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10983989", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2ZIMA0", "r": 3}, {"navn": "Iverbakken 8", "grp": "Kun mobil", "lat": 62.355509, "lon": 5.831903, "adr": "Iverbakken 8, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984856", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2nHMAS", "r": 3}, {"navn": "Myravegen 13", "grp": "Kun mobil", "lat": 62.352101, "lon": 5.829034, "adr": "Myravegen 13, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981008", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1nDMAS", "r": 2}, {"navn": "Skeidsbakkane 14", "grp": "Kun mobil", "lat": 62.354063, "lon": 5.831514, "adr": "Skeidsbakkane 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000976", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G746MAC", "r": 3}, {"navn": "Ivagarden 3", "grp": "Kun mobil", "lat": 62.366352, "lon": 5.821629, "adr": "Ivagarden 3, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10972600", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzWoMAK", "r": 5}, {"navn": "Osnesvegen 63", "grp": "Kun mobil", "lat": 62.345098, "lon": 5.831571, "adr": "Osnesvegen 63, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024115", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD8VMAW", "r": 1}, {"navn": "Osbergvegen 72", "grp": "Kun mobil", "lat": 62.349017, "lon": 5.825377, "adr": "Osbergvegen 72, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10993706", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5AqMAK", "r": 2}, {"navn": "Kolbeinhaugane 40", "grp": "Kun mobil", "lat": 62.364041, "lon": 5.825896, "adr": "Kolbeinhaugane 40, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984467", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2h0MAC", "r": 5}, {"navn": "Iverbakken 3", "grp": "Kun mobil", "lat": 62.354945, "lon": 5.831189, "adr": "Iverbakken 3, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996790", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5yaMAC", "r": 3}, {"navn": "Skeidsbakkane 10", "grp": "Kun mobil", "lat": 62.354418, "lon": 5.830237, "adr": "Skeidsbakkane 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10998330", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6NQMA0", "r": 3}, {"navn": "Osnesvegen 65", "grp": "Kun mobil", "lat": 62.344895, "lon": 5.830143, "adr": "Osnesvegen 65, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10972711", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzYbMAK", "r": 1}, {"navn": "Osbergvegen 55", "grp": "Kun mobil", "lat": 62.348818, "lon": 5.828047, "adr": "Osbergvegen 55, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024478", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDEMMA4", "r": 2}, {"navn": "Bøen 48", "grp": "Kun mobil", "lat": 62.354629, "lon": 5.831512, "adr": "Bøen 48, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11009392", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9FqMAK", "r": 3}, {"navn": "Bøen 2", "grp": "Kun mobil", "lat": 62.356306, "lon": 5.825109, "adr": "Bøen 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003474", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7iOMAS", "r": 3}, {"navn": "Ivagarden 8", "grp": "Kun mobil", "lat": 62.367101, "lon": 5.821801, "adr": "Ivagarden 8, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10981899", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G21aMAC", "r": 5}, {"navn": "Kolbeinhaugane 43", "grp": "Kun mobil", "lat": 62.363404, "lon": 5.826312, "adr": "Kolbeinhaugane 43, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10995414", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5cOMAS", "r": 4}, {"navn": "Osbergvegen 66", "grp": "Kun mobil", "lat": 62.348662, "lon": 5.826749, "adr": "Osbergvegen 66, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10992868", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4xKMAS", "r": 2}, {"navn": "Vollane 17", "grp": "Kun mobil", "lat": 62.347877, "lon": 5.830216, "adr": "Vollane 17, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021715", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCVnMAO", "r": 2}, {"navn": "Ivagarden 11", "grp": "Kun mobil", "lat": 62.366402, "lon": 5.823036, "adr": "Ivagarden 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11014786", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAi2MAG", "r": 5}, {"navn": "Kolbeinhaugane 47", "grp": "Kun mobil", "lat": 62.363499, "lon": 5.827308, "adr": "Kolbeinhaugane 47, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10987071", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3N0MAK", "r": 4}, {"navn": "Fløvegen 257", "grp": "Kun mobil", "lat": 62.364044, "lon": 5.820887, "adr": "Fløvegen 257, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11013128", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAFhMAO", "r": 5}, {"navn": "Skeidsvegen 2", "grp": "Kun mobil", "lat": 62.350787, "lon": 5.829324, "adr": "Skeidsvegen 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11025530", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDVKMA4", "r": 2}, {"navn": "Ottavikvegen 29", "grp": "Kun mobil", "lat": 62.340654, "lon": 5.82567, "adr": "Ottavikvegen 29, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10999918", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6n2MAC", "r": 1}, {"navn": "Iverbakken 6", "grp": "Kun mobil", "lat": 62.355212, "lon": 5.831876, "adr": "Iverbakken 6, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11013353", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAJKMA4", "r": 3}, {"navn": "Bøen 43", "grp": "Kun mobil", "lat": 62.355479, "lon": 5.830185, "adr": "Bøen 43, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5q7MAC", "r": 3}, {"navn": "Skeidsvegen 33", "grp": "Kun mobil", "lat": 62.353437, "lon": 5.830478, "adr": "Skeidsvegen 33, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10986979", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3LWMA0", "r": 2}, {"navn": "Kolbeinhaugane 22", "grp": "Kun mobil", "lat": 62.363302, "lon": 5.824988, "adr": "Kolbeinhaugane 22, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10986880", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3JvMAK", "r": 4}, {"navn": "Bøen 14", "grp": "Kun mobil", "lat": 62.357803, "lon": 5.827759, "adr": "Bøen 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11009141", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9BnMAK", "r": 4}, {"navn": "Kolbeinhaugane 16", "grp": "Kun mobil", "lat": 62.364012, "lon": 5.824198, "adr": "Kolbeinhaugane 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000421", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6v9MAC", "r": 5}, {"navn": "Oshaugen 7", "grp": "Kun mobil", "lat": 62.344929, "lon": 5.829318, "adr": "Oshaugen 7, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021138", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCMUMA4", "r": 1}, {"navn": "Osbergvegen 63", "grp": "Kun mobil", "lat": 62.349082, "lon": 5.827014, "adr": "Osbergvegen 63, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976003", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0PhMAK", "r": 2}, {"navn": "Fløvegen 280", "grp": "Kun mobil", "lat": 62.36605, "lon": 5.82023, "adr": "Fløvegen 280, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11005667", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8HlMAK", "r": 5}, {"navn": "Fløvegen 187", "grp": "Kun mobil", "lat": 62.358794, "lon": 5.824494, "adr": "Fløvegen 187, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10977382", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0nXMAS", "r": 4}, {"navn": "Fløvegen 166", "grp": "Kun mobil", "lat": 62.356459, "lon": 5.823914, "adr": "Fløvegen 166, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11008475", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G913MAC", "r": 3}, {"navn": "Fløvegen 281", "grp": "Kun mobil", "lat": 62.366274, "lon": 5.82096, "adr": "Fløvegen 281, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000987", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G74HMAS", "r": 5}, {"navn": "Sjøgata 87", "grp": "Kun mobil", "lat": 62.344917, "lon": 5.836022, "adr": "Sjøgata 87, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11004321", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G7w3MAC", "r": 1}, {"navn": "Fløvegen 131", "grp": "Kun mobil", "lat": 62.353846, "lon": 5.827922, "adr": "Fløvegen 131, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012100", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9z7MAC", "r": 3}, {"navn": "Osnesvegen 61", "grp": "Kun mobil", "lat": 62.344906, "lon": 5.832229, "adr": "Osnesvegen 61, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012128", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9zZMAS", "r": 1}, {"navn": "Skeidsreina 1", "grp": "Kun mobil", "lat": 62.355811, "lon": 5.825839, "adr": "Skeidsreina 1, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11022641", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCkjMAG", "r": 3}, {"navn": "Vollane 19", "grp": "Kun mobil", "lat": 62.347829, "lon": 5.82962, "adr": "Vollane 19, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11015302", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAqMMAW", "r": 2}, {"navn": "Fløvegen 261", "grp": "Kun mobil", "lat": 62.364309, "lon": 5.822605, "adr": "Fløvegen 261, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10992282", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4nsMAC", "r": 5}, {"navn": "Kolbeinhaugane 32", "grp": "Kun mobil", "lat": 62.364356, "lon": 5.826308, "adr": "Kolbeinhaugane 32, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10986016", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G35zMAC", "r": 5}, {"navn": "Vollane 26", "grp": "Kun mobil", "lat": 62.347979, "lon": 5.827923, "adr": "Vollane 26, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11014036", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAULMA4", "r": 2}, {"navn": "Osbergvegen 27", "grp": "Kun mobil", "lat": 62.347294, "lon": 5.833717, "adr": "Osbergvegen 27, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11017791", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBUVMA4", "r": 1}, {"navn": "Fløvegen 31", "grp": "Kun mobil", "lat": 62.346996, "lon": 5.832066, "adr": "Fløvegen 31, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000669", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6z9MAC", "r": 1}, {"navn": "Kolbeinhaugane 30", "grp": "Kun mobil", "lat": 62.364415, "lon": 5.825722, "adr": "Kolbeinhaugane 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10977920", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0wDMAS", "r": 5}, {"navn": "Osnesvegen 52", "grp": "Kun mobil", "lat": 62.345143, "lon": 5.835528, "adr": "Osnesvegen 52, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10979546", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1O2MAK", "r": 1}, {"navn": "Vollane 20", "grp": "Kun mobil", "lat": 62.347645, "lon": 5.829021, "adr": "Vollane 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984276", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2dvMAC", "r": 1}, {"navn": "Bøen 11", "grp": "Kun mobil", "lat": 62.356137, "lon": 5.827158, "adr": "Bøen 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10999517", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6gZMAS", "r": 3}, {"navn": "Iverbakken 15", "grp": "Kun mobil", "lat": 62.354196, "lon": 5.832683, "adr": "Iverbakken 15, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027461", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GE24MAG", "r": 3}, {"navn": "Osbergvegen 53", "grp": "Kun mobil", "lat": 62.348884, "lon": 5.828581, "adr": "Osbergvegen 53, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997682", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6CyMAK", "r": 2}, {"navn": "Kolbeinhaugane 39", "grp": "Kun mobil", "lat": 62.363071, "lon": 5.825883, "adr": "Kolbeinhaugane 39, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11010176", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9SUMA0", "r": 4}, {"navn": "Bøen 42", "grp": "Kun mobil", "lat": 62.356045, "lon": 5.831769, "adr": "Bøen 42, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10979543", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1NzMAK", "r": 3}, {"navn": "Myravegen 10", "grp": "Kun mobil", "lat": 62.352063, "lon": 5.828069, "adr": "Myravegen 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994628", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5PiMAK", "r": 2}, {"navn": "Skeidsvegen 4", "grp": "Kun mobil", "lat": 62.351047, "lon": 5.8293, "adr": "Skeidsvegen 4, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10984368", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2fPMAS", "r": 2}, {"navn": "Fløvegen 274", "grp": "Kun mobil", "lat": 62.364992, "lon": 5.81717, "adr": "Fløvegen 274, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002715", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7W9MAK", "r": 5}, {"navn": "Bøen 24", "grp": "Kun mobil", "lat": 62.356684, "lon": 5.828685, "adr": "Bøen 24, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996349", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5rTMAS", "r": 3}, {"navn": "Myravegen 8", "grp": "Kun mobil", "lat": 62.351765, "lon": 5.828159, "adr": "Myravegen 8, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989709", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G46mMAC", "r": 2}, {"navn": "Fløvegen 85", "grp": "Kun mobil", "lat": 62.349593, "lon": 5.826268, "adr": "Fløvegen 85, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10989678", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G46HMAS", "r": 2}, {"navn": "Fløvegen 27", "grp": "Kun mobil", "lat": 62.346851, "lon": 5.833131, "adr": "Fløvegen 27, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027789", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GE7MMAW", "r": 1}, {"navn": "Iverbakken 1", "grp": "Kun mobil", "lat": 62.355209, "lon": 5.830968, "adr": "Iverbakken 1, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10972245", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzR5MAK", "r": 3}, {"navn": "Osnesvegen 58", "grp": "Kun mobil", "lat": 62.344952, "lon": 5.833848, "adr": "Osnesvegen 58, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11006613", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8X1MAK", "r": 1}, {"navn": "Fløvegen 286", "grp": "Kun mobil", "lat": 62.366577, "lon": 5.820096, "adr": "Fløvegen 286, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11000749", "bol": "H0301", "st": "Ikke besøkt", "sfid": "a4CSg000000G70RMAS", "r": 5}, {"navn": "Bøen 28", "grp": "Kun mobil", "lat": 62.356429, "lon": 5.829292, "adr": "Bøen 28, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996430", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5smMAC", "r": 3}, {"navn": "Iverbakken 12", "grp": "Kun mobil", "lat": 62.354836, "lon": 5.832728, "adr": "Iverbakken 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001893", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7ItMAK", "r": 3}, {"navn": "Fløvegen 199", "grp": "Kun mobil", "lat": 62.359432, "lon": 5.826268, "adr": "Fløvegen 199, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11009001", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G99XMAS", "r": 4}, {"navn": "Sjøgata 89", "grp": "Kun mobil", "lat": 62.344905, "lon": 5.835708, "adr": "Sjøgata 89, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973399", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzjhMAC", "r": 1}, {"navn": "Skeidsbakkane 61", "grp": "Kun mobil", "lat": 62.352564, "lon": 5.833259, "adr": "Skeidsbakkane 61, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11019813", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GC17MAG", "r": 2}, {"navn": "Fløvegen 16", "grp": "Kun mobil", "lat": 62.345881, "lon": 5.833208, "adr": "Fløvegen 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002480", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7SMMA0", "r": 1}, {"navn": "Fløvegen 127", "grp": "Kun mobil", "lat": 62.353365, "lon": 5.827957, "adr": "Fløvegen 127, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10982603", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2CwMAK", "r": 3}, {"navn": "Bøen 46", "grp": "Kun mobil", "lat": 62.354933, "lon": 5.830829, "adr": "Bøen 46, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11017450", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBP0MAO", "r": 3}, {"navn": "Vollane 28", "grp": "Kun mobil", "lat": 62.348157, "lon": 5.82744, "adr": "Vollane 28, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976631", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0bQMAS", "r": 2}, {"navn": "Kolbeinhaugane 44", "grp": "Kun mobil", "lat": 62.36379, "lon": 5.826291, "adr": "Kolbeinhaugane 44, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11005695", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8IDMA0", "r": 4}, {"navn": "Iverbakken 13", "grp": "Kun mobil", "lat": 62.354478, "lon": 5.832379, "adr": "Iverbakken 13, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10972806", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fza8MAC", "r": 3}, {"navn": "Vollane 3", "grp": "Kun mobil", "lat": 62.347425, "lon": 5.830378, "adr": "Vollane 3, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973633", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FznTMAS", "r": 1}, {"navn": "Osnesvegen 101", "grp": "Kun mobil", "lat": 62.342058, "lon": 5.823175, "adr": "Osnesvegen 101, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10973852", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fzr0MAC", "r": 1}, {"navn": "Fløvegen 321", "grp": "Kun mobil", "lat": 62.370099, "lon": 5.821658, "adr": "Fløvegen 321, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003404", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7hGMAS", "r": 5}, {"navn": "Kolbeinhaugane 45", "grp": "Kun mobil", "lat": 62.363461, "lon": 5.826828, "adr": "Kolbeinhaugane 45, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10982466", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2AjMAK", "r": 4}, {"navn": "Osbergvegen 16", "grp": "Kun mobil", "lat": 62.346751, "lon": 5.833561, "adr": "Osbergvegen 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997809", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6F1MAK", "r": 1}, {"navn": "Iverbakken 14", "grp": "Kun mobil", "lat": 62.354592, "lon": 5.833063, "adr": "Iverbakken 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10971865", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzKxMAK", "r": 3}, {"navn": "Fløvegen 219", "grp": "Kun mobil", "lat": 62.360893, "lon": 5.823963, "adr": "Fløvegen 219, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11017082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBJ4MAO", "r": 4}, {"navn": "Kolbeinhaugane 49", "grp": "Kun mobil", "lat": 62.363565, "lon": 5.827842, "adr": "Kolbeinhaugane 49, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980643", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1hKMAS", "r": 4}, {"navn": "Sjøgata 93", "grp": "Kun mobil", "lat": 62.344839, "lon": 5.834787, "adr": "Sjøgata 93, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996755", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5y1MAC", "r": 1}, {"navn": "Bøen 22", "grp": "Kun mobil", "lat": 62.357062, "lon": 5.828297, "adr": "Bøen 22, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11009806", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9MWMA0", "r": 4}, {"navn": "Kolbeinhaugane 33", "grp": "Kun mobil", "lat": 62.363049, "lon": 5.827297, "adr": "Kolbeinhaugane 33, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027774", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GE77MAG", "r": 4}, {"navn": "Bøen 20", "grp": "Kun mobil", "lat": 62.357255, "lon": 5.828084, "adr": "Bøen 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988072", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3d9MAC", "r": 4}, {"navn": "Fløvegen 275", "grp": "Kun mobil", "lat": 62.365651, "lon": 5.821135, "adr": "Fløvegen 275, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997654", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6CWMA0", "r": 5}, {"navn": "Bøen 40", "grp": "Kun mobil", "lat": 62.356412, "lon": 5.831305, "adr": "Bøen 40, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007943", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8sTMAS", "r": 3}, {"navn": "Osbergvegen 64", "grp": "Kun mobil", "lat": 62.348452, "lon": 5.826964, "adr": "Osbergvegen 64, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11009146", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9BsMAK", "r": 2}, {"navn": "Osbergvegen 51", "grp": "Kun mobil", "lat": 62.348724, "lon": 5.829062, "adr": "Osbergvegen 51, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11004934", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G85wMAC", "r": 2}, {"navn": "Kolbeinhaugane 35", "grp": "Kun mobil", "lat": 62.3632, "lon": 5.826817, "adr": "Kolbeinhaugane 35, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10998031", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6IbMAK", "r": 4}, {"navn": "Ottavikvegen 11", "grp": "Kun mobil", "lat": 62.341955, "lon": 5.827303, "adr": "Ottavikvegen 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10977097", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0iwMAC", "r": 1}, {"navn": "Fløvegen 213", "grp": "Kun mobil", "lat": 62.3603, "lon": 5.824267, "adr": "Fløvegen 213, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11017358", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBNWMA4", "r": 4}, {"navn": "Osnesvegen 99", "grp": "Kun mobil", "lat": 62.3422, "lon": 5.823875, "adr": "Osnesvegen 99, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10974131", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzvVMAS", "r": 1}, {"navn": "Osbergvegen 24", "grp": "Kun mobil", "lat": 62.346974, "lon": 5.833866, "adr": "Osbergvegen 24, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980636", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1hDMAS", "r": 1}, {"navn": "Myravegen 3", "grp": "Kun mobil", "lat": 62.351002, "lon": 5.828663, "adr": "Myravegen 3, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003595", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7kLMAS", "r": 2}, {"navn": "Fløvegen 33", "grp": "Kun mobil", "lat": 62.347179, "lon": 5.832627, "adr": "Fløvegen 33, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994093", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5H5MAK", "r": 1}, {"navn": "Vollane 25", "grp": "Kun mobil", "lat": 62.348356, "lon": 5.828529, "adr": "Vollane 25, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10975721", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0L9MAK", "r": 2}, {"navn": "Osbergvegen 40", "grp": "Kun mobil", "lat": 62.347686, "lon": 5.831016, "adr": "Osbergvegen 40, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11020298", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GC8wMAG", "r": 1}, {"navn": "Skeidsbakkane 60", "grp": "Kun mobil", "lat": 62.352571, "lon": 5.833964, "adr": "Skeidsbakkane 60, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11011119", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9hhMAC", "r": 2}, {"navn": "Fløvegen 269", "grp": "Kun mobil", "lat": 62.365118, "lon": 5.821895, "adr": "Fløvegen 269, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002999", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7ajMAC", "r": 5}, {"navn": "Bøen 4", "grp": "Kun mobil", "lat": 62.356507, "lon": 5.824837, "adr": "Bøen 4, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10978990", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1F4MAK", "r": 3}, {"navn": "Myravegen 11", "grp": "Kun mobil", "lat": 62.351865, "lon": 5.828823, "adr": "Myravegen 11, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10997114", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G63oMAC", "r": 2}, {"navn": "Skeidsbakkane 34", "grp": "Kun mobil", "lat": 62.354428, "lon": 5.831785, "adr": "Skeidsbakkane 34, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002085", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7LzMAK", "r": 3}, {"navn": "Myravegen 2", "grp": "Kun mobil", "lat": 62.351098, "lon": 5.827961, "adr": "Myravegen 2, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10990110", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4DFMA0", "r": 2}, {"navn": "Fløvegen 387", "grp": "Kun mobil", "lat": 62.375263, "lon": 5.820886, "adr": "Fløvegen 387, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10970983", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fz6jMAC", "r": 5}, {"navn": "Osnesvegen 103", "grp": "Kun mobil", "lat": 62.341929, "lon": 5.822609, "adr": "Osnesvegen 103, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10974768", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G05mMAC", "r": 1}, {"navn": "Skeidsvegen 14", "grp": "Kun mobil", "lat": 62.351965, "lon": 5.829466, "adr": "Skeidsvegen 14, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10976210", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0T2MAK", "r": 2}, {"navn": "Vollane 9", "grp": "Kun mobil", "lat": 62.347472, "lon": 5.831434, "adr": "Vollane 9, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10977866", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0vLMAS", "r": 1}, {"navn": "Kolbeinhaugane 45", "grp": "Kun mobil", "lat": 62.363461, "lon": 5.826828, "adr": "Kolbeinhaugane 45, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10979569", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G1OPMA0", "r": 4}, {"navn": "Osnesvegen 107", "grp": "Kun mobil", "lat": 62.341848, "lon": 5.822231, "adr": "Osnesvegen 107, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10979579", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G1OZMA0", "r": 1}, {"navn": "Ivagarden 9", "grp": "Kun mobil", "lat": 62.366439, "lon": 5.822297, "adr": "Ivagarden 9, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980261", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1bAMAS", "r": 5}, {"navn": "Sjøgata 95", "grp": "Kun mobil", "lat": 62.344778, "lon": 5.834465, "adr": "Sjøgata 95, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10980833", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1kOMAS", "r": 1}, {"navn": "Bøen 47", "grp": "Kun mobil", "lat": 62.354891, "lon": 5.830158, "adr": "Bøen 47, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10982199", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G26QMAS", "r": 3}, {"navn": "Oshaugen 26", "grp": "Kun mobil", "lat": 62.346732, "lon": 5.82875, "adr": "Oshaugen 26, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10982949", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2IWMA0", "r": 1}, {"navn": "Skeidsbakkane 30", "grp": "Kun mobil", "lat": 62.353984, "lon": 5.832159, "adr": "Skeidsbakkane 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10983600", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2T1MAK", "r": 3}, {"navn": "Vollane 20", "grp": "Kun mobil", "lat": 62.347645, "lon": 5.829021, "adr": "Vollane 20, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988218", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G3fVMAS", "r": 1}, {"navn": "Ivagarden 7", "grp": "Kun mobil", "lat": 62.366559, "lon": 5.821646, "adr": "Ivagarden 7, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10988960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3t5MAC", "r": 5}, {"navn": "Osbergvegen 75", "grp": "Kun mobil", "lat": 62.349815, "lon": 5.827265, "adr": "Osbergvegen 75, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10991513", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4ZsMAK", "r": 2}, {"navn": "Fløvegen 265", "grp": "Kun mobil", "lat": 62.36466, "lon": 5.821112, "adr": "Fløvegen 265, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10994000", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G5FaMAK", "r": 5}, {"navn": "Skeidsvegen 12", "grp": "Kun mobil", "lat": 62.351893, "lon": 5.829477, "adr": "Skeidsvegen 12, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996062", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5mqMAC", "r": 2}, {"navn": "Iverbakken 18", "grp": "Kun mobil", "lat": 62.354169, "lon": 5.833823, "adr": "Iverbakken 18, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10996517", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G5uBMAS", "r": 3}, {"navn": "Fløvegen 337", "grp": "Kun mobil", "lat": 62.371041, "lon": 5.820823, "adr": "Fløvegen 337, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-10999584", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6heMAC", "r": 5}, {"navn": "Fløvegen 231", "grp": "Kun mobil", "lat": 62.361598, "lon": 5.824318, "adr": "Fløvegen 231, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11001133", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G76dMAC", "r": 4}, {"navn": "Skeidsbakkane 69", "grp": "Kun mobil", "lat": 62.3523, "lon": 5.833361, "adr": "Skeidsbakkane 69, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11002703", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7VxMAK", "r": 2}, {"navn": "Osnesvegen 65", "grp": "Kun mobil", "lat": 62.344895, "lon": 5.830143, "adr": "Osnesvegen 65, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003368", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G7ggMAC", "r": 1}, {"navn": "Oshaugen 32", "grp": "Kun mobil", "lat": 62.346684, "lon": 5.828639, "adr": "Oshaugen 32, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003995", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7qnMAC", "r": 1}, {"navn": "Oshaugen 16", "grp": "Kun mobil", "lat": 62.345704, "lon": 5.827815, "adr": "Oshaugen 16, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11003997", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7qpMAC", "r": 1}, {"navn": "Ivagarden 10", "grp": "Kun mobil", "lat": 62.367089, "lon": 5.822559, "adr": "Ivagarden 10, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007497", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8lHMAS", "r": 5}, {"navn": "Fløvegen 135", "grp": "Kun mobil", "lat": 62.354318, "lon": 5.827491, "adr": "Fløvegen 135, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11007727", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8ozMAC", "r": 3}, {"navn": "Fløvegen 355", "grp": "Kun mobil", "lat": 62.372945, "lon": 5.821975, "adr": "Fløvegen 355, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11011924", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9wHMAS", "r": 5}, {"navn": "Vollane 9", "grp": "Kun mobil", "lat": 62.347472, "lon": 5.831434, "adr": "Vollane 9, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012048", "bol": "U0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G9yHMAS", "r": 1}, {"navn": "Osnesvegen 53", "grp": "Kun mobil", "lat": 62.345587, "lon": 5.834515, "adr": "Osnesvegen 53, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012086", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9ytMAC", "r": 1}, {"navn": "Oshaugen 30", "grp": "Kun mobil", "lat": 62.3467, "lon": 5.828155, "adr": "Oshaugen 30, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11012818", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAAhMAO", "r": 1}, {"navn": "Osbergvegen 21", "grp": "Kun mobil", "lat": 62.347069, "lon": 5.834881, "adr": "Osbergvegen 21, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11013864", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GARZMA4", "r": 1}, {"navn": "Fløvegen 85", "grp": "Kun mobil", "lat": 62.349593, "lon": 5.826268, "adr": "Fløvegen 85, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11019862", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GC1uMAG", "r": 2}, {"navn": "Oshaugen 28", "grp": "Kun mobil", "lat": 62.346765, "lon": 5.828225, "adr": "Oshaugen 28, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11021781", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCWrMAO", "r": 1}, {"navn": "Fløvegen 181", "grp": "Kun mobil", "lat": 62.358501, "lon": 5.826811, "adr": "Fløvegen 181, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11023586", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCzyMAG", "r": 4}, {"navn": "Sjøgata 87", "grp": "Kun mobil", "lat": 62.344917, "lon": 5.836022, "adr": "Sjøgata 87, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11024892", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDL2MAO", "r": 1}, {"navn": "Fløvegen 286", "grp": "Kun mobil", "lat": 62.366577, "lon": 5.820096, "adr": "Fløvegen 286, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11026380", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GDkdMAG", "r": 5}, {"navn": "Bøen 49", "grp": "Kun mobil", "lat": 62.354912, "lon": 5.830239, "adr": "Bøen 49, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027452", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GE1vMAG", "r": 3}, {"navn": "Fløvegen 231", "grp": "Kun mobil", "lat": 62.361598, "lon": 5.824318, "adr": "Fløvegen 231, 6065 Ulsteinvik", "area": "Ulsteinvik", "bnr": "V-11027453", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GE1wMAG", "r": 4}];
+var AREAS = ["Ulsteinvik"];
+var STORE_KEY = "dorkart_Olav_16.11.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Olav";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":0,"m":74,"h":[[[62.348107,5.83202],[62.348092,5.832335],[62.34732,5.835103],[62.347261,5.835292],[62.347173,5.835418],[62.345021,5.836559],[62.344917,5.836603],[62.344813,5.836559],[62.344725,5.836433],[62.340442,5.82652],[62.340383,5.826331],[62.340363,5.826109],[62.340403,5.825448],[62.341714,5.821215],[62.341802,5.821089],[62.341906,5.821045],[62.34201,5.821089],[62.347322,5.827934],[62.347308,5.828103],[62.347888,5.829108],[62.347607,5.829504],[62.347685,5.82998],[62.34767,5.830062],[62.347932,5.830599],[62.347881,5.83085],[62.347908,5.831094],[62.347793,5.831545]]],"b":[[62.348107,5.83202]],"g":["Osbergvegen","Osnesvegen","Vollane"]},{"n":2,"c":"#7b2cbf","s":0,"m":65,"h":[[[62.353154,5.832848],[62.352763,5.834375],[62.352675,5.834501],[62.352571,5.834545],[62.352467,5.834501],[62.348162,5.832103],[62.347793,5.831545],[62.347908,5.831094],[62.347881,5.83085],[62.347932,5.830599],[62.34767,5.830062],[62.347685,5.82998],[62.347607,5.829504],[62.347888,5.829108],[62.347538,5.828501],[62.347547,5.828396],[62.347728,5.827701],[62.348351,5.825809],[62.348913,5.82484],[62.349017,5.824796],[62.349121,5.82484],[62.353079,5.827704],[62.353116,5.827966],[62.353496,5.828433],[62.353481,5.828551],[62.353646,5.829061],[62.35361,5.829289],[62.352981,5.829733],[62.353715,5.830195],[62.353708,5.83034],[62.35355,5.831031],[62.353366,5.831359],[62.353354,5.83189],[62.35312,5.832598]]],"b":[[62.353715,5.830195]],"g":["Osbergvegen","Skeidsvegen","Vollane"]},{"n":3,"c":"#0b7285","s":0,"m":74,"h":[[[62.353114,5.827735],[62.353173,5.827546],[62.356616,5.822634],[62.35672,5.82259],[62.356824,5.822634],[62.356912,5.82276],[62.356971,5.822949],[62.357103,5.824145],[62.357033,5.8263],[62.356912,5.826428],[62.356762,5.827124],[62.356688,5.827666],[62.356944,5.82881],[62.356663,5.831527],[62.356604,5.831716],[62.356516,5.831842],[62.354129,5.834742],[62.354025,5.834786],[62.353921,5.834742],[62.353833,5.834616],[62.353774,5.834427],[62.353483,5.832504],[62.353382,5.831329],[62.35355,5.831031],[62.353708,5.83034],[62.353717,5.830196],[62.353261,5.829909],[62.35323,5.829557],[62.35361,5.829289],[62.353646,5.829061],[62.353481,5.828551],[62.353496,5.828433],[62.353116,5.827966]]],"b":[[62.357103,5.824145]],"g":["Bøen","Iverbakken","Skeidsreina"]},{"n":4,"c":"#a61e4d","s":0,"m":54,"h":[[[62.364358,5.827077],[62.364036,5.827895],[62.363669,5.828379],[62.363565,5.828423],[62.357062,5.828878],[62.356945,5.828815],[62.356802,5.828175],[62.357708,5.822895],[62.357767,5.822706],[62.358028,5.82231],[62.358389,5.822104],[62.362829,5.821402],[62.362933,5.821446],[62.363021,5.821572],[62.363693,5.823715],[62.363664,5.824602],[62.363881,5.824701],[62.36383,5.825412],[62.363922,5.825551],[62.363881,5.825993],[62.363935,5.82615],[62.363943,5.826487],[62.364043,5.826566],[62.364211,5.826539],[62.364376,5.826882]]],"b":[[62.364376,5.826882]],"g":["Kolbeinhaugane","Fløvegen","Bøen"]},{"n":5,"c":"#343a40","s":0,"m":54,"h":[[[62.363479,5.821015],[62.363499,5.820793],[62.3648,5.816759],[62.364888,5.816633],[62.364992,5.816589],[62.375265,5.819904],[62.375369,5.819948],[62.375457,5.820074],[62.375516,5.820263],[62.375536,5.820485],[62.375514,5.821108],[62.375455,5.821297],[62.375367,5.821423],[62.364375,5.826881],[62.364211,5.826539],[62.364043,5.826566],[62.363943,5.826487],[62.363935,5.82615],[62.363881,5.825993],[62.363922,5.825551],[62.36383,5.825412],[62.363881,5.824701],[62.363664,5.824602],[62.363717,5.822961],[62.363512,5.822468]]],"b":[[62.375536,5.820485]],"g":["Fløvegen","Ivagarden","Kolbeinhaugane"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
+
