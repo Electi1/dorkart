@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Markus 17.11.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Markus</div>
+<div class="date">17.11.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Panoramavegen 430", "grp": "HP", "lat": 61.001641, "lon": 9.061873, "adr": "Panoramavegen 430, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10955459", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EThJMAW", "r": 1}, {"navn": "Tonsåslinna 63", "grp": "HC Vula", "lat": 60.895426, "lon": 9.470168, "adr": "Tonsåslinna 63, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10938329", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Ee4KMAS", "r": 5}, {"navn": "Månovegen 200", "grp": "HP", "lat": 60.969823, "lon": 9.310712, "adr": "Månovegen 200, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10938815", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EeCAMA0", "r": 3}, {"navn": "Skørvaåsen 8", "grp": "HC Vula", "lat": 61.033784, "lon": 9.202707, "adr": "Skørvaåsen 8, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10939811", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EeX4MAK", "r": 1}, {"navn": "Høllavegen 121", "grp": "HP", "lat": 61.007366, "lon": 9.067305, "adr": "Høllavegen 121, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10941024", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Eep2MAC", "r": 1}, {"navn": "Bagnsvegen 5", "grp": "HP", "lat": 60.894953, "lon": 9.462347, "adr": "Bagnsvegen 5, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10941042", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EepKMAS", "r": 5}, {"navn": "Skrautvålsvegen 689", "grp": "HP", "lat": 61.041652, "lon": 9.198661, "adr": "Skrautvålsvegen 689, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10942362", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfFRMA0", "r": 1}, {"navn": "Brekkudn 300", "grp": "HP", "lat": 61.009196, "lon": 9.046839, "adr": "Brekkudn 300, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10942857", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfSGMA0", "r": 1}, {"navn": "Bagnsvegen 11", "grp": "HP", "lat": 60.895229, "lon": 9.463056, "adr": "Bagnsvegen 11, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10943123", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfWYMA0", "r": 5}, {"navn": "Bøagoto 10", "grp": "HP", "lat": 60.930558, "lon": 9.401843, "adr": "Bøagoto 10, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10943238", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfbdMAC", "r": 4}, {"navn": "Prestgardsvegen 14", "grp": "HC Vula", "lat": 60.922429, "lon": 9.414926, "adr": "Prestgardsvegen 14, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10943249", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfboMAC", "r": 4}, {"navn": "Skrautvålsvegen 691", "grp": "HP", "lat": 61.041929, "lon": 9.198992, "adr": "Skrautvålsvegen 691, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10943499", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EffqMAC", "r": 1}, {"navn": "Oslovegen 1422", "grp": "HP", "lat": 60.905784, "lon": 9.443745, "adr": "Oslovegen 1422, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10944053", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfomMAC", "r": 5}, {"navn": "Vestringslinna 575", "grp": "HP", "lat": 60.929063, "lon": 9.341214, "adr": "Vestringslinna 575, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10944531", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfwUMAS", "r": 3}, {"navn": "Oslovegen 1359", "grp": "HP", "lat": 60.910614, "lon": 9.43608, "adr": "Oslovegen 1359, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10945812", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EgH9MAK", "r": 4}, {"navn": "Bøagoto 7", "grp": "HP", "lat": 60.930495, "lon": 9.404437, "adr": "Bøagoto 7, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10945908", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EgIhMAK", "r": 4}, {"navn": "Brekkudn 369", "grp": "HP", "lat": 61.010275, "lon": 9.037849, "adr": "Brekkudn 369, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10946543", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EgWBMA0", "r": 1}, {"navn": "Panoramavegen 584", "grp": "HP", "lat": 61.007408, "lon": 9.035689, "adr": "Panoramavegen 584, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10946901", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EgfBMAS", "r": 1}, {"navn": "Panoramavegen 410", "grp": "HP", "lat": 61.000881, "lon": 9.06515, "adr": "Panoramavegen 410, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10948015", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EgylMAC", "r": 1}, {"navn": "Engelykkja 8", "grp": "HC Vula", "lat": 60.893697, "lon": 9.474598, "adr": "Engelykkja 8, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10948316", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Eh3cMAC", "r": 5}, {"navn": "Skrautvålsvegen 895", "grp": "HC", "lat": 61.052787, "lon": 9.181789, "adr": "Skrautvålsvegen 895, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10948459", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Eh5vMAC", "r": 1}, {"navn": "Tonsåslinna 74", "grp": "HC Vula", "lat": 60.897036, "lon": 9.472229, "adr": "Tonsåslinna 74, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10949902", "bol": "H0201", "st": "Ikke hjemme", "sfid": "a4CSg000000EhTDMA0", "r": 5}, {"navn": "Skaffarplassvegen 192", "grp": "HC Vula", "lat": 60.842761, "lon": 9.728185, "adr": "Skaffarplassvegen 192, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10952603", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EiFbMAK", "r": 5}, {"navn": "Oslovegen 1388", "grp": "HC", "lat": 60.908307, "lon": 9.440993, "adr": "Oslovegen 1388, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10952941", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EiL3MAK", "r": 5}, {"navn": "Panoramavegen 657", "grp": "HP", "lat": 61.008406, "lon": 9.024492, "adr": "Panoramavegen 657, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10953033", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EiMXMA0", "r": 1}, {"navn": "Øvrebygdsvegen 280", "grp": "HC Vula", "lat": 61.02485, "lon": 9.231159, "adr": "Øvrebygdsvegen 280, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10954039", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EiclMAC", "r": 3}, {"navn": "Skrautvålsvegen 769", "grp": "HP", "lat": 61.045531, "lon": 9.192801, "adr": "Skrautvålsvegen 769, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10956129", "bol": "U0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Ej8tMAC", "r": 1}, {"navn": "Søreisvegen 4 A", "grp": "HP", "lat": 60.920949, "lon": 9.417983, "adr": "Søreisvegen 4 A, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10957953", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EjdtMAC", "r": 4}, {"navn": "Vinjarskogen 3", "grp": "HP", "lat": 60.921809, "lon": 9.401907, "adr": "Vinjarskogen 3, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10958091", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Ejg7MAC", "r": 4}, {"navn": "Skrautvålsvegen 891", "grp": "HP", "lat": 61.051579, "lon": 9.181807, "adr": "Skrautvålsvegen 891, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10959947", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkA3MAK", "r": 1}, {"navn": "Øddetoppen 6", "grp": "HP", "lat": 60.968012, "lon": 9.272672, "adr": "Øddetoppen 6, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10960847", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkOZMA0", "r": 3}, {"navn": "Rudsvegen 67", "grp": "HP", "lat": 60.925527, "lon": 9.428814, "adr": "Rudsvegen 67, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10960985", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkQnMAK", "r": 4}, {"navn": "Høllavegen 36", "grp": "HP", "lat": 61.002988, "lon": 9.068561, "adr": "Høllavegen 36, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10961053", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkRtMAK", "r": 1}, {"navn": "Søreisvegen 20", "grp": "HP", "lat": 60.920797, "lon": 9.41888, "adr": "Søreisvegen 20, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10961772", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkdUMAS", "r": 4}, {"navn": "Steinsetbygdvegen 1681", "grp": "HC Vula", "lat": 61.060422, "lon": 9.421593, "adr": "Steinsetbygdvegen 1681, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10962523", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkpbMAC", "r": 2}, {"navn": "Brekkudn 196", "grp": "HP", "lat": 61.012871, "lon": 9.060442, "adr": "Brekkudn 196, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10962954", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkwYMAS", "r": 1}, {"navn": "Høllavegen 131", "grp": "HP", "lat": 61.008537, "lon": 9.06646, "adr": "Høllavegen 131, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10963346", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000El2sMAC", "r": 1}, {"navn": "Svarthamarvegen 211", "grp": "HP", "lat": 61.025521, "lon": 9.23705, "adr": "Svarthamarvegen 211, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10963487", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000El59MAC", "r": 2}, {"navn": "Mælingen 11", "grp": "HC", "lat": 60.930073, "lon": 9.401625, "adr": "Mælingen 11, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10963601", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000El6zMAC", "r": 4}, {"navn": "Bagnsvegen 9", "grp": "HP", "lat": 60.894813, "lon": 9.462697, "adr": "Bagnsvegen 9, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10963711", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000El8lMAC", "r": 5}, {"navn": "Skrautvålsvegen 748", "grp": "Kun mobil", "lat": 61.040155, "lon": 9.19248, "adr": "Skrautvålsvegen 748, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10964807", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000ElXXMA0", "r": 1}, {"navn": "Kvednavegen 39", "grp": "Kun mobil", "lat": 61.039179, "lon": 9.193832, "adr": "Kvednavegen 39, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10966112", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000ElsaMAC", "r": 1}, {"navn": "Brekkudn 278", "grp": "Kun mobil", "lat": 61.010296, "lon": 9.054196, "adr": "Brekkudn 278, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10966125", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000ElsnMAC", "r": 1}, {"navn": "Øvrebygdsvegen 147", "grp": "Kun mobil", "lat": 61.015064, "lon": 9.238097, "adr": "Øvrebygdsvegen 147, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10967411", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EmDXMA0", "r": 3}, {"navn": "Fødnesvegen 717", "grp": "Kun mobil", "lat": 60.998744, "lon": 9.129417, "adr": "Fødnesvegen 717, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10967431", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EmDrMAK", "r": 1}, {"navn": "Kassetvegen 32", "grp": "Kun mobil", "lat": 61.037815, "lon": 9.217112, "adr": "Kassetvegen 32, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10968090", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EmOUMA0", "r": 2}, {"navn": "Håvrudvegen 345", "grp": "Kun mobil", "lat": 60.960316, "lon": 9.162715, "adr": "Håvrudvegen 345, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10968369", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EmSzMAK", "r": 1}, {"navn": "Tyinvegen 770", "grp": "Kun mobil", "lat": 60.990293, "lon": 9.116964, "adr": "Tyinvegen 770, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10968948", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EmcKMAS", "r": 1}, {"navn": "Øddetoppen 4", "grp": "HC", "lat": 60.967936, "lon": 9.272641, "adr": "Øddetoppen 4, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10938560", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000Ee83MAC", "r": 3}, {"navn": "Rugnusgoto 2", "grp": "HP", "lat": 60.999723, "lon": 9.074114, "adr": "Rugnusgoto 2, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10938676", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000Ee9vMAC", "r": 1}, {"navn": "Åbjørsvegen 97", "grp": "HC", "lat": 60.929178, "lon": 9.307779, "adr": "Åbjørsvegen 97, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10939032", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EeFfMAK", "r": 3}, {"navn": "Åbjørsvegen 126", "grp": "HP", "lat": 60.932064, "lon": 9.311584, "adr": "Åbjørsvegen 126, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10943375", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EfdqMAC", "r": 3}, {"navn": "Moaraste 170", "grp": "HC", "lat": 60.921115, "lon": 9.310648, "adr": "Moaraste 170, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10944211", "bol": "U0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EfrKMAS", "r": 3}, {"navn": "Førsøddin 51", "grp": "HC", "lat": 60.970038, "lon": 9.275257, "adr": "Førsøddin 51, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10951171", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EhpHMAS", "r": 3}, {"navn": "Åbjørsvegen 34", "grp": "HC Vula", "lat": 60.938904, "lon": 9.29858, "adr": "Åbjørsvegen 34, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10951781", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000Ehz7MAC", "r": 3}, {"navn": "Åbjørsvegen 125", "grp": "HC Vula", "lat": 60.931299, "lon": 9.309845, "adr": "Åbjørsvegen 125, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10954061", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000Eid7MAC", "r": 3}, {"navn": "Skrautvålsvegen 602", "grp": "HC Vula", "lat": 61.031623, "lon": 9.210469, "adr": "Skrautvålsvegen 602, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10959747", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000Ek6pMAC", "r": 3}, {"navn": "Skaveldbakkatn 6", "grp": "HP", "lat": 60.963253, "lon": 9.316691, "adr": "Skaveldbakkatn 6, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10962472", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EkomMAC", "r": 3}, {"navn": "Førsøddin 27 D", "grp": "HC", "lat": 60.968858, "lon": 9.272452, "adr": "Førsøddin 27 D, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10963070", "bol": "H0201", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EkyQMAS", "r": 3}, {"navn": "Førsøddin 39", "grp": "HC", "lat": 60.968885, "lon": 9.273723, "adr": "Førsøddin 39, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10963174", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000El06MAC", "r": 3}, {"navn": "Vestringslinna 510", "grp": "Kun mobil", "lat": 60.925662, "lon": 9.350624, "adr": "Vestringslinna 510, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10969218", "bol": "H0101", "st": "Tenker (fått tilbud)", "sfid": "a4CSg000000EmggMAC", "r": 3}, {"navn": "Golsvegen 102", "grp": "HP", "lat": 60.963274, "lon": 9.287226, "adr": "Golsvegen 102, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10937580", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdsFMAS", "r": 3}, {"navn": "Engelykkja 11", "grp": "HP", "lat": 60.892585, "lon": 9.476198, "adr": "Engelykkja 11, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10937590", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdsPMAS", "r": 5}, {"navn": "Hestkinnbygde 95", "grp": "HP", "lat": 61.009485, "lon": 9.577551, "adr": "Hestkinnbygde 95, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10937697", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Edu8MAC", "r": 2}, {"navn": "Danebuvegen 26", "grp": "HP", "lat": 60.926992, "lon": 9.412058, "adr": "Danebuvegen 26, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10937731", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdugMAC", "r": 4}, {"navn": "Oslovegen 1378", "grp": "HP", "lat": 60.909391, "lon": 9.439149, "adr": "Oslovegen 1378, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10938062", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee01MAC", "r": 4}, {"navn": "Golsvegen 397", "grp": "HP", "lat": 60.944593, "lon": 9.2931, "adr": "Golsvegen 397, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10938085", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee0OMAS", "r": 3}, {"navn": "Lundebakka 14", "grp": "HP", "lat": 60.847718, "lon": 9.741205, "adr": "Lundebakka 14, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10938131", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee18MAC", "r": 5}, {"navn": "Alpinvegen 7", "grp": "HP", "lat": 60.936426, "lon": 9.410701, "adr": "Alpinvegen 7, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10938324", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee4FMAS", "r": 4}, {"navn": "Raskebakkin 49", "grp": "HP", "lat": 60.920604, "lon": 9.412127, "adr": "Raskebakkin 49, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10938478", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee6jMAC", "r": 4}, {"navn": "Oslovegen 1531", "grp": "HP", "lat": 60.898418, "lon": 9.453845, "adr": "Oslovegen 1531, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10938596", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ee8dMAC", "r": 5}, {"navn": "Skrautvålsvegen 614", "grp": "HP", "lat": 61.032784, "lon": 9.208811, "adr": "Skrautvålsvegen 614, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10939007", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EeFGMA0", "r": 3}, {"navn": "Graneisleie 190", "grp": "HP", "lat": 61.011226, "lon": 9.073405, "adr": "Graneisleie 190, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10939300", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeJzMAK", "r": 1}, {"navn": "Sjurudvegen 74", "grp": "HP", "lat": 60.93831, "lon": 9.400231, "adr": "Sjurudvegen 74, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10939303", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeK2MAK", "r": 3}, {"navn": "Steinsetbygdvegen 968", "grp": "HP", "lat": 61.023536, "lon": 9.515969, "adr": "Steinsetbygdvegen 968, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10939334", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeKXMA0", "r": 2}, {"navn": "Brendavegen 323", "grp": "HP", "lat": 61.035486, "lon": 9.550256, "adr": "Brendavegen 323, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10939470", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeMjMAK", "r": 2}, {"navn": "Tyinvegen 677", "grp": "HP", "lat": 60.986361, "lon": 9.132161, "adr": "Tyinvegen 677, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10940038", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeajMAC", "r": 1}, {"navn": "Steinset 54", "grp": "HP", "lat": 61.052516, "lon": 9.459169, "adr": "Steinset 54, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10940634", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeikMAC", "r": 2}, {"navn": "Vestringslinna 209", "grp": "HP", "lat": 60.925733, "lon": 9.388406, "adr": "Vestringslinna 209, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10940755", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EekhMAC", "r": 3}, {"navn": "Mønavegen 199", "grp": "HP", "lat": 60.919668, "lon": 9.312692, "adr": "Mønavegen 199, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10941333", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eeu1MAC", "r": 3}, {"navn": "Tonsåslinna 13", "grp": "HP", "lat": 60.895672, "lon": 9.461009, "adr": "Tonsåslinna 13, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10941480", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef1DMAS", "r": 5}, {"navn": "Høgdingsvegen 13", "grp": "HP", "lat": 60.917027, "lon": 9.428145, "adr": "Høgdingsvegen 13, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10941816", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef6dMAC", "r": 4}, {"navn": "Høgdingsvegen 265", "grp": "HP", "lat": 60.917205, "lon": 9.437386, "adr": "Høgdingsvegen 265, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10941951", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef8oMAC", "r": 4}, {"navn": "Oslovegen 1026", "grp": "HP", "lat": 60.932211, "lon": 9.39513, "adr": "Oslovegen 1026, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10942128", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfBfMAK", "r": 3}, {"navn": "Smiugardsbygde 86", "grp": "HP", "lat": 61.050723, "lon": 9.561776, "adr": "Smiugardsbygde 86, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10942354", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfFJMA0", "r": 2}, {"navn": "Oslovegen 1285", "grp": "HP", "lat": 60.916021, "lon": 9.428057, "adr": "Oslovegen 1285, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10942386", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfFpMAK", "r": 4}, {"navn": "Sjurudvegen 80", "grp": "HC", "lat": 60.938717, "lon": 9.393623, "adr": "Sjurudvegen 80, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10942627", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfOYMA0", "r": 3}, {"navn": "Mønavegen 9", "grp": "HP", "lat": 60.926174, "lon": 9.33813, "adr": "Mønavegen 9, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10942672", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfPHMA0", "r": 3}, {"navn": "Oslovegen 1216", "grp": "HP", "lat": 60.92093, "lon": 9.42125, "adr": "Oslovegen 1216, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10942938", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EfTZMA0", "r": 4}, {"navn": "Danebuvegen 229", "grp": "HP", "lat": 60.934239, "lon": 9.414651, "adr": "Danebuvegen 229, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10943037", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfVAMA0", "r": 4}, {"navn": "Åbjørsvegen 89", "grp": "HC", "lat": 60.931107, "lon": 9.305739, "adr": "Åbjørsvegen 89, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10943689", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfiuMAC", "r": 3}, {"navn": "Steinsetbygdvegen 1138", "grp": "HP", "lat": 61.028273, "lon": 9.487863, "adr": "Steinsetbygdvegen 1138, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10944745", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfzwMAC", "r": 2}, {"navn": "Sørfjellsvegen 132", "grp": "HP", "lat": 60.894682, "lon": 9.598996, "adr": "Sørfjellsvegen 132, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10945635", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgEIMA0", "r": 5}, {"navn": "Hjellevegen 63", "grp": "HC", "lat": 60.934149, "lon": 9.397067, "adr": "Hjellevegen 63, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10946288", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgQRMA0", "r": 4}, {"navn": "Lovegen 1095", "grp": "HP", "lat": 60.979505, "lon": 9.112608, "adr": "Lovegen 1095, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10946324", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgR1MAK", "r": 1}, {"navn": "Høgdingsvegen 165", "grp": "HP", "lat": 60.924208, "lon": 9.426438, "adr": "Høgdingsvegen 165, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10946409", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgU1MAK", "r": 4}, {"navn": "Smiugardsbygde 194", "grp": "HP", "lat": 61.057626, "lon": 9.551747, "adr": "Smiugardsbygde 194, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10946917", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgfRMAS", "r": 2}, {"navn": "Øvrebygdsvegen 657", "grp": "HP", "lat": 61.049667, "lon": 9.186591, "adr": "Øvrebygdsvegen 657, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10947107", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgiVMAS", "r": 1}, {"navn": "Lundebakka 21", "grp": "HP", "lat": 60.845381, "lon": 9.74376, "adr": "Lundebakka 21, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10947595", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgrzMAC", "r": 5}, {"navn": "Panoramavegen 205", "grp": "HP", "lat": 60.996793, "lon": 9.088314, "adr": "Panoramavegen 205, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10947972", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Egy4MAC", "r": 1}, {"navn": "Øvrebygdsvegen 282", "grp": "HC", "lat": 61.024764, "lon": 9.231589, "adr": "Øvrebygdsvegen 282, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10947981", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgyDMAS", "r": 3}, {"navn": "Vestringslinna 723", "grp": "HP", "lat": 60.937459, "lon": 9.320484, "adr": "Vestringslinna 723, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10948118", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh0QMAS", "r": 3}, {"navn": "Oslovegen 1218", "grp": "HP", "lat": 60.920685, "lon": 9.421666, "adr": "Oslovegen 1218, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10948141", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh0nMAC", "r": 4}, {"navn": "Møllevegen 2", "grp": "HP", "lat": 60.929282, "lon": 9.32671, "adr": "Møllevegen 2, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10948513", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh6nMAC", "r": 3}, {"navn": "Steinset 87", "grp": "HP", "lat": 61.053393, "lon": 9.455498, "adr": "Steinset 87, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10948724", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhACMA0", "r": 2}, {"navn": "Fjellslinna 295", "grp": "HP", "lat": 60.887014, "lon": 9.616593, "adr": "Fjellslinna 295, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10949098", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhGEMA0", "r": 5}, {"navn": "Brendavegen 434", "grp": "HC", "lat": 61.0427, "lon": 9.555684, "adr": "Brendavegen 434, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10949753", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhQoMAK", "r": 2}, {"navn": "Tyinvegen 778 B", "grp": "HP", "lat": 60.990669, "lon": 9.116551, "adr": "Tyinvegen 778 B, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10950160", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhXNMA0", "r": 1}, {"navn": "Hjemlivegen 202", "grp": "HC", "lat": 60.915228, "lon": 9.328132, "adr": "Hjemlivegen 202, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10950550", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhfGMAS", "r": 3}, {"navn": "Fødnesvegen 912", "grp": "HP", "lat": 60.995864, "lon": 9.116139, "adr": "Fødnesvegen 912, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10950974", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ehm6MAC", "r": 1}, {"navn": "Tonsåslinna 1438", "grp": "HC", "lat": 60.865658, "lon": 9.666971, "adr": "Tonsåslinna 1438, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10950991", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhmNMAS", "r": 5}, {"navn": "Høllavegen 34", "grp": "HP", "lat": 61.003239, "lon": 9.067285, "adr": "Høllavegen 34, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10951146", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhosMAC", "r": 1}, {"navn": "Fjellslinna 507", "grp": "HC", "lat": 60.872172, "lon": 9.621949, "adr": "Fjellslinna 507, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10951189", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhpZMAS", "r": 5}, {"navn": "Danebuvegen 198", "grp": "HP", "lat": 60.932204, "lon": 9.413982, "adr": "Danebuvegen 198, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10951277", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhqzMAC", "r": 4}, {"navn": "Olav Moevegen 8", "grp": "HP", "lat": 60.920491, "lon": 9.42248, "adr": "Olav Moevegen 8, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10951422", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhtKMAS", "r": 4}, {"navn": "Lovegen 1238", "grp": "HP", "lat": 60.989715, "lon": 9.100047, "adr": "Lovegen 1238, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10951492", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhuSMAS", "r": 1}, {"navn": "Øvrebygdsvegen 353", "grp": "HP", "lat": 61.031652, "lon": 9.230227, "adr": "Øvrebygdsvegen 353, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10951811", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhzbMAC", "r": 2}, {"navn": "Tyinvegen 778 A", "grp": "HP", "lat": 60.990754, "lon": 9.116713, "adr": "Tyinvegen 778 A, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10952120", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei4aMAC", "r": 1}, {"navn": "Sørfjellsvegen 81", "grp": "HP", "lat": 60.892931, "lon": 9.609198, "adr": "Sørfjellsvegen 81, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10952128", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei4iMAC", "r": 5}, {"navn": "Sjurudvegen 48", "grp": "HP", "lat": 60.937169, "lon": 9.405686, "adr": "Sjurudvegen 48, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10952270", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei8cMAC", "r": 4}, {"navn": "Høgdingsvegen 127", "grp": "HP", "lat": 60.923663, "lon": 9.425483, "adr": "Høgdingsvegen 127, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10952416", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiCaMAK", "r": 4}, {"navn": "Danebuvegen 232", "grp": "HP", "lat": 60.93399, "lon": 9.414266, "adr": "Danebuvegen 232, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10952548", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiEiMAK", "r": 4}, {"navn": "Oslovegen 1445", "grp": "HC Vula", "lat": 60.903608, "lon": 9.443528, "adr": "Oslovegen 1445, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10952551", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiElMAK", "r": 5}, {"navn": "Lovegen 1135", "grp": "HP", "lat": 60.982353, "lon": 9.109337, "adr": "Lovegen 1135, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10952621", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiFtMAK", "r": 1}, {"navn": "Hestkinnbygde 111", "grp": "HP", "lat": 61.008804, "lon": 9.57648, "adr": "Hestkinnbygde 111, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10952623", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiFvMAK", "r": 2}, {"navn": "Danebuvegen 328", "grp": "HP", "lat": 60.939089, "lon": 9.408775, "adr": "Danebuvegen 328, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10952980", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiLgMAK", "r": 4}, {"navn": "Øvrebygdsvegen 665", "grp": "HC Vula", "lat": 61.052007, "lon": 9.190565, "adr": "Øvrebygdsvegen 665, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10953048", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiMmMAK", "r": 1}, {"navn": "Dalsvegen 17", "grp": "HP", "lat": 61.062683, "lon": 9.398158, "adr": "Dalsvegen 17, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10953117", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiNtMAK", "r": 2}, {"navn": "Steinsetbygdvegen 1673", "grp": "HC Vula", "lat": 61.059936, "lon": 9.422858, "adr": "Steinsetbygdvegen 1673, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10953122", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiNyMAK", "r": 2}, {"navn": "Danebuvegen 140", "grp": "HP", "lat": 60.930304, "lon": 9.41483, "adr": "Danebuvegen 140, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10953130", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiO6MAK", "r": 4}, {"navn": "Søreisvegen 5", "grp": "HP", "lat": 60.920538, "lon": 9.417563, "adr": "Søreisvegen 5, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10953639", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiWJMA0", "r": 4}, {"navn": "Øvrebygdsvegen 605", "grp": "HC Vula", "lat": 61.046983, "lon": 9.195339, "adr": "Øvrebygdsvegen 605, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10953703", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiXLMA0", "r": 1}, {"navn": "Skogstadvegen 4", "grp": "HP", "lat": 61.033454, "lon": 9.20613, "adr": "Skogstadvegen 4, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10953795", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiYpMAK", "r": 1}, {"navn": "Brekkudn 316", "grp": "HP", "lat": 61.009634, "lon": 9.046825, "adr": "Brekkudn 316, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10954044", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EicqMAC", "r": 1}, {"navn": "Tyinvegen 978", "grp": "HP", "lat": 61.00636, "lon": 9.103298, "adr": "Tyinvegen 978, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10954094", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EideMAC", "r": 1}, {"navn": "Danebuvegen 309", "grp": "HP", "lat": 60.938756, "lon": 9.407743, "adr": "Danebuvegen 309, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10954640", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EimSMAS", "r": 4}, {"navn": "Sjurudvegen 62", "grp": "HP", "lat": 60.936776, "lon": 9.405119, "adr": "Sjurudvegen 62, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10955183", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EivDMAS", "r": 4}, {"navn": "Øvrebygdsvegen 416", "grp": "HC", "lat": 61.034868, "lon": 9.219127, "adr": "Øvrebygdsvegen 416, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10955390", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiyYMAS", "r": 2}, {"navn": "Venstrevegen 135", "grp": "HP", "lat": 60.875416, "lon": 9.63339, "adr": "Venstrevegen 135, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10955530", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EizEMAS", "r": 5}, {"navn": "Søreisvegen 9", "grp": "HP", "lat": 60.919985, "lon": 9.417457, "adr": "Søreisvegen 9, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10956099", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej8PMAS", "r": 4}, {"navn": "Øvrebygdsvegen 607", "grp": "HC Vula", "lat": 61.047108, "lon": 9.193196, "adr": "Øvrebygdsvegen 607, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10956164", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej9SMAS", "r": 1}, {"navn": "Nyvegen 126", "grp": "HP", "lat": 60.875636, "lon": 9.645988, "adr": "Nyvegen 126, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10956629", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjIXMA0", "r": 5}, {"navn": "Danebuvegen 329", "grp": "HP", "lat": 60.937659, "lon": 9.41129, "adr": "Danebuvegen 329, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10956808", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjLQMA0", "r": 4}, {"navn": "Woldsvegen 51", "grp": "HP", "lat": 60.879472, "lon": 9.699526, "adr": "Woldsvegen 51, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10957021", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjOrMAK", "r": 5}, {"navn": "Krøssjordet 10", "grp": "HP", "lat": 60.931633, "lon": 9.298388, "adr": "Krøssjordet 10, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10957209", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjRtMAK", "r": 3}, {"navn": "Fødnesvegen 801", "grp": "HP", "lat": 60.992337, "lon": 9.127535, "adr": "Fødnesvegen 801, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10957367", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjURMA0", "r": 1}, {"navn": "Nørre Skrindsrud 14", "grp": "HP", "lat": 61.056843, "lon": 9.383973, "adr": "Nørre Skrindsrud 14, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10957638", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjYoMAK", "r": 2}, {"navn": "Nyvegen 254", "grp": "HP", "lat": 60.867225, "lon": 9.656918, "adr": "Nyvegen 254, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10957679", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjZTMA0", "r": 5}, {"navn": "Tyinvegen 1035", "grp": "HP", "lat": 61.01155, "lon": 9.101732, "adr": "Tyinvegen 1035, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10957694", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjZiMAK", "r": 1}, {"navn": "Steinsetbygdvegen 1640", "grp": "HC", "lat": 61.058746, "lon": 9.426803, "adr": "Steinsetbygdvegen 1640, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10958233", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjiPMAS", "r": 2}, {"navn": "Steinsetbygdvegen 1716", "grp": "HP", "lat": 61.060666, "lon": 9.415208, "adr": "Steinsetbygdvegen 1716, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10959151", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjxDMAS", "r": 2}, {"navn": "Panoramavegen 168", "grp": "HP", "lat": 60.995872, "lon": 9.09217, "adr": "Panoramavegen 168, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10959594", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek4MMAS", "r": 1}, {"navn": "Grånstølvegen 10", "grp": "HP", "lat": 61.036299, "lon": 9.473382, "adr": "Grånstølvegen 10, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10959904", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek9MMAS", "r": 2}, {"navn": "Oslovegen 1216", "grp": "HP", "lat": 60.92093, "lon": 9.42125, "adr": "Oslovegen 1216, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10959926", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek9iMAC", "r": 4}, {"navn": "Fjellslinna 461", "grp": "HP", "lat": 60.875816, "lon": 9.618814, "adr": "Fjellslinna 461, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10959996", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkAqMAK", "r": 5}, {"navn": "Sjurudvegen 30", "grp": "HP", "lat": 60.936426, "lon": 9.406991, "adr": "Sjurudvegen 30, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10960447", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkI7MAK", "r": 4}, {"navn": "Nordfjellsvegen 131", "grp": "HP", "lat": 60.893174, "lon": 9.598946, "adr": "Nordfjellsvegen 131, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10960483", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkIhMAK", "r": 5}, {"navn": "Raskebakkin 9", "grp": "HP", "lat": 60.922096, "lon": 9.415537, "adr": "Raskebakkin 9, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10960952", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EkQGMA0", "r": 4}, {"navn": "Høgdingsvegen 46", "grp": "HP", "lat": 60.91755, "lon": 9.429105, "adr": "Høgdingsvegen 46, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10961046", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkRmMAK", "r": 4}, {"navn": "Fjellslinna 279", "grp": "HP", "lat": 60.887173, "lon": 9.620099, "adr": "Fjellslinna 279, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10961292", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkVkMAK", "r": 5}, {"navn": "Øvrebygdsvegen 371", "grp": "HP", "lat": 61.032534, "lon": 9.224823, "adr": "Øvrebygdsvegen 371, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10961324", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkWGMA0", "r": 2}, {"navn": "Krøssjordet 88", "grp": "HP", "lat": 60.925265, "lon": 9.300264, "adr": "Krøssjordet 88, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10961505", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkZBMA0", "r": 3}, {"navn": "Golsvegen 447", "grp": "HP", "lat": 60.936498, "lon": 9.296085, "adr": "Golsvegen 447, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10961512", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkZIMA0", "r": 3}, {"navn": "Røyrosvegen 65", "grp": "HP", "lat": 60.916766, "lon": 9.327593, "adr": "Røyrosvegen 65, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10961637", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkbJMAS", "r": 3}, {"navn": "Steinsetbygdvegen 876", "grp": "HP", "lat": 61.013918, "lon": 9.51721, "adr": "Steinsetbygdvegen 876, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10961686", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ekc6MAC", "r": 2}, {"navn": "Grønbrekkvegen 9", "grp": "HP", "lat": 61.055617, "lon": 9.447918, "adr": "Grønbrekkvegen 9, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10961942", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkgEMAS", "r": 2}, {"navn": "Steinsetbygdvegen 1278", "grp": "HP", "lat": 61.037891, "lon": 9.466548, "adr": "Steinsetbygdvegen 1278, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10962131", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkjHMAS", "r": 2}, {"navn": "Vestringslinna 576", "grp": "HP", "lat": 60.926603, "lon": 9.33828, "adr": "Vestringslinna 576, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10962159", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkjjMAC", "r": 3}, {"navn": "Øvrebygdsvegen 611", "grp": "HC", "lat": 61.047761, "lon": 9.192012, "adr": "Øvrebygdsvegen 611, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10962325", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkmPMAS", "r": 1}, {"navn": "Steinsetbygdvegen 1683", "grp": "HC", "lat": 61.060164, "lon": 9.420648, "adr": "Steinsetbygdvegen 1683, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10962600", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkqqMAC", "r": 2}, {"navn": "Steinset 71", "grp": "HP", "lat": 61.053629, "lon": 9.457053, "adr": "Steinset 71, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10962789", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkttMAC", "r": 2}, {"navn": "Hestkinnbygde 108", "grp": "HP", "lat": 61.008866, "lon": 9.578413, "adr": "Hestkinnbygde 108, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10962798", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eku2MAC", "r": 2}, {"navn": "Hestkinnbygde 105", "grp": "HP", "lat": 61.009116, "lon": 9.577081, "adr": "Hestkinnbygde 105, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10963079", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkyZMAS", "r": 2}, {"navn": "Etnedalsvegen 638", "grp": "HP", "lat": 60.864896, "lon": 9.724062, "adr": "Etnedalsvegen 638, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10963124", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkzIMAS", "r": 5}, {"navn": "Danebuvegen 222", "grp": "HP", "lat": 60.933277, "lon": 9.414929, "adr": "Danebuvegen 222, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10963182", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El0EMAS", "r": 4}, {"navn": "Danebuvegen 201", "grp": "HP", "lat": 60.931237, "lon": 9.417707, "adr": "Danebuvegen 201, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10963207", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El0dMAC", "r": 4}, {"navn": "Øvrebygdsvegen 653", "grp": "HP", "lat": 61.048757, "lon": 9.18847, "adr": "Øvrebygdsvegen 653, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10963710", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El8kMAC", "r": 1}, {"navn": "Vestringslinna 721", "grp": "HP", "lat": 60.93732, "lon": 9.321093, "adr": "Vestringslinna 721, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10963876", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElBQMA0", "r": 3}, {"navn": "Øvrebygdsvegen 410", "grp": "Kun mobil", "lat": 61.033523, "lon": 9.221092, "adr": "Øvrebygdsvegen 410, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10963973", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElK5MAK", "r": 2}, {"navn": "Sålsåbøvegen 12", "grp": "Kun mobil", "lat": 60.931962, "lon": 9.393829, "adr": "Sålsåbøvegen 12, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964022", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElKsMAK", "r": 3}, {"navn": "Graneisbygde 55", "grp": "Kun mobil", "lat": 61.002777, "lon": 9.601392, "adr": "Graneisbygde 55, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964041", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElLBMA0", "r": 2}, {"navn": "Nyvegen 240", "grp": "Kun mobil", "lat": 60.869679, "lon": 9.657971, "adr": "Nyvegen 240, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964056", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElLQMA0", "r": 5}, {"navn": "Oslovegen 1475", "grp": "Kun mobil", "lat": 60.901999, "lon": 9.447568, "adr": "Oslovegen 1475, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964168", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElNEMA0", "r": 5}, {"navn": "Kleivgardsbygde 123", "grp": "Kun mobil", "lat": 60.885733, "lon": 9.67401, "adr": "Kleivgardsbygde 123, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964218", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElO2MAK", "r": 5}, {"navn": "Fjellslinna 320", "grp": "Kun mobil", "lat": 60.885268, "lon": 9.615481, "adr": "Fjellslinna 320, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964230", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElOEMA0", "r": 5}, {"navn": "Breiesvegen 79", "grp": "Kun mobil", "lat": 60.885522, "lon": 9.596504, "adr": "Breiesvegen 79, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964383", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElQhMAK", "r": 5}, {"navn": "Ton 49", "grp": "Kun mobil", "lat": 61.026618, "lon": 9.51507, "adr": "Ton 49, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964443", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElRfMAK", "r": 2}, {"navn": "Jotungløttvegen 22", "grp": "Kun mobil", "lat": 60.929646, "lon": 9.412083, "adr": "Jotungløttvegen 22, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964444", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElRgMAK", "r": 4}, {"navn": "Etnedalsvegen 273", "grp": "Kun mobil", "lat": 60.837832, "lon": 9.7569, "adr": "Etnedalsvegen 273, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964551", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElTPMA0", "r": 5}, {"navn": "Oslovegen 1477", "grp": "Kun mobil", "lat": 60.901687, "lon": 9.448667, "adr": "Oslovegen 1477, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964575", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElTnMAK", "r": 5}, {"navn": "Mælingen 26", "grp": "Kun mobil", "lat": 60.928641, "lon": 9.403187, "adr": "Mælingen 26, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964583", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElTvMAK", "r": 4}, {"navn": "Smiugardsbygde 192", "grp": "Kun mobil", "lat": 61.057615, "lon": 9.55221, "adr": "Smiugardsbygde 192, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10964679", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElVTMA0", "r": 2}, {"navn": "Raskebakkin 9", "grp": "Kun mobil", "lat": 60.922096, "lon": 9.415537, "adr": "Raskebakkin 9, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964680", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElVUMA0", "r": 4}, {"navn": "Prestgardsvegen 18", "grp": "Kun mobil", "lat": 60.921895, "lon": 9.414035, "adr": "Prestgardsvegen 18, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10964748", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElWaMAK", "r": 4}, {"navn": "Øvrebygdsvegen 406", "grp": "Kun mobil", "lat": 61.034407, "lon": 9.222053, "adr": "Øvrebygdsvegen 406, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10964782", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElX8MAK", "r": 2}, {"navn": "Øvrebygdsvegen 493", "grp": "Kun mobil", "lat": 61.038378, "lon": 9.20997, "adr": "Øvrebygdsvegen 493, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10964928", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElZUMA0", "r": 2}, {"navn": "Danebuvegen 227", "grp": "Kun mobil", "lat": 60.93213, "lon": 9.417541, "adr": "Danebuvegen 227, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965022", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elb0MAC", "r": 4}, {"navn": "Steinsetbygdvegen 1806", "grp": "Kun mobil", "lat": 61.060697, "lon": 9.400228, "adr": "Steinsetbygdvegen 1806, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10965071", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElbnMAC", "r": 2}, {"navn": "Stasjonsgoto 43", "grp": "Kun mobil", "lat": 60.89165, "lon": 9.484257, "adr": "Stasjonsgoto 43, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965110", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElcQMAS", "r": 5}, {"navn": "Stokkevegen 51", "grp": "Kun mobil", "lat": 60.972842, "lon": 9.138657, "adr": "Stokkevegen 51, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10965140", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElcuMAC", "r": 1}, {"navn": "Fjellslinna 508", "grp": "Kun mobil", "lat": 60.872466, "lon": 9.6248, "adr": "Fjellslinna 508, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10965199", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EldrMAC", "r": 5}, {"navn": "Øvrebygdsvegen 389", "grp": "Kun mobil", "lat": 61.034279, "lon": 9.224795, "adr": "Øvrebygdsvegen 389, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10965292", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElfMMAS", "r": 2}, {"navn": "Flatåkervegen 6", "grp": "Kun mobil", "lat": 60.997812, "lon": 9.117023, "adr": "Flatåkervegen 6, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10965353", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElgLMAS", "r": 1}, {"navn": "Engelykkja 3", "grp": "Kun mobil", "lat": 60.893676, "lon": 9.473631, "adr": "Engelykkja 3, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965439", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElhjMAC", "r": 5}, {"navn": "Dalsvegen 15", "grp": "Kun mobil", "lat": 61.062664, "lon": 9.397825, "adr": "Dalsvegen 15, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10965461", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eli5MAC", "r": 2}, {"navn": "Steinset 93", "grp": "Kun mobil", "lat": 61.053248, "lon": 9.452347, "adr": "Steinset 93, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10965503", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElilMAC", "r": 2}, {"navn": "Tyinvegen 751", "grp": "Kun mobil", "lat": 60.989139, "lon": 9.119108, "adr": "Tyinvegen 751, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10965506", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElioMAC", "r": 1}, {"navn": "Engelykkja 9", "grp": "Kun mobil", "lat": 60.892961, "lon": 9.475702, "adr": "Engelykkja 9, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965535", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EljHMAS", "r": 5}, {"navn": "Høllavegen 112", "grp": "Kun mobil", "lat": 61.006367, "lon": 9.067389, "adr": "Høllavegen 112, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10965571", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EljrMAC", "r": 1}, {"navn": "Tyinvegen 749", "grp": "Kun mobil", "lat": 60.988361, "lon": 9.120106, "adr": "Tyinvegen 749, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10965583", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elk3MAC", "r": 1}, {"navn": "Stasjonsgoto 39", "grp": "Kun mobil", "lat": 60.891847, "lon": 9.481886, "adr": "Stasjonsgoto 39, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965665", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EllNMAS", "r": 5}, {"navn": "Vestringslinna 197", "grp": "Kun mobil", "lat": 60.920155, "lon": 9.394185, "adr": "Vestringslinna 197, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965731", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElmRMAS", "r": 4}, {"navn": "Øvrebygdsvegen 329", "grp": "Kun mobil", "lat": 61.028946, "lon": 9.229094, "adr": "Øvrebygdsvegen 329, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10965767", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eln1MAC", "r": 2}, {"navn": "Tonsåslinna 76", "grp": "Kun mobil", "lat": 60.897266, "lon": 9.472202, "adr": "Tonsåslinna 76, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965844", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EloGMAS", "r": 5}, {"navn": "Mælingen 28", "grp": "Kun mobil", "lat": 60.928711, "lon": 9.402205, "adr": "Mælingen 28, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10965982", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElqUMAS", "r": 4}, {"navn": "Oslovegen 1537", "grp": "Kun mobil", "lat": 60.896653, "lon": 9.454851, "adr": "Oslovegen 1537, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10966114", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElscMAC", "r": 5}, {"navn": "Fjellslinna 514", "grp": "Kun mobil", "lat": 60.871923, "lon": 9.625966, "adr": "Fjellslinna 514, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10966266", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elv4MAC", "r": 5}, {"navn": "Stasjonsgoto 45", "grp": "Kun mobil", "lat": 60.892448, "lon": 9.482389, "adr": "Stasjonsgoto 45, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10966280", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElvIMAS", "r": 5}, {"navn": "Hestkinnbygde 11", "grp": "Kun mobil", "lat": 61.014385, "lon": 9.586611, "adr": "Hestkinnbygde 11, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10966508", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElyyMAC", "r": 2}, {"navn": "Jotungløttvegen 18", "grp": "Kun mobil", "lat": 60.929184, "lon": 9.412599, "adr": "Jotungløttvegen 18, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10966644", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em1AMAS", "r": 4}, {"navn": "Lovegen 365", "grp": "Kun mobil", "lat": 60.969113, "lon": 9.229938, "adr": "Lovegen 365, 2920 Leira I Valdres", "area": "Leira", "bnr": "V-10966711", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em2FMAS", "r": 3}, {"navn": "Haugsvegen 55", "grp": "Kun mobil", "lat": 60.871229, "lon": 9.642491, "adr": "Haugsvegen 55, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10966799", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em3fMAC", "r": 5}, {"navn": "Vestringslinna 808", "grp": "Kun mobil", "lat": 60.940389, "lon": 9.29989, "adr": "Vestringslinna 808, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10966897", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em5FMAS", "r": 3}, {"navn": "Etnedalsvegen 3019", "grp": "Kun mobil", "lat": 61.041638, "lon": 9.570507, "adr": "Etnedalsvegen 3019, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967021", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em7FMAS", "r": 2}, {"navn": "Sagbrøtavegen 2", "grp": "Kun mobil", "lat": 60.92059, "lon": 9.406352, "adr": "Sagbrøtavegen 2, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967036", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em7UMAS", "r": 4}, {"navn": "Jyllandsvegen 92", "grp": "Kun mobil", "lat": 61.057552, "lon": 9.367169, "adr": "Jyllandsvegen 92, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967055", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em7nMAC", "r": 2}, {"navn": "Oslovegen 1212", "grp": "Kun mobil", "lat": 60.92118, "lon": 9.420623, "adr": "Oslovegen 1212, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em8EMAS", "r": 4}, {"navn": "Olav Moevegen 3", "grp": "Kun mobil", "lat": 60.919729, "lon": 9.424177, "adr": "Olav Moevegen 3, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967094", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em8QMAS", "r": 4}, {"navn": "Etnedalsvegen 2779", "grp": "Kun mobil", "lat": 61.023725, "lon": 9.585833, "adr": "Etnedalsvegen 2779, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967102", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em8YMAS", "r": 2}, {"navn": "Lundebakka 5", "grp": "Kun mobil", "lat": 60.846757, "lon": 9.741389, "adr": "Lundebakka 5, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967125", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em8vMAC", "r": 5}, {"navn": "Øvrebygdsvegen 547", "grp": "Kun mobil", "lat": 61.042239, "lon": 9.203013, "adr": "Øvrebygdsvegen 547, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10967361", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmCjMAK", "r": 1}, {"navn": "Blankebakkin 7", "grp": "Kun mobil", "lat": 60.922896, "lon": 9.398916, "adr": "Blankebakkin 7, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967409", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmDVMA0", "r": 4}, {"navn": "Laukeslettvegen 2", "grp": "Kun mobil", "lat": 61.051404, "lon": 9.458444, "adr": "Laukeslettvegen 2, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967538", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmFaMAK", "r": 2}, {"navn": "Prestgardsvegen 11", "grp": "Kun mobil", "lat": 60.922495, "lon": 9.412461, "adr": "Prestgardsvegen 11, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967651", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmHPMA0", "r": 4}, {"navn": "Oslovegen 1006", "grp": "Kun mobil", "lat": 60.93295, "lon": 9.39267, "adr": "Oslovegen 1006, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967700", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmICMA0", "r": 3}, {"navn": "Smiugardsbygde 7", "grp": "Kun mobil", "lat": 61.045011, "lon": 9.56832, "adr": "Smiugardsbygde 7, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967773", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmJNMA0", "r": 2}, {"navn": "Øvrebygdsvegen 351", "grp": "Kun mobil", "lat": 61.031159, "lon": 9.229753, "adr": "Øvrebygdsvegen 351, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10967781", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmJVMA0", "r": 2}, {"navn": "Smiugardsbygde 249", "grp": "Kun mobil", "lat": 61.06323, "lon": 9.543041, "adr": "Smiugardsbygde 249, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967839", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmKRMA0", "r": 2}, {"navn": "Stasjonsgoto 41", "grp": "Kun mobil", "lat": 60.891952, "lon": 9.48282, "adr": "Stasjonsgoto 41, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967865", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmKrMAK", "r": 5}, {"navn": "Søreisvegen 27", "grp": "Kun mobil", "lat": 60.9191, "lon": 9.419667, "adr": "Søreisvegen 27, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967942", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmM6MAK", "r": 4}, {"navn": "Liavollatn 4", "grp": "Kun mobil", "lat": 60.895063, "lon": 9.598621, "adr": "Liavollatn 4, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10967947", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmMBMA0", "r": 5}, {"navn": "Oslovegen 1516", "grp": "Kun mobil", "lat": 60.89839, "lon": 9.458486, "adr": "Oslovegen 1516, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967982", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmMkMAK", "r": 5}, {"navn": "Oslovegen 1384", "grp": "Kun mobil", "lat": 60.908946, "lon": 9.439817, "adr": "Oslovegen 1384, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10967995", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmMxMAK", "r": 4}, {"navn": "Mælingen 12", "grp": "Kun mobil", "lat": 60.929736, "lon": 9.402108, "adr": "Mælingen 12, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10968085", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmOPMA0", "r": 4}, {"navn": "Steinsetbygdvegen 812", "grp": "Kun mobil", "lat": 61.012272, "lon": 9.53063, "adr": "Steinsetbygdvegen 812, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968097", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmObMAK", "r": 2}, {"navn": "Nyvegen 293", "grp": "Kun mobil", "lat": 60.865384, "lon": 9.660931, "adr": "Nyvegen 293, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968232", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmQmMAK", "r": 5}, {"navn": "Øvrebygdsvegen 187", "grp": "Kun mobil", "lat": 61.018241, "lon": 9.238721, "adr": "Øvrebygdsvegen 187, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10968279", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmRXMA0", "r": 3}, {"navn": "Steinsetbygdvegen 1638", "grp": "Kun mobil", "lat": 61.058617, "lon": 9.428608, "adr": "Steinsetbygdvegen 1638, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968306", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmRyMAK", "r": 2}, {"navn": "Søreisvegen 26", "grp": "Kun mobil", "lat": 60.91954, "lon": 9.420113, "adr": "Søreisvegen 26, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10968344", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmSaMAK", "r": 4}, {"navn": "Smiugardsbygde 127", "grp": "Kun mobil", "lat": 61.053371, "lon": 9.560231, "adr": "Smiugardsbygde 127, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968427", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmTvMAK", "r": 2}, {"navn": "Olav Moevegen 37", "grp": "Kun mobil", "lat": 60.922268, "lon": 9.42055, "adr": "Olav Moevegen 37, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10968445", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmUDMA0", "r": 4}, {"navn": "Hagaset 36", "grp": "Kun mobil", "lat": 61.062387, "lon": 9.418441, "adr": "Hagaset 36, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968470", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmUcMAK", "r": 2}, {"navn": "Oslovegen 1227", "grp": "Kun mobil", "lat": 60.91917, "lon": 9.421115, "adr": "Oslovegen 1227, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10968554", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmVyMAK", "r": 4}, {"navn": "Steinsetbygdvegen 1275", "grp": "Kun mobil", "lat": 61.03565, "lon": 9.47091, "adr": "Steinsetbygdvegen 1275, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968578", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmWMMA0", "r": 2}, {"navn": "Leirskogvegen 1529", "grp": "Kun mobil", "lat": 60.826245, "lon": 9.769681, "adr": "Leirskogvegen 1529, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10968797", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmZtMAK", "r": 5}, {"navn": "Bagnsvegen 50", "grp": "Kun mobil", "lat": 60.894807, "lon": 9.471324, "adr": "Bagnsvegen 50, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10968861", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmavMAC", "r": 5}, {"navn": "Sålsåbøvegen 26", "grp": "Kun mobil", "lat": 60.932534, "lon": 9.392369, "adr": "Sålsåbøvegen 26, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10969077", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmePMAS", "r": 3}, {"navn": "Høllavegen 77", "grp": "Kun mobil", "lat": 61.005526, "lon": 9.073235, "adr": "Høllavegen 77, 2918 Ulnes", "area": "Ulnes", "bnr": "V-10969087", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmeZMAS", "r": 1}, {"navn": "Øvrebygdsvegen 213", "grp": "Kun mobil", "lat": 61.020735, "lon": 9.23843, "adr": "Øvrebygdsvegen 213, 2917 Skrautvål", "area": "Skrautvål", "bnr": "V-10969132", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmfIMAS", "r": 3}, {"navn": "Høgdingsvegen 125", "grp": "Kun mobil", "lat": 60.923367, "lon": 9.425758, "adr": "Høgdingsvegen 125, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10969142", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmfSMAS", "r": 4}, {"navn": "Dalsvegen 40", "grp": "Kun mobil", "lat": 61.062697, "lon": 9.389022, "adr": "Dalsvegen 40, 2890 Etnedal", "area": "Etnedal", "bnr": "V-10969160", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmfkMAC", "r": 2}, {"navn": "Kølhusvegen 14", "grp": "Kun mobil", "lat": 60.922553, "lon": 9.396307, "adr": "Kølhusvegen 14, 2910 Aurdal", "area": "Aurdal", "bnr": "V-10969213", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmgbMAC", "r": 4}];
+var AREAS = ["Aurdal", "Etnedal", "Ulnes", "Skrautvål", "Leira"];
+var STORE_KEY = "dorkart_Markus_17.11.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Markus";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":39,"m":13,"h":[[[60.960108,9.16374],[60.959932,9.1635],[60.959815,9.16314],[60.959773,9.162715],[60.959815,9.16229],[60.959932,9.16193],[61.008022,9.023707],[61.008198,9.023467],[61.008406,9.023382],[61.008614,9.023467],[61.00879,9.023707],[61.008907,9.024067],[61.010776,9.037424],[61.013414,9.060442],[61.012093,9.101732],[61.012051,9.102157],[61.011934,9.102517],[60.999128,9.130202],[60.998952,9.130442],[60.960524,9.16374],[60.960316,9.163825]],[[61.033454,9.20724],[61.033246,9.207155],[61.03307,9.206915],[61.032953,9.206555],[61.032911,9.20613],[61.033283,9.202282],[61.0334,9.201922],[61.038795,9.193047],[61.039947,9.191455],[61.051371,9.180782],[61.051579,9.180697],[61.052787,9.180679],[61.052995,9.180764],[61.053171,9.181004],[61.053288,9.181364],[61.05333,9.181789],[61.052508,9.19099],[61.052391,9.19135],[61.052215,9.19159],[61.042447,9.204038],[61.039679,9.205031],[61.038667,9.202685],[61.037834,9.201705],[61.036387,9.205531],[61.036253,9.206246]]],"b":[[61.013414,9.060442],[61.05333,9.181789]],"g":["Tyinvegen","Øvrebygdsvegen","Skrautvålsvegen"]},{"n":2,"c":"#7b2cbf","s":28,"m":26,"h":[[[61.063731,9.543466],[61.063614,9.543826],[61.053755,9.561016],[61.053579,9.561256],[61.045219,9.569345],[61.023933,9.586858],[61.002985,9.602417],[61.002777,9.602502],[61.002569,9.602417],[61.002393,9.602177],[61.002276,9.601817],[61.002234,9.601392],[61.002276,9.600967],[61.013417,9.516785],[61.057051,9.366744],[61.057168,9.366384],[61.057344,9.366144],[61.057552,9.366059],[61.05776,9.366144],[61.057936,9.366384],[61.058053,9.366744],[61.063198,9.388597],[61.06324,9.389022],[61.063773,9.543041]],[[61.028562,9.228309],[61.037994,9.209185],[61.03817,9.208945],[61.038378,9.20886],[61.038586,9.208945],[61.038762,9.209185],[61.038879,9.209545],[61.038921,9.20997],[61.038316,9.217537],[61.038199,9.217897],[61.034663,9.22558],[61.032036,9.231012],[61.03186,9.231252],[61.025729,9.238075],[61.025521,9.23816],[61.025313,9.238075],[61.025137,9.237835],[61.02502,9.237475],[61.024978,9.23705],[61.02502,9.236625],[61.025137,9.236265],[61.026252,9.233676],[61.027259,9.233117],[61.027091,9.231726]]],"b":[[61.063773,9.543041],[61.038921,9.20997]],"g":["Steinsetbygdvegen","Øvrebygdsvegen","Smiugardsbygde"]},{"n":3,"c":"#0b7285","s":35,"m":9,"h":[[[60.932003,9.396155],[60.925525,9.389431],[60.925349,9.389191],[60.925232,9.388831],[60.914727,9.328557],[60.914685,9.328132],[60.914727,9.327707],[60.919284,9.311907],[60.924881,9.299479],[60.968729,9.229153],[60.968905,9.228913],[60.969113,9.228828],[60.969321,9.228913],[60.969497,9.229153],[60.969614,9.229513],[60.969656,9.229938],[60.970581,9.275257],[60.970366,9.310712],[60.970324,9.311137],[60.938694,9.401016],[60.938518,9.401256],[60.93831,9.401341],[60.938102,9.401256],[60.936065,9.399552],[60.936631,9.396444],[60.93587,9.392225],[60.933446,9.394986],[60.932973,9.396966]],[[61.021119,9.239215],[61.020943,9.239455],[61.020735,9.23954],[61.018241,9.239831],[61.015064,9.239207],[61.014856,9.239122],[61.01468,9.238882],[61.014563,9.238522],[61.014521,9.238097],[61.014563,9.237672],[61.01468,9.237312],[61.025572,9.219139],[61.026653,9.228097],[61.025148,9.232374],[61.023411,9.235322],[61.022978,9.235573],[61.023008,9.236006]],[[61.031239,9.209684],[61.032576,9.207786],[61.032784,9.207701],[61.032992,9.207786],[61.033168,9.208026],[61.033285,9.208386],[61.033327,9.208811],[61.033285,9.209236],[61.030425,9.217387],[61.028975,9.21847],[61.028368,9.218631],[61.026537,9.217531]]],"b":[[60.970581,9.275257],[61.026653,9.228097]],"g":["Vestringslinna","Åbjørsvegen","Øvrebygdsvegen"]},{"n":4,"c":"#a61e4d","s":39,"m":21,"h":[[[60.933258,9.395774],[60.934357,9.396042],[60.934533,9.396282],[60.936029,9.39975],[60.935891,9.400508],[60.936963,9.401913],[60.93914,9.406958],[60.93959,9.40835],[60.939632,9.408775],[60.93959,9.4092],[60.939473,9.40956],[60.938043,9.412075],[60.925735,9.429839],[60.917413,9.438411],[60.908946,9.440927],[60.908837,9.440882],[60.908413,9.439919],[60.908445,9.439392],[60.919654,9.39376],[60.919771,9.3934],[60.919947,9.39316],[60.920155,9.393075],[60.925187,9.394112],[60.926149,9.395731],[60.926417,9.396033],[60.927922,9.394675],[60.928326,9.394758],[60.928728,9.395409],[60.929699,9.396393],[60.930737,9.39782],[60.932367,9.399499]]],"b":[[60.939632,9.408775]],"g":["Danebuvegen","Oslovegen","Søreisvegen"]},{"n":5,"c":"#343a40","s":28,"m":24,"h":[[[60.895271,9.597596],[60.895447,9.597836],[60.895564,9.598196],[60.895606,9.598621],[60.895564,9.599046],[60.886234,9.674435],[60.879973,9.699951],[60.879856,9.700311],[60.86528,9.724847],[60.865104,9.725087],[60.83804,9.757925],[60.826453,9.770706],[60.826245,9.770791],[60.826037,9.770706],[60.825861,9.770466],[60.825744,9.770106],[60.825702,9.769681],[60.825744,9.769256],[60.871788,9.621164],[60.885138,9.595719],[60.885314,9.595479],[60.885522,9.595394],[60.895063,9.597511]],[[60.90884,9.440889],[60.908808,9.441418],[60.908691,9.441778],[60.89765,9.472987],[60.892034,9.485042],[60.891858,9.485282],[60.89165,9.485367],[60.891442,9.485282],[60.891266,9.485042],[60.891149,9.484682],[60.891107,9.484257],[60.891304,9.481886],[60.892084,9.475773],[60.894312,9.462272],[60.896152,9.454426],[60.896269,9.454066],[60.9034,9.442503],[60.908307,9.439883],[60.908417,9.439928]]],"b":[[60.895606,9.598621],[60.90884,9.440889]],"g":["Oslovegen","Fjellslinna","Tonsåslinna"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
