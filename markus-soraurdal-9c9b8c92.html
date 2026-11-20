@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Markus 20.11.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Markus</div>
+<div class="date">20.11.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "Spangrudvegen 2", "grp": "HC Vula", "lat": 60.824767, "lon": 9.560212, "adr": "Spangrudvegen 2, 2930 Bagn", "area": "Bagn", "bnr": "V-10937887", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EdxCMAS", "r": 2}, {"navn": "Austsidevegen 163", "grp": "HP", "lat": 60.756605, "lon": 9.692072, "adr": "Austsidevegen 163, 2930 Bagn", "area": "Bagn", "bnr": "V-10942176", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfCRMA0", "r": 3}, {"navn": "Stabelvegen 17", "grp": "HC", "lat": 60.818574, "lon": 9.567396, "adr": "Stabelvegen 17, 2930 Bagn", "area": "Bagn", "bnr": "V-10943814", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EfkvMAC", "r": 2}, {"navn": "Dønhaugvegen 7", "grp": "HC", "lat": 60.825197, "lon": 9.559121, "adr": "Dønhaugvegen 7, 2930 Bagn", "area": "Bagn", "bnr": "V-10950981", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EhmDMAS", "r": 2}, {"navn": "Stabelvegen 2", "grp": "HC", "lat": 60.819923, "lon": 9.567337, "adr": "Stabelvegen 2, 2930 Bagn", "area": "Bagn", "bnr": "V-10951198", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EhpiMAC", "r": 2}, {"navn": "Spangrudvegen 20", "grp": "HP", "lat": 60.825933, "lon": 9.560494, "adr": "Spangrudvegen 20, 2930 Bagn", "area": "Bagn", "bnr": "V-10951829", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EhztMAC", "r": 2}, {"navn": "Erstadvegen 58", "grp": "HC", "lat": 60.817665, "lon": 9.559143, "adr": "Erstadvegen 58, 2930 Bagn", "area": "Bagn", "bnr": "V-10954306", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Eih4MAC", "r": 2}, {"navn": "Nedrevegen 10", "grp": "HP", "lat": 60.833494, "lon": 9.500306, "adr": "Nedrevegen 10, 2933 Reinli", "area": "Reinli", "bnr": "V-10954936", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EirEMAS", "r": 1}, {"navn": "Hagagrendvegen 227", "grp": "HC Vula", "lat": 60.83808, "lon": 9.492714, "adr": "Hagagrendvegen 227, 2933 Reinli", "area": "Reinli", "bnr": "V-10957053", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EjPNMA0", "r": 1}, {"navn": "Erstadvegen 82", "grp": "HC Vula", "lat": 60.815479, "lon": 9.560438, "adr": "Erstadvegen 82, 2930 Bagn", "area": "Bagn", "bnr": "V-10958609", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EjoTMAS", "r": 2}, {"navn": "Prestgardshagin 9", "grp": "HC Vula", "lat": 60.820303, "lon": 9.56856, "adr": "Prestgardshagin 9, 2930 Bagn", "area": "Bagn", "bnr": "V-10959921", "bol": "U0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Ek9dMAC", "r": 2}, {"navn": "Prestgardshagin 8", "grp": "HP", "lat": 60.820621, "lon": 9.567696, "adr": "Prestgardshagin 8, 2930 Bagn", "area": "Bagn", "bnr": "V-10961252", "bol": "U0101", "st": "Ikke hjemme", "sfid": "a4CSg000000EkV6MAK", "r": 2}, {"navn": "Erstadvegen 53", "grp": "Kun mobil", "lat": 60.817903, "lon": 9.557955, "adr": "Erstadvegen 53, 2930 Bagn", "area": "Bagn", "bnr": "V-10964736", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000ElWOMA0", "r": 2}, {"navn": "Austsidevegen 1885", "grp": "Kun mobil", "lat": 60.658288, "lon": 9.826377, "adr": "Austsidevegen 1885, 2937 Begna", "area": "Begna", "bnr": "V-10965104", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000ElcKMAS", "r": 5}, {"navn": "Pålelivegen 29", "grp": "Kun mobil", "lat": 60.826895, "lon": 9.492358, "adr": "Pålelivegen 29, 2933 Reinli", "area": "Reinli", "bnr": "V-10966803", "bol": "H0101", "st": "Ikke hjemme", "sfid": "a4CSg000000Em3jMAC", "r": 1}, {"navn": "Moreina 18", "grp": "HC", "lat": 60.648872, "lon": 9.867626, "adr": "Moreina 18, 2937 Begna", "area": "Begna", "bnr": "V-10940423", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EScZMAW", "r": 5}, {"navn": "Leirskogvegen 343", "grp": "HP", "lat": 60.802464, "lon": 9.629461, "adr": "Leirskogvegen 343, 2930 Bagn", "area": "Bagn", "bnr": "V-10937621", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdsuMAC", "r": 3}, {"navn": "Lundebygdvegen 147", "grp": "HP", "lat": 60.777253, "lon": 9.618637, "adr": "Lundebygdvegen 147, 2930 Bagn", "area": "Bagn", "bnr": "V-10937688", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EdtzMAC", "r": 3}, {"navn": "Åsemyrvegen 248", "grp": "HC", "lat": 60.747657, "lon": 9.668981, "adr": "Åsemyrvegen 248, 2930 Bagn", "area": "Bagn", "bnr": "V-10937732", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EduhMAC", "r": 3}, {"navn": "Leirskogvegen 758", "grp": "HP", "lat": 60.79975, "lon": 9.700658, "adr": "Leirskogvegen 758, 2930 Bagn", "area": "Bagn", "bnr": "V-10937945", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Edy8MAC", "r": 3}, {"navn": "Hedalsvegen 2351", "grp": "HP", "lat": 60.6202, "lon": 9.717447, "adr": "Hedalsvegen 2351, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10938820", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EeCFMA0", "r": 4}, {"navn": "Austsidevegen 1621", "grp": "HC", "lat": 60.653605, "lon": 9.785374, "adr": "Austsidevegen 1621, 2937 Begna", "area": "Begna", "bnr": "V-10938905", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeDcMAK", "r": 5}, {"navn": "Valdresvegen 2096", "grp": "HP", "lat": 60.71056, "lon": 9.706717, "adr": "Valdresvegen 2096, 2930 Bagn", "area": "Bagn", "bnr": "V-10939244", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeJ5MAK", "r": 4}, {"navn": "Valdresvegen 3420", "grp": "HP", "lat": 60.795242, "lon": 9.580238, "adr": "Valdresvegen 3420, 2930 Bagn", "area": "Bagn", "bnr": "V-10939841", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeXYMA0", "r": 2}, {"navn": "Valdresvegen 1987", "grp": "HP", "lat": 60.701338, "lon": 9.718568, "adr": "Valdresvegen 1987, 2930 Bagn", "area": "Bagn", "bnr": "V-10940150", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EecXMAS", "r": 4}, {"navn": "Åsemyrvegen 482", "grp": "HP", "lat": 60.730489, "lon": 9.688314, "adr": "Åsemyrvegen 482, 2930 Bagn", "area": "Bagn", "bnr": "V-10940316", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EefDMAS", "r": 3}, {"navn": "Øvrevegen 246", "grp": "HP", "lat": 60.632458, "lon": 9.690377, "adr": "Øvrevegen 246, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10940393", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EegSMAS", "r": 4}, {"navn": "Rudkroken 22", "grp": "HP", "lat": 60.660923, "lon": 9.742006, "adr": "Rudkroken 22, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10940563", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EehbMAC", "r": 4}, {"navn": "Bagnslinna 224", "grp": "HP", "lat": 60.821372, "lon": 9.576088, "adr": "Bagnslinna 224, 2930 Bagn", "area": "Bagn", "bnr": "V-10940992", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeoWMAS", "r": 2}, {"navn": "Åsemyrvegen 23", "grp": "HP", "lat": 60.761527, "lon": 9.659075, "adr": "Åsemyrvegen 23, 2930 Bagn", "area": "Bagn", "bnr": "V-10941005", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeojMAC", "r": 3}, {"navn": "Austsidevegen 2001", "grp": "HC", "lat": 60.653096, "lon": 9.843803, "adr": "Austsidevegen 2001, 2937 Begna", "area": "Begna", "bnr": "V-10941216", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ees8MAC", "r": 5}, {"navn": "Hedalsvegen 2488", "grp": "HP", "lat": 60.622033, "lon": 9.692961, "adr": "Hedalsvegen 2488, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10941237", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EesTMAS", "r": 4}, {"navn": "Leirskogvegen 374", "grp": "HC", "lat": 60.806069, "lon": 9.63685, "adr": "Leirskogvegen 374, 2930 Bagn", "area": "Bagn", "bnr": "V-10941248", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EeseMAC", "r": 3}, {"navn": "Leirskogvegen 878", "grp": "HP", "lat": 60.804287, "lon": 9.720536, "adr": "Leirskogvegen 878, 2930 Bagn", "area": "Bagn", "bnr": "V-10941465", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef0yMAC", "r": 3}, {"navn": "Dølvesvegen 92", "grp": "HP", "lat": 60.790985, "lon": 9.582818, "adr": "Dølvesvegen 92, 2930 Bagn", "area": "Bagn", "bnr": "V-10941474", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef17MAC", "r": 2}, {"navn": "Bagnslinna 270", "grp": "HP", "lat": 60.820083, "lon": 9.579957, "adr": "Bagnslinna 270, 2930 Bagn", "area": "Bagn", "bnr": "V-10941524", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef1vMAC", "r": 2}, {"navn": "Moreina 22", "grp": "HP", "lat": 60.64902, "lon": 9.866062, "adr": "Moreina 22, 2937 Begna", "area": "Begna", "bnr": "V-10941676", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef4NMAS", "r": 5}, {"navn": "Sørvollbakkin 44", "grp": "HP", "lat": 60.817487, "lon": 9.554409, "adr": "Sørvollbakkin 44, 2930 Bagn", "area": "Bagn", "bnr": "V-10941758", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef5hMAC", "r": 2}, {"navn": "Rustøvegen 206", "grp": "HC Vula", "lat": 60.868651, "lon": 9.473496, "adr": "Rustøvegen 206, 2933 Reinli", "area": "Reinli", "bnr": "V-10941823", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ef6kMAC", "r": 1}, {"navn": "Valdresvegen 3434", "grp": "HP", "lat": 60.795851, "lon": 9.578233, "adr": "Valdresvegen 3434, 2930 Bagn", "area": "Bagn", "bnr": "V-10942265", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfDsMAK", "r": 2}, {"navn": "Valdresvegen 2387", "grp": "HC", "lat": 60.735396, "lon": 9.70776, "adr": "Valdresvegen 2387, 2930 Bagn", "area": "Bagn", "bnr": "V-10942328", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfEtMAK", "r": 3}, {"navn": "Tingvollbakkin 5", "grp": "HP", "lat": 60.822996, "lon": 9.547479, "adr": "Tingvollbakkin 5, 2930 Bagn", "area": "Bagn", "bnr": "V-10942384", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfFnMAK", "r": 1}, {"navn": "Bagnskleive 299", "grp": "HP", "lat": 60.83867, "lon": 9.521563, "adr": "Bagnskleive 299, 2930 Bagn", "area": "Bagn", "bnr": "V-10942863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfSMMA0", "r": 1}, {"navn": "Sørumsvegen 58", "grp": "HP", "lat": 60.646746, "lon": 9.860775, "adr": "Sørumsvegen 58, 2937 Begna", "area": "Begna", "bnr": "V-10943103", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfWEMA0", "r": 5}, {"navn": "Moreina 17", "grp": "HC", "lat": 60.649158, "lon": 9.868039, "adr": "Moreina 17, 2937 Begna", "area": "Begna", "bnr": "V-10943423", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfecMAC", "r": 5}, {"navn": "Steinsætervegen 75", "grp": "HP", "lat": 60.774719, "lon": 9.650068, "adr": "Steinsætervegen 75, 2930 Bagn", "area": "Bagn", "bnr": "V-10943786", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfkTMAS", "r": 3}, {"navn": "Stabelvegen 50", "grp": "HC Vula", "lat": 60.816115, "lon": 9.572087, "adr": "Stabelvegen 50, 2930 Bagn", "area": "Bagn", "bnr": "V-10944044", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfodMAC", "r": 2}, {"navn": "Tellatn 6", "grp": "HP", "lat": 60.82472, "lon": 9.557969, "adr": "Tellatn 6, 2930 Bagn", "area": "Bagn", "bnr": "V-10944387", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EfuAMAS", "r": 2}, {"navn": "Juvkamsvegen 116", "grp": "HC", "lat": 60.834002, "lon": 9.529755, "adr": "Juvkamsvegen 116, 2930 Bagn", "area": "Bagn", "bnr": "V-10944702", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EfzFMAS", "r": 1}, {"navn": "Skarovegen 441", "grp": "HP", "lat": 60.788261, "lon": 9.665473, "adr": "Skarovegen 441, 2930 Bagn", "area": "Bagn", "bnr": "V-10945133", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eg6CMAS", "r": 3}, {"navn": "Vestbygdvegen 117", "grp": "HC Vula", "lat": 60.820158, "lon": 9.543964, "adr": "Vestbygdvegen 117, 2930 Bagn", "area": "Bagn", "bnr": "V-10945278", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000Eg8XMAS", "r": 1}, {"navn": "Dølvesvegen 287", "grp": "HP", "lat": 60.782621, "lon": 9.581168, "adr": "Dølvesvegen 287, 2930 Bagn", "area": "Bagn", "bnr": "V-10945399", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgAUMA0", "r": 2}, {"navn": "Bagnslinna 12", "grp": "HC Vula", "lat": 60.823182, "lon": 9.560845, "adr": "Bagnslinna 12, 2930 Bagn", "area": "Bagn", "bnr": "V-10945747", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgG6MAK", "r": 2}, {"navn": "Dølvesvegen 336", "grp": "HP", "lat": 60.784295, "lon": 9.573938, "adr": "Dølvesvegen 336, 2930 Bagn", "area": "Bagn", "bnr": "V-10945801", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgGyMAK", "r": 2}, {"navn": "Austsidevegen 1521", "grp": "HP", "lat": 60.655542, "lon": 9.771707, "adr": "Austsidevegen 1521, 2937 Begna", "area": "Begna", "bnr": "V-10945882", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgIHMA0", "r": 5}, {"navn": "Hagagrendvegen 195", "grp": "HC Vula", "lat": 60.835282, "lon": 9.491885, "adr": "Hagagrendvegen 195, 2933 Reinli", "area": "Reinli", "bnr": "V-10945890", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgIPMA0", "r": 1}, {"navn": "Austsidevegen 721", "grp": "HC", "lat": 60.710603, "lon": 9.715371, "adr": "Austsidevegen 721, 2930 Bagn", "area": "Bagn", "bnr": "V-10946306", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgQjMAK", "r": 4}, {"navn": "Hagagrendvegen 191", "grp": "HP", "lat": 60.834232, "lon": 9.493038, "adr": "Hagagrendvegen 191, 2933 Reinli", "area": "Reinli", "bnr": "V-10946395", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgSAMA0", "r": 1}, {"navn": "Skarovegen 196", "grp": "HC", "lat": 60.787797, "lon": 9.631499, "adr": "Skarovegen 196, 2930 Bagn", "area": "Bagn", "bnr": "V-10946430", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgUMMA0", "r": 3}, {"navn": "Austsidevegen 996", "grp": "HP", "lat": 60.693564, "lon": 9.745339, "adr": "Austsidevegen 996, 2930 Bagn", "area": "Bagn", "bnr": "V-10946723", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgZ5MAK", "r": 4}, {"navn": "Mohaugvegen 4", "grp": "HP", "lat": 60.824984, "lon": 9.543909, "adr": "Mohaugvegen 4, 2930 Bagn", "area": "Bagn", "bnr": "V-10946968", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EggGMAS", "r": 1}, {"navn": "Rustøvegen 196", "grp": "HP", "lat": 60.868694, "lon": 9.471591, "adr": "Rustøvegen 196, 2933 Reinli", "area": "Reinli", "bnr": "V-10947159", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgjLMAS", "r": 1}, {"navn": "Åsemyrvegen 62", "grp": "HP", "lat": 60.7581, "lon": 9.659711, "adr": "Åsemyrvegen 62, 2930 Bagn", "area": "Bagn", "bnr": "V-10947597", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Egs1MAC", "r": 3}, {"navn": "Mohaugvegen 31", "grp": "HC", "lat": 60.825165, "lon": 9.539191, "adr": "Mohaugvegen 31, 2930 Bagn", "area": "Bagn", "bnr": "V-10947766", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgukMAC", "r": 1}, {"navn": "Storebruvegen 19", "grp": "HP", "lat": 60.823122, "lon": 9.55121, "adr": "Storebruvegen 19, 2930 Bagn", "area": "Bagn", "bnr": "V-10947956", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EgxoMAC", "r": 2}, {"navn": "Vollskroken 14", "grp": "HC Vula", "lat": 60.819412, "lon": 9.552423, "adr": "Vollskroken 14, 2930 Bagn", "area": "Bagn", "bnr": "V-10948177", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh1NMAS", "r": 2}, {"navn": "Grøvsvegen 27", "grp": "HP", "lat": 60.627699, "lon": 9.670968, "adr": "Grøvsvegen 27, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10948213", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh1xMAC", "r": 4}, {"navn": "Vestbygdvegen 140", "grp": "HC Vula", "lat": 60.81732, "lon": 9.545127, "adr": "Vestbygdvegen 140, 2930 Bagn", "area": "Bagn", "bnr": "V-10948233", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh2HMAS", "r": 1}, {"navn": "Grøvsvegen 43", "grp": "HP", "lat": 60.627949, "lon": 9.663403, "adr": "Grøvsvegen 43, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10948332", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eh3sMAC", "r": 4}, {"navn": "Austsidevegen 978", "grp": "HP", "lat": 60.692733, "lon": 9.744951, "adr": "Austsidevegen 978, 2930 Bagn", "area": "Bagn", "bnr": "V-10949284", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhJEMA0", "r": 4}, {"navn": "Vollskroken 8", "grp": "HP", "lat": 60.82028, "lon": 9.55388, "adr": "Vollskroken 8, 2930 Bagn", "area": "Bagn", "bnr": "V-10949543", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhNQMA0", "r": 2}, {"navn": "Valdresvegen 2385", "grp": "HP", "lat": 60.735142, "lon": 9.707426, "adr": "Valdresvegen 2385, 2930 Bagn", "area": "Bagn", "bnr": "V-10949590", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhOBMA0", "r": 3}, {"navn": "Reinlivegen 452", "grp": "HC", "lat": 60.827863, "lon": 9.47716, "adr": "Reinlivegen 452, 2933 Reinli", "area": "Reinli", "bnr": "V-10949619", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhOeMAK", "r": 1}, {"navn": "Bagnslinna 17", "grp": "HP", "lat": 60.822136, "lon": 9.560939, "adr": "Bagnslinna 17, 2930 Bagn", "area": "Bagn", "bnr": "V-10949778", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhRDMA0", "r": 2}, {"navn": "Valdresvegen 2539", "grp": "HP", "lat": 60.748305, "lon": 9.701073, "adr": "Valdresvegen 2539, 2930 Bagn", "area": "Bagn", "bnr": "V-10949782", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhRHMA0", "r": 3}, {"navn": "Lundebygdvegen 214", "grp": "HC", "lat": 60.773319, "lon": 9.624447, "adr": "Lundebygdvegen 214, 2930 Bagn", "area": "Bagn", "bnr": "V-10949816", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhRpMAK", "r": 3}, {"navn": "Erstadvegen 21", "grp": "HC Vula", "lat": 60.820346, "lon": 9.554461, "adr": "Erstadvegen 21, 2930 Bagn", "area": "Bagn", "bnr": "V-10949896", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhT7MAK", "r": 2}, {"navn": "Reinlivegen 590", "grp": "HC Vula", "lat": 60.82609, "lon": 9.455641, "adr": "Reinlivegen 590, 2933 Reinli", "area": "Reinli", "bnr": "V-10950331", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eha8MAC", "r": 1}, {"navn": "Sørumsvegen 73", "grp": "HP", "lat": 60.645826, "lon": 9.862504, "adr": "Sørumsvegen 73, 2937 Begna", "area": "Begna", "bnr": "V-10950418", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ehd8MAC", "r": 5}, {"navn": "Valdresvegen 3252", "grp": "HP", "lat": 60.783404, "lon": 9.598476, "adr": "Valdresvegen 3252, 2930 Bagn", "area": "Bagn", "bnr": "V-10950599", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ehg3MAC", "r": 3}, {"navn": "Begnavegen 151", "grp": "HC", "lat": 60.647527, "lon": 9.871575, "adr": "Begnavegen 151, 2937 Begna", "area": "Begna", "bnr": "V-10950822", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhjeMAC", "r": 5}, {"navn": "Valdresvegen 2051", "grp": "HP", "lat": 60.70662, "lon": 9.711824, "adr": "Valdresvegen 2051, 2930 Bagn", "area": "Bagn", "bnr": "V-10951166", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhpCMAS", "r": 4}, {"navn": "Stavadalsvegen 99", "grp": "HP", "lat": 60.831081, "lon": 9.437351, "adr": "Stavadalsvegen 99, 2933 Reinli", "area": "Reinli", "bnr": "V-10951255", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhqdMAC", "r": 1}, {"navn": "Hagagrendvegen 54", "grp": "HC Vula", "lat": 60.832126, "lon": 9.46928, "adr": "Hagagrendvegen 54, 2933 Reinli", "area": "Reinli", "bnr": "V-10951399", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhsxMAC", "r": 1}, {"navn": "Bagnskleive 137", "grp": "HP", "lat": 60.828907, "lon": 9.530123, "adr": "Bagnskleive 137, 2930 Bagn", "area": "Bagn", "bnr": "V-10951759", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhylMAC", "r": 1}, {"navn": "Valdresvegen 283", "grp": "HP", "lat": 60.623252, "lon": 9.910355, "adr": "Valdresvegen 283, 2937 Begna", "area": "Begna", "bnr": "V-10951764", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhyqMAC", "r": 5}, {"navn": "Austsidevegen 51", "grp": "HP", "lat": 60.756934, "lon": 9.673316, "adr": "Austsidevegen 51, 2930 Bagn", "area": "Bagn", "bnr": "V-10951779", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ehz5MAC", "r": 3}, {"navn": "Lundebygdvegen 211", "grp": "HP", "lat": 60.772728, "lon": 9.619541, "adr": "Lundebygdvegen 211, 2930 Bagn", "area": "Bagn", "bnr": "V-10951798", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EhzOMAS", "r": 3}, {"navn": "Valdresvegen 1567", "grp": "HC", "lat": 60.670313, "lon": 9.742485, "adr": "Valdresvegen 1567, 2930 Bagn", "area": "Bagn", "bnr": "V-10951857", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei0LMAS", "r": 4}, {"navn": "Valdresvegen 203", "grp": "HP", "lat": 60.617761, "lon": 9.920958, "adr": "Valdresvegen 203, 2937 Begna", "area": "Begna", "bnr": "V-10951968", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei28MAC", "r": 5}, {"navn": "Leistrudbakkin 3", "grp": "HC Vula", "lat": 60.824901, "lon": 9.544252, "adr": "Leistrudbakkin 3, 2930 Bagn", "area": "Bagn", "bnr": "V-10952190", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei5iMAC", "r": 1}, {"navn": "Leirskogvegen 1148", "grp": "HC", "lat": 60.815364, "lon": 9.756407, "adr": "Leirskogvegen 1148, 2930 Bagn", "area": "Bagn", "bnr": "V-10952293", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ei8zMAC", "r": 3}, {"navn": "Steinsætervegen 84", "grp": "HP", "lat": 60.774423, "lon": 9.651561, "adr": "Steinsætervegen 84, 2930 Bagn", "area": "Bagn", "bnr": "V-10952375", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiAJMA0", "r": 3}, {"navn": "Vestbygdvegen 142", "grp": "HP", "lat": 60.817188, "lon": 9.545287, "adr": "Vestbygdvegen 142, 2930 Bagn", "area": "Bagn", "bnr": "V-10953066", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000EiN4MAK", "r": 1}, {"navn": "Valdresvegen 2064", "grp": "HP", "lat": 60.708063, "lon": 9.708274, "adr": "Valdresvegen 2064, 2930 Bagn", "area": "Bagn", "bnr": "V-10953372", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiS0MAK", "r": 4}, {"navn": "Liagrendvegen 15", "grp": "HC Vula", "lat": 60.832639, "lon": 9.500718, "adr": "Liagrendvegen 15, 2933 Reinli", "area": "Reinli", "bnr": "V-10953432", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiSyMAK", "r": 1}, {"navn": "Bagnslinna 242", "grp": "HP", "lat": 60.820643, "lon": 9.579245, "adr": "Bagnslinna 242, 2930 Bagn", "area": "Bagn", "bnr": "V-10953613", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiVtMAK", "r": 2}, {"navn": "Valdresvegen 1997", "grp": "HP", "lat": 60.703183, "lon": 9.717377, "adr": "Valdresvegen 1997, 2930 Bagn", "area": "Bagn", "bnr": "V-10953874", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eia6MAC", "r": 4}, {"navn": "Hagagrendvegen 135", "grp": "HP", "lat": 60.833945, "lon": 9.482207, "adr": "Hagagrendvegen 135, 2933 Reinli", "area": "Reinli", "bnr": "V-10954254", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EigEMAS", "r": 1}, {"navn": "Erstadvegen 35", "grp": "HP", "lat": 60.818953, "lon": 9.556339, "adr": "Erstadvegen 35, 2930 Bagn", "area": "Bagn", "bnr": "V-10954524", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EikaMAC", "r": 2}, {"navn": "Leistrudbakkin 5", "grp": "HP", "lat": 60.824811, "lon": 9.544251, "adr": "Leistrudbakkin 5, 2930 Bagn", "area": "Bagn", "bnr": "V-10954772", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EioaMAC", "r": 1}, {"navn": "Bagnskleive 297", "grp": "HP", "lat": 60.83827, "lon": 9.521996, "adr": "Bagnskleive 297, 2930 Bagn", "area": "Bagn", "bnr": "V-10955182", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EivCMAS", "r": 1}, {"navn": "Austsidevegen 1998", "grp": "HC", "lat": 60.655026, "lon": 9.842629, "adr": "Austsidevegen 1998, 2937 Begna", "area": "Begna", "bnr": "V-10955257", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EiwPMAS", "r": 5}, {"navn": "Hagagrendvegen 98", "grp": "HP", "lat": 60.834866, "lon": 9.473018, "adr": "Hagagrendvegen 98, 2933 Reinli", "area": "Reinli", "bnr": "V-10955555", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EizdMAC", "r": 1}, {"navn": "Stabelvegen 9 C", "grp": "HC", "lat": 60.818606, "lon": 9.565845, "adr": "Stabelvegen 9 C, 2930 Bagn", "area": "Bagn", "bnr": "V-10955682", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej1gMAC", "r": 2}, {"navn": "Hedalsvegen 2635", "grp": "HP", "lat": 60.630967, "lon": 9.675801, "adr": "Hedalsvegen 2635, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10955812", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej3mMAC", "r": 4}, {"navn": "Vollskogvegen 35", "grp": "HP", "lat": 60.823246, "lon": 9.545762, "adr": "Vollskogvegen 35, 2930 Bagn", "area": "Bagn", "bnr": "V-10955863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej4bMAC", "r": 1}, {"navn": "Valdresvegen 826", "grp": "HP", "lat": 60.651213, "lon": 9.835887, "adr": "Valdresvegen 826, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10956084", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej8AMAS", "r": 5}, {"navn": "Austsidevegen 1321", "grp": "HP", "lat": 60.665366, "lon": 9.747747, "adr": "Austsidevegen 1321, 2937 Begna", "area": "Begna", "bnr": "V-10956108", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ej8YMAS", "r": 5}, {"navn": "Leirskogvegen 837", "grp": "HC Vula", "lat": 60.797404, "lon": 9.714117, "adr": "Leirskogvegen 837, 2930 Bagn", "area": "Bagn", "bnr": "V-10956503", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjGVMA0", "r": 3}, {"navn": "Valdresvegen 784", "grp": "HP", "lat": 60.650281, "lon": 9.839916, "adr": "Valdresvegen 784, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10956595", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjHzMAK", "r": 5}, {"navn": "Liavegen 5", "grp": "HC", "lat": 60.819526, "lon": 9.543599, "adr": "Liavegen 5, 2930 Bagn", "area": "Bagn", "bnr": "V-10957218", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjS2MAK", "r": 1}, {"navn": "Hedalsvegen 2682", "grp": "HP", "lat": 60.630756, "lon": 9.664088, "adr": "Hedalsvegen 2682, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10957327", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjTnMAK", "r": 4}, {"navn": "Begnavegen 378", "grp": "HP", "lat": 60.637918, "lon": 9.902951, "adr": "Begnavegen 378, 2937 Begna", "area": "Begna", "bnr": "V-10957410", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjV8MAK", "r": 5}, {"navn": "Stabelvegen 33", "grp": "HP", "lat": 60.817774, "lon": 9.569028, "adr": "Stabelvegen 33, 2930 Bagn", "area": "Bagn", "bnr": "V-10957468", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjW4MAK", "r": 2}, {"navn": "Stabelvegen 24", "grp": "HP", "lat": 60.818188, "lon": 9.569191, "adr": "Stabelvegen 24, 2930 Bagn", "area": "Bagn", "bnr": "V-10957651", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjZ1MAK", "r": 2}, {"navn": "Liavegen 6", "grp": "HP", "lat": 60.818267, "lon": 9.542844, "adr": "Liavegen 6, 2930 Bagn", "area": "Bagn", "bnr": "V-10957831", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjbvMAC", "r": 1}, {"navn": "Valdresvegen 313", "grp": "HC", "lat": 60.624268, "lon": 9.905298, "adr": "Valdresvegen 313, 2937 Begna", "area": "Begna", "bnr": "V-10957958", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjdyMAC", "r": 5}, {"navn": "Hedalsvegen 2596", "grp": "HP", "lat": 60.626472, "lon": 9.677627, "adr": "Hedalsvegen 2596, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10958089", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ejg5MAC", "r": 4}, {"navn": "Hedalsvegen 2351", "grp": "HP", "lat": 60.6202, "lon": 9.717447, "adr": "Hedalsvegen 2351, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10958287", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjjHMAS", "r": 4}, {"navn": "Hedalsvegen 2517", "grp": "HP", "lat": 60.623765, "lon": 9.68995, "adr": "Hedalsvegen 2517, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10958418", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjlOMAS", "r": 4}, {"navn": "Sørvollbakkin 21", "grp": "HP", "lat": 60.819214, "lon": 9.554586, "adr": "Sørvollbakkin 21, 2930 Bagn", "area": "Bagn", "bnr": "V-10958448", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjlsMAC", "r": 2}, {"navn": "Valdresvegen 1159", "grp": "HP", "lat": 60.649173, "lon": 9.778208, "adr": "Valdresvegen 1159, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10958600", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjoKMAS", "r": 5}, {"navn": "Sørumsvegen 66", "grp": "HP", "lat": 60.646593, "lon": 9.863353, "adr": "Sørumsvegen 66, 2937 Begna", "area": "Begna", "bnr": "V-10958696", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjpsMAC", "r": 5}, {"navn": "Valdresvegen 2347", "grp": "HP", "lat": 60.73203, "lon": 9.70912, "adr": "Valdresvegen 2347, 2930 Bagn", "area": "Bagn", "bnr": "V-10958756", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EjqqMAC", "r": 3}, {"navn": "Valdresvegen 1075", "grp": "HC Vula", "lat": 60.647529, "lon": 9.791076, "adr": "Valdresvegen 1075, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10959426", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek1eMAC", "r": 5}, {"navn": "Austsidevegen 1317", "grp": "HP", "lat": 60.665758, "lon": 9.747826, "adr": "Austsidevegen 1317, 2937 Begna", "area": "Begna", "bnr": "V-10959526", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek3GMAS", "r": 5}, {"navn": "Reinlivegen 504", "grp": "HP", "lat": 60.828113, "lon": 9.469823, "adr": "Reinlivegen 504, 2933 Reinli", "area": "Reinli", "bnr": "V-10959771", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek7DMAS", "r": 1}, {"navn": "Austsidevegen 1319", "grp": "HP", "lat": 60.66541, "lon": 9.747143, "adr": "Austsidevegen 1319, 2937 Begna", "area": "Begna", "bnr": "V-10959896", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ek9EMAS", "r": 5}, {"navn": "Reinlivegen 598", "grp": "HP", "lat": 60.82582, "lon": 9.453942, "adr": "Reinlivegen 598, 2933 Reinli", "area": "Reinli", "bnr": "V-10959986", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkAgMAK", "r": 1}, {"navn": "Rustebakkvegen 27", "grp": "HP", "lat": 60.701632, "lon": 9.723628, "adr": "Rustebakkvegen 27, 2930 Bagn", "area": "Bagn", "bnr": "V-10960037", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkBVMA0", "r": 4}, {"navn": "Leirskogvegen 372", "grp": "HC Vula", "lat": 60.805362, "lon": 9.635834, "adr": "Leirskogvegen 372, 2930 Bagn", "area": "Bagn", "bnr": "V-10960240", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkEmMAK", "r": 3}, {"navn": "Tverrvassvegen 63", "grp": "HC", "lat": 60.794506, "lon": 9.735688, "adr": "Tverrvassvegen 63, 2930 Bagn", "area": "Bagn", "bnr": "V-10960361", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkGjMAK", "r": 3}, {"navn": "Austsidevegen 1235", "grp": "HP", "lat": 60.672432, "lon": 9.746473, "adr": "Austsidevegen 1235, 2937 Begna", "area": "Begna", "bnr": "V-10960461", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkILMA0", "r": 4}, {"navn": "Valdresvegen 2098", "grp": "HP", "lat": 60.710596, "lon": 9.708325, "adr": "Valdresvegen 2098, 2930 Bagn", "area": "Bagn", "bnr": "V-10960513", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkJBMA0", "r": 4}, {"navn": "Steinsætervegen 73", "grp": "HP", "lat": 60.775174, "lon": 9.649533, "adr": "Steinsætervegen 73, 2930 Bagn", "area": "Bagn", "bnr": "V-10960565", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkK1MAK", "r": 3}, {"navn": "Valdresvegen 309", "grp": "HP", "lat": 60.623835, "lon": 9.906215, "adr": "Valdresvegen 309, 2937 Begna", "area": "Begna", "bnr": "V-10960984", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkQmMAK", "r": 5}, {"navn": "Juvkamsvegen 98", "grp": "HP", "lat": 60.835524, "lon": 9.529029, "adr": "Juvkamsvegen 98, 2930 Bagn", "area": "Bagn", "bnr": "V-10961120", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkSyMAK", "r": 1}, {"navn": "Moreina 19", "grp": "HP", "lat": 60.649078, "lon": 9.868091, "adr": "Moreina 19, 2937 Begna", "area": "Begna", "bnr": "V-10961256", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkVAMA0", "r": 5}, {"navn": "Hedalsvegen 2832", "grp": "HC Vula", "lat": 60.63785, "lon": 9.6425, "adr": "Hedalsvegen 2832, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10961725", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkcjMAC", "r": 4}, {"navn": "Valdresvegen 1290", "grp": "HP", "lat": 60.649116, "lon": 9.754437, "adr": "Valdresvegen 1290, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10962018", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkhSMAS", "r": 5}, {"navn": "Bagnslinna 167", "grp": "HP", "lat": 60.82306, "lon": 9.569048, "adr": "Bagnslinna 167, 2930 Bagn", "area": "Bagn", "bnr": "V-10962022", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkhWMAS", "r": 2}, {"navn": "Roagrendvegen 23", "grp": "HP", "lat": 60.634483, "lon": 9.661532, "adr": "Roagrendvegen 23, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10962186", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkkAMAS", "r": 4}, {"navn": "Liavegen 40", "grp": "HP", "lat": 60.820307, "lon": 9.538901, "adr": "Liavegen 40, 2930 Bagn", "area": "Bagn", "bnr": "V-10962473", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkonMAC", "r": 1}, {"navn": "Oslovegen 2172", "grp": "HP", "lat": 60.855151, "lon": 9.513159, "adr": "Oslovegen 2172, 2930 Bagn", "area": "Bagn", "bnr": "V-10962538", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkpqMAC", "r": 1}, {"navn": "Leirskogvegen 723", "grp": "HP", "lat": 60.797917, "lon": 9.694201, "adr": "Leirskogvegen 723, 2930 Bagn", "area": "Bagn", "bnr": "V-10962731", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EksxMAC", "r": 3}, {"navn": "Skulejordet 11", "grp": "HP", "lat": 60.822575, "lon": 9.564918, "adr": "Skulejordet 11, 2930 Bagn", "area": "Bagn", "bnr": "V-10962835", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkudMAC", "r": 2}, {"navn": "Brattrudsvingen 25", "grp": "HP", "lat": 60.814646, "lon": 9.534345, "adr": "Brattrudsvingen 25, 2930 Bagn", "area": "Bagn", "bnr": "V-10962999", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EkxHMAS", "r": 1}, {"navn": "Åsemyrvegen 100", "grp": "HP", "lat": 60.755951, "lon": 9.661191, "adr": "Åsemyrvegen 100, 2930 Bagn", "area": "Bagn", "bnr": "V-10963251", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El1LMAS", "r": 3}, {"navn": "Vollskroken 21", "grp": "HC", "lat": 60.821311, "lon": 9.553371, "adr": "Vollskroken 21, 2930 Bagn", "area": "Bagn", "bnr": "V-10963335", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El2hMAC", "r": 2}, {"navn": "Reinlivegen 491", "grp": "HP", "lat": 60.828554, "lon": 9.472502, "adr": "Reinlivegen 491, 2933 Reinli", "area": "Reinli", "bnr": "V-10963471", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El4tMAC", "r": 1}, {"navn": "Hedalsvegen 2807", "grp": "HP", "lat": 60.640344, "lon": 9.648441, "adr": "Hedalsvegen 2807, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10963604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El72MAC", "r": 4}, {"navn": "Øvrevegen 213", "grp": "HP", "lat": 60.629834, "lon": 9.69506, "adr": "Øvrevegen 213, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10963722", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000El8wMAC", "r": 4}, {"navn": "Erstadvegen 79", "grp": "HP", "lat": 60.814011, "lon": 9.557431, "adr": "Erstadvegen 79, 2930 Bagn", "area": "Bagn", "bnr": "V-10963943", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElCVMA0", "r": 2}, {"navn": "Austsidevegen 2017", "grp": "Kun mobil", "lat": 60.652423, "lon": 9.847248, "adr": "Austsidevegen 2017, 2937 Begna", "area": "Begna", "bnr": "V-10964014", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElKkMAK", "r": 5}, {"navn": "Sørvollbakkin 23", "grp": "Kun mobil", "lat": 60.819639, "lon": 9.553544, "adr": "Sørvollbakkin 23, 2930 Bagn", "area": "Bagn", "bnr": "V-10964020", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElKqMAK", "r": 2}, {"navn": "Hedalsvegen 3008", "grp": "Kun mobil", "lat": 60.632823, "lon": 9.61407, "adr": "Hedalsvegen 3008, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10964095", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElM3MAK", "r": 4}, {"navn": "Begnavegen 374", "grp": "Kun mobil", "lat": 60.637825, "lon": 9.901591, "adr": "Begnavegen 374, 2937 Begna", "area": "Begna", "bnr": "V-10964145", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElMrMAK", "r": 5}, {"navn": "Begnavegen 137", "grp": "Kun mobil", "lat": 60.647599, "lon": 9.868786, "adr": "Begnavegen 137, 2937 Begna", "area": "Begna", "bnr": "V-10964215", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElNzMAK", "r": 5}, {"navn": "Hagahaugvegen 19", "grp": "Kun mobil", "lat": 60.799949, "lon": 9.716137, "adr": "Hagahaugvegen 19, 2930 Bagn", "area": "Bagn", "bnr": "V-10964229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElODMA0", "r": 3}, {"navn": "Vollskroken 4", "grp": "Kun mobil", "lat": 60.820754, "lon": 9.554206, "adr": "Vollskroken 4, 2930 Bagn", "area": "Bagn", "bnr": "V-10964300", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElPMMA0", "r": 2}, {"navn": "Gamle Vestbygdvegen 90", "grp": "Kun mobil", "lat": 60.805696, "lon": 9.539117, "adr": "Gamle Vestbygdvegen 90, 2930 Bagn", "area": "Bagn", "bnr": "V-10964318", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElPeMAK", "r": 1}, {"navn": "Bergsbakka 47", "grp": "Kun mobil", "lat": 60.626977, "lon": 9.690666, "adr": "Bergsbakka 47, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10964323", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElPjMAK", "r": 4}, {"navn": "Prestgardshagin 3", "grp": "Kun mobil", "lat": 60.819682, "lon": 9.568976, "adr": "Prestgardshagin 3, 2930 Bagn", "area": "Bagn", "bnr": "V-10964332", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElPsMAK", "r": 2}, {"navn": "Briskebyvegen 64", "grp": "Kun mobil", "lat": 60.777527, "lon": 9.637549, "adr": "Briskebyvegen 64, 2930 Bagn", "area": "Bagn", "bnr": "V-10964363", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElQNMA0", "r": 3}, {"navn": "Hedalsvegen 2991", "grp": "Kun mobil", "lat": 60.635223, "lon": 9.616428, "adr": "Hedalsvegen 2991, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10964435", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElRXMA0", "r": 4}, {"navn": "Bagnslinna 19", "grp": "Kun mobil", "lat": 60.82207, "lon": 9.561023, "adr": "Bagnslinna 19, 2930 Bagn", "area": "Bagn", "bnr": "V-10964490", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000ElSQMA0", "r": 2}, {"navn": "Moreina 16", "grp": "Kun mobil", "lat": 60.648737, "lon": 9.868161, "adr": "Moreina 16, 2937 Begna", "area": "Begna", "bnr": "V-10964497", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElSXMA0", "r": 5}, {"navn": "Dølvesvegen 109", "grp": "Kun mobil", "lat": 60.791845, "lon": 9.579638, "adr": "Dølvesvegen 109, 2930 Bagn", "area": "Bagn", "bnr": "V-10964504", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElSeMAK", "r": 2}, {"navn": "Lundebygdvegen 116", "grp": "Kun mobil", "lat": 60.777923, "lon": 9.6234, "adr": "Lundebygdvegen 116, 2930 Bagn", "area": "Bagn", "bnr": "V-10964506", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElSgMAK", "r": 3}, {"navn": "Stupulmyra 18", "grp": "Kun mobil", "lat": 60.623798, "lon": 9.703118, "adr": "Stupulmyra 18, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10964546", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElTKMA0", "r": 4}, {"navn": "Austsidevegen 1993", "grp": "Kun mobil", "lat": 60.653666, "lon": 9.841787, "adr": "Austsidevegen 1993, 2937 Begna", "area": "Begna", "bnr": "V-10964608", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElUKMA0", "r": 5}, {"navn": "Vestbygdvegen 73", "grp": "Kun mobil", "lat": 60.819642, "lon": 9.549288, "adr": "Vestbygdvegen 73, 2930 Bagn", "area": "Bagn", "bnr": "V-10964639", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElUpMAK", "r": 2}, {"navn": "Stabelvegen 11", "grp": "Kun mobil", "lat": 60.818424, "lon": 9.56624, "adr": "Stabelvegen 11, 2930 Bagn", "area": "Bagn", "bnr": "V-10964644", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElUuMAK", "r": 2}, {"navn": "Spangrudvegen 22", "grp": "Kun mobil", "lat": 60.82627, "lon": 9.560573, "adr": "Spangrudvegen 22, 2930 Bagn", "area": "Bagn", "bnr": "V-10964675", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElVPMA0", "r": 2}, {"navn": "Hedalsvegen 2636", "grp": "Kun mobil", "lat": 60.628343, "lon": 9.671469, "adr": "Hedalsvegen 2636, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10964696", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElVkMAK", "r": 4}, {"navn": "Brendavegen 109", "grp": "Kun mobil", "lat": 60.777919, "lon": 9.597357, "adr": "Brendavegen 109, 2930 Bagn", "area": "Bagn", "bnr": "V-10964759", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElWlMAK", "r": 3}, {"navn": "Tingvollbakkin 7", "grp": "Kun mobil", "lat": 60.822767, "lon": 9.547888, "adr": "Tingvollbakkin 7, 2930 Bagn", "area": "Bagn", "bnr": "V-10964935", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElZbMAK", "r": 1}, {"navn": "Dølvesvegen 160", "grp": "Kun mobil", "lat": 60.787592, "lon": 9.586754, "adr": "Dølvesvegen 160, 2930 Bagn", "area": "Bagn", "bnr": "V-10964960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ela0MAC", "r": 2}, {"navn": "Hedalsvegen 2606", "grp": "Kun mobil", "lat": 60.626704, "lon": 9.676196, "adr": "Hedalsvegen 2606, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10964983", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElaNMAS", "r": 4}, {"navn": "Kinnvegen 44", "grp": "Kun mobil", "lat": 60.813816, "lon": 9.553972, "adr": "Kinnvegen 44, 2930 Bagn", "area": "Bagn", "bnr": "V-10965010", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElaoMAC", "r": 2}, {"navn": "Øvrevegen 174", "grp": "Kun mobil", "lat": 60.626227, "lon": 9.69676, "adr": "Øvrevegen 174, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10965170", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EldOMAS", "r": 4}, {"navn": "Erstadvegen 33", "grp": "Kun mobil", "lat": 60.819197, "lon": 9.555813, "adr": "Erstadvegen 33, 2930 Bagn", "area": "Bagn", "bnr": "V-10965179", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EldXMAS", "r": 2}, {"navn": "Moreina 3", "grp": "Kun mobil", "lat": 60.648706, "lon": 9.871093, "adr": "Moreina 3, 2937 Begna", "area": "Begna", "bnr": "V-10965190", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EldiMAC", "r": 5}, {"navn": "Leirskogvegen 618", "grp": "Kun mobil", "lat": 60.800293, "lon": 9.675323, "adr": "Leirskogvegen 618, 2930 Bagn", "area": "Bagn", "bnr": "V-10965295", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElfPMAS", "r": 3}, {"navn": "Valdresvegen 1298", "grp": "Kun mobil", "lat": 60.648859, "lon": 9.751487, "adr": "Valdresvegen 1298, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10965424", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElhUMAS", "r": 5}, {"navn": "Skarovegen 443", "grp": "Kun mobil", "lat": 60.787982, "lon": 9.666085, "adr": "Skarovegen 443, 2930 Bagn", "area": "Bagn", "bnr": "V-10965458", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eli2MAC", "r": 3}, {"navn": "Vollskogvegen 29", "grp": "Kun mobil", "lat": 60.822912, "lon": 9.546786, "adr": "Vollskogvegen 29, 2930 Bagn", "area": "Bagn", "bnr": "V-10965478", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EliMMAS", "r": 1}, {"navn": "Rudkroken 44", "grp": "Kun mobil", "lat": 60.662812, "lon": 9.743493, "adr": "Rudkroken 44, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10965489", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EliXMAS", "r": 4}, {"navn": "Leirskogvegen 517", "grp": "Kun mobil", "lat": 60.79979, "lon": 9.660023, "adr": "Leirskogvegen 517, 2930 Bagn", "area": "Bagn", "bnr": "V-10965490", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EliYMAS", "r": 3}, {"navn": "Valdresvegen 2599", "grp": "Kun mobil", "lat": 60.753649, "lon": 9.693222, "adr": "Valdresvegen 2599, 2930 Bagn", "area": "Bagn", "bnr": "V-10965517", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElizMAC", "r": 3}, {"navn": "Austsidevegen 1933", "grp": "Kun mobil", "lat": 60.657476, "lon": 9.828512, "adr": "Austsidevegen 1933, 2937 Begna", "area": "Begna", "bnr": "V-10965523", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elj5MAC", "r": 5}, {"navn": "Leirskogvegen 888", "grp": "Kun mobil", "lat": 60.800399, "lon": 9.72147, "adr": "Leirskogvegen 888, 2930 Bagn", "area": "Bagn", "bnr": "V-10965534", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EljGMAS", "r": 3}, {"navn": "Hagagrendvegen 187", "grp": "Kun mobil", "lat": 60.834769, "lon": 9.491645, "adr": "Hagagrendvegen 187, 2933 Reinli", "area": "Reinli", "bnr": "V-10965687", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElljMAC", "r": 1}, {"navn": "Austsidevegen 165", "grp": "Kun mobil", "lat": 60.756751, "lon": 9.693338, "adr": "Austsidevegen 165, 2930 Bagn", "area": "Bagn", "bnr": "V-10965772", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Eln6MAC", "r": 3}, {"navn": "Bergsbakka 14", "grp": "Kun mobil", "lat": 60.625239, "lon": 9.688404, "adr": "Bergsbakka 14, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10965826", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElnyMAC", "r": 4}, {"navn": "Skarovegen 409", "grp": "Kun mobil", "lat": 60.792725, "lon": 9.649102, "adr": "Skarovegen 409, 2930 Bagn", "area": "Bagn", "bnr": "V-10965838", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EloAMAS", "r": 3}, {"navn": "Leirskogvegen 735", "grp": "Kun mobil", "lat": 60.796975, "lon": 9.694614, "adr": "Leirskogvegen 735, 2930 Bagn", "area": "Bagn", "bnr": "V-10965848", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EloKMAS", "r": 3}, {"navn": "Moreina 13", "grp": "Kun mobil", "lat": 60.649094, "lon": 9.869299, "adr": "Moreina 13, 2937 Begna", "area": "Begna", "bnr": "V-10965879", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElopMAC", "r": 5}, {"navn": "Bagnslinna 230", "grp": "Kun mobil", "lat": 60.824256, "lon": 9.572828, "adr": "Bagnslinna 230, 2930 Bagn", "area": "Bagn", "bnr": "V-10965919", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000ElpTMAS", "r": 2}, {"navn": "Hedalsvegen 2642", "grp": "Kun mobil", "lat": 60.62883, "lon": 9.669497, "adr": "Hedalsvegen 2642, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10965944", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElpsMAC", "r": 4}, {"navn": "Skarovegen 348", "grp": "Kun mobil", "lat": 60.789588, "lon": 9.641292, "adr": "Skarovegen 348, 2930 Bagn", "area": "Bagn", "bnr": "V-10965957", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elq5MAC", "r": 3}, {"navn": "Briskebyvegen 36", "grp": "Kun mobil", "lat": 60.780086, "lon": 9.63363, "adr": "Briskebyvegen 36, 2930 Bagn", "area": "Bagn", "bnr": "V-10965970", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElqIMAS", "r": 3}, {"navn": "Hagagrendvegen 215", "grp": "Kun mobil", "lat": 60.837801, "lon": 9.492772, "adr": "Hagagrendvegen 215, 2933 Reinli", "area": "Reinli", "bnr": "V-10966020", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elr6MAC", "r": 1}, {"navn": "Stabelvegen 15", "grp": "Kun mobil", "lat": 60.818905, "lon": 9.56763, "adr": "Stabelvegen 15, 2930 Bagn", "area": "Bagn", "bnr": "V-10966170", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EltWMAS", "r": 2}, {"navn": "Lundebygdvegen 145", "grp": "Kun mobil", "lat": 60.777057, "lon": 9.618971, "adr": "Lundebygdvegen 145, 2930 Bagn", "area": "Bagn", "bnr": "V-10966259", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EluxMAC", "r": 3}, {"navn": "Valdresvegen 1197", "grp": "Kun mobil", "lat": 60.649413, "lon": 9.771686, "adr": "Valdresvegen 1197, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10966312", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElvoMAC", "r": 5}, {"navn": "Hedalsvegen 2643", "grp": "Kun mobil", "lat": 60.631111, "lon": 9.675479, "adr": "Hedalsvegen 2643, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10966384", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElwyMAC", "r": 4}, {"navn": "Hedalsvegen 2729", "grp": "Kun mobil", "lat": 60.633367, "lon": 9.658802, "adr": "Hedalsvegen 2729, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10966386", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elx0MAC", "r": 4}, {"navn": "Bagnslinna 241", "grp": "Kun mobil", "lat": 60.817445, "lon": 9.577565, "adr": "Bagnslinna 241, 2930 Bagn", "area": "Bagn", "bnr": "V-10966388", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Elx2MAC", "r": 2}, {"navn": "Roagrendvegen 80", "grp": "Kun mobil", "lat": 60.638114, "lon": 9.656399, "adr": "Roagrendvegen 80, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10966423", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElxbMAC", "r": 4}, {"navn": "Austsidevegen 1939", "grp": "Kun mobil", "lat": 60.656194, "lon": 9.833271, "adr": "Austsidevegen 1939, 2937 Begna", "area": "Begna", "bnr": "V-10966425", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElxdMAC", "r": 5}, {"navn": "Dølvesvegen 128", "grp": "Kun mobil", "lat": 60.790049, "lon": 9.583465, "adr": "Dølvesvegen 128, 2930 Bagn", "area": "Bagn", "bnr": "V-10966436", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElxoMAC", "r": 2}, {"navn": "Rennavegen 4", "grp": "Kun mobil", "lat": 60.827319, "lon": 9.56018, "adr": "Rennavegen 4, 2930 Bagn", "area": "Bagn", "bnr": "V-10966451", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ely3MAC", "r": 2}, {"navn": "Stavadalsvegen 152", "grp": "Kun mobil", "lat": 60.831871, "lon": 9.432156, "adr": "Stavadalsvegen 152, 2933 Reinli", "area": "Reinli", "bnr": "V-10966466", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElyIMAS", "r": 1}, {"navn": "Vollskogvegen 31", "grp": "Kun mobil", "lat": 60.823215, "lon": 9.546912, "adr": "Vollskogvegen 31, 2930 Bagn", "area": "Bagn", "bnr": "V-10966477", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElyTMAS", "r": 1}, {"navn": "Hagagrendvegen 273", "grp": "Kun mobil", "lat": 60.842031, "lon": 9.489685, "adr": "Hagagrendvegen 273, 2933 Reinli", "area": "Reinli", "bnr": "V-10966501", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000ElyrMAC", "r": 1}, {"navn": "Bagnslinna 172", "grp": "Kun mobil", "lat": 60.825882, "lon": 9.568898, "adr": "Bagnslinna 172, 2930 Bagn", "area": "Bagn", "bnr": "V-10966603", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em0VMAS", "r": 2}, {"navn": "Hedalsvegen 2575", "grp": "Kun mobil", "lat": 60.627879, "lon": 9.682681, "adr": "Hedalsvegen 2575, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10966721", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em2PMAS", "r": 4}, {"navn": "Rennavegen 1", "grp": "Kun mobil", "lat": 60.827208, "lon": 9.561026, "adr": "Rennavegen 1, 2930 Bagn", "area": "Bagn", "bnr": "V-10966753", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em2vMAC", "r": 2}, {"navn": "Begnavegen 8", "grp": "Kun mobil", "lat": 60.648792, "lon": 9.85151, "adr": "Begnavegen 8, 2937 Begna", "area": "Begna", "bnr": "V-10966783", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em3PMAS", "r": 5}, {"navn": "Austsidevegen 1578", "grp": "Kun mobil", "lat": 60.655519, "lon": 9.778578, "adr": "Austsidevegen 1578, 2937 Begna", "area": "Begna", "bnr": "V-10966832", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em4CMAS", "r": 5}, {"navn": "Roagrendvegen 57", "grp": "Kun mobil", "lat": 60.638189, "lon": 9.660976, "adr": "Roagrendvegen 57, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10966865", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em4jMAC", "r": 4}, {"navn": "Hedalsvegen 2668", "grp": "Kun mobil", "lat": 60.630007, "lon": 9.667222, "adr": "Hedalsvegen 2668, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10966895", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em5DMAS", "r": 4}, {"navn": "Sørvollbakkin 41", "grp": "Kun mobil", "lat": 60.817584, "lon": 9.553255, "adr": "Sørvollbakkin 41, 2930 Bagn", "area": "Bagn", "bnr": "V-10966922", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em5eMAC", "r": 2}, {"navn": "Begnavegen 153", "grp": "Kun mobil", "lat": 60.646994, "lon": 9.871573, "adr": "Begnavegen 153, 2937 Begna", "area": "Begna", "bnr": "V-10966999", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em6tMAC", "r": 5}, {"navn": "Leirskogvegen 631", "grp": "Kun mobil", "lat": 60.79786, "lon": 9.678507, "adr": "Leirskogvegen 631, 2930 Bagn", "area": "Bagn", "bnr": "V-10967008", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em72MAC", "r": 3}, {"navn": "Tellatn 19", "grp": "Kun mobil", "lat": 60.826123, "lon": 9.559417, "adr": "Tellatn 19, 2930 Bagn", "area": "Bagn", "bnr": "V-10967042", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em7aMAC", "r": 2}, {"navn": "Hedalsvegen 2791", "grp": "Kun mobil", "lat": 60.637343, "lon": 9.650384, "adr": "Hedalsvegen 2791, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967048", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Em7gMAC", "r": 4}, {"navn": "Vestbygdvegen 256", "grp": "Kun mobil", "lat": 60.807805, "lon": 9.553497, "adr": "Vestbygdvegen 256, 2930 Bagn", "area": "Bagn", "bnr": "V-10967235", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmAhMAK", "r": 2}, {"navn": "Briskebyvegen 37", "grp": "Kun mobil", "lat": 60.778867, "lon": 9.632373, "adr": "Briskebyvegen 37, 2930 Bagn", "area": "Bagn", "bnr": "V-10967245", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmArMAK", "r": 3}, {"navn": "Leirskogvegen 647", "grp": "Kun mobil", "lat": 60.798003, "lon": 9.679744, "adr": "Leirskogvegen 647, 2930 Bagn", "area": "Bagn", "bnr": "V-10967258", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmB4MAK", "r": 3}, {"navn": "Øvrevegen 156", "grp": "Kun mobil", "lat": 60.626104, "lon": 9.700499, "adr": "Øvrevegen 156, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967282", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmBSMA0", "r": 4}, {"navn": "Valdresvegen 932", "grp": "Kun mobil", "lat": 60.650005, "lon": 9.819009, "adr": "Valdresvegen 932, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10967343", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmCRMA0", "r": 5}, {"navn": "Leirskogvegen 731", "grp": "Kun mobil", "lat": 60.797268, "lon": 9.694925, "adr": "Leirskogvegen 731, 2930 Bagn", "area": "Bagn", "bnr": "V-10967392", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmDEMA0", "r": 3}, {"navn": "Austsidevegen 36", "grp": "Kun mobil", "lat": 60.758282, "lon": 9.675098, "adr": "Austsidevegen 36, 2930 Bagn", "area": "Bagn", "bnr": "V-10967398", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmDKMA0", "r": 3}, {"navn": "Hedalsvegen 2645", "grp": "Kun mobil", "lat": 60.632676, "lon": 9.676327, "adr": "Hedalsvegen 2645, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967499", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmExMAK", "r": 4}, {"navn": "Øvrevegen 87", "grp": "Kun mobil", "lat": 60.625169, "lon": 9.711591, "adr": "Øvrevegen 87, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967510", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmF8MAK", "r": 4}, {"navn": "Hedalsvegen 2354", "grp": "Kun mobil", "lat": 60.619877, "lon": 9.717054, "adr": "Hedalsvegen 2354, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967513", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmFBMA0", "r": 4}, {"navn": "Spangrudvegen 21", "grp": "Kun mobil", "lat": 60.825541, "lon": 9.56495, "adr": "Spangrudvegen 21, 2930 Bagn", "area": "Bagn", "bnr": "V-10967520", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmFIMA0", "r": 2}, {"navn": "Hedalsvegen 2384", "grp": "Kun mobil", "lat": 60.620546, "lon": 9.711339, "adr": "Hedalsvegen 2384, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967580", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EmGGMA0", "r": 4}, {"navn": "Hagagrendvegen 103", "grp": "Kun mobil", "lat": 60.832849, "lon": 9.480209, "adr": "Hagagrendvegen 103, 2933 Reinli", "area": "Reinli", "bnr": "V-10967598", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmGYMA0", "r": 1}, {"navn": "Valdresvegen 828", "grp": "Kun mobil", "lat": 60.65121, "lon": 9.834613, "adr": "Valdresvegen 828, 2936 Begnadalen", "area": "Begnadalen", "bnr": "V-10967605", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmGfMAK", "r": 5}, {"navn": "Gamle Vestbygdvegen 128", "grp": "Kun mobil", "lat": 60.802775, "lon": 9.541715, "adr": "Gamle Vestbygdvegen 128, 2930 Bagn", "area": "Bagn", "bnr": "V-10967633", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmH7MAK", "r": 1}, {"navn": "Hedalsvegen 2588", "grp": "Kun mobil", "lat": 60.627608, "lon": 9.681565, "adr": "Hedalsvegen 2588, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967652", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmHQMA0", "r": 4}, {"navn": "Hedalsvegen 2655", "grp": "Kun mobil", "lat": 60.632847, "lon": 9.669544, "adr": "Hedalsvegen 2655, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967719", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmIVMA0", "r": 4}, {"navn": "Rustebakkvegen 119", "grp": "Kun mobil", "lat": 60.701268, "lon": 9.73173, "adr": "Rustebakkvegen 119, 2930 Bagn", "area": "Bagn", "bnr": "V-10967734", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmIkMAK", "r": 4}, {"navn": "Vestbygdvegen 387", "grp": "Kun mobil", "lat": 60.808312, "lon": 9.538734, "adr": "Vestbygdvegen 387, 2930 Bagn", "area": "Bagn", "bnr": "V-10967748", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmIyMAK", "r": 1}, {"navn": "Øvrevegen 244", "grp": "Kun mobil", "lat": 60.632303, "lon": 9.690856, "adr": "Øvrevegen 244, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10967824", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmKCMA0", "r": 4}, {"navn": "Bagnslinna 9", "grp": "Kun mobil", "lat": 60.824184, "lon": 9.557997, "adr": "Bagnslinna 9, 2930 Bagn", "area": "Bagn", "bnr": "V-10967837", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmKPMA0", "r": 2}, {"navn": "Sørumsvegen 141", "grp": "Kun mobil", "lat": 60.641663, "lon": 9.871978, "adr": "Sørumsvegen 141, 2937 Begna", "area": "Begna", "bnr": "V-10967895", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmLLMA0", "r": 5}, {"navn": "Moreina 28", "grp": "Kun mobil", "lat": 60.649902, "lon": 9.863717, "adr": "Moreina 28, 2937 Begna", "area": "Begna", "bnr": "V-10967916", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmLgMAK", "r": 5}, {"navn": "Hedalsvegen 3048", "grp": "Kun mobil", "lat": 60.634787, "lon": 9.607432, "adr": "Hedalsvegen 3048, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10968128", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmP6MAK", "r": 4}, {"navn": "Hedalsvegen 2683", "grp": "Kun mobil", "lat": 60.631221, "lon": 9.666719, "adr": "Hedalsvegen 2683, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10968161", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmPdMAK", "r": 4}, {"navn": "Valdresvegen 1996", "grp": "Kun mobil", "lat": 60.701959, "lon": 9.717021, "adr": "Valdresvegen 1996, 2930 Bagn", "area": "Bagn", "bnr": "V-10968200", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmQGMA0", "r": 4}, {"navn": "Skarovegen 346", "grp": "Kun mobil", "lat": 60.788857, "lon": 9.642098, "adr": "Skarovegen 346, 2930 Bagn", "area": "Bagn", "bnr": "V-10968289", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmRhMAK", "r": 3}, {"navn": "Dønhaugvegen 23", "grp": "Kun mobil", "lat": 60.826582, "lon": 9.560162, "adr": "Dønhaugvegen 23, 2930 Bagn", "area": "Bagn", "bnr": "V-10968305", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmRxMAK", "r": 2}, {"navn": "Hedalsvegen 2659", "grp": "Kun mobil", "lat": 60.630339, "lon": 9.669569, "adr": "Hedalsvegen 2659, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10968350", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmSgMAK", "r": 4}, {"navn": "Dønhaugvegen 27", "grp": "Kun mobil", "lat": 60.826735, "lon": 9.559417, "adr": "Dønhaugvegen 27, 2930 Bagn", "area": "Bagn", "bnr": "V-10968360", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmSqMAK", "r": 2}, {"navn": "Dalagata 10", "grp": "Kun mobil", "lat": 60.823927, "lon": 9.547523, "adr": "Dalagata 10, 2930 Bagn", "area": "Bagn", "bnr": "V-10968388", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000EmTIMA0", "r": 1}, {"navn": "Steinsætervegen 119", "grp": "Kun mobil", "lat": 60.771635, "lon": 9.654268, "adr": "Steinsætervegen 119, 2930 Bagn", "area": "Bagn", "bnr": "V-10968417", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmTlMAK", "r": 3}, {"navn": "Hakakroken 17", "grp": "Kun mobil", "lat": 60.649736, "lon": 9.869939, "adr": "Hakakroken 17, 2937 Begna", "area": "Begna", "bnr": "V-10968619", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmX1MAK", "r": 5}, {"navn": "Leirskogvegen 1028", "grp": "Kun mobil", "lat": 60.805518, "lon": 9.743837, "adr": "Leirskogvegen 1028, 2930 Bagn", "area": "Bagn", "bnr": "V-10968657", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmXdMAK", "r": 3}, {"navn": "Hedalsvegen 2824", "grp": "Kun mobil", "lat": 60.637647, "lon": 9.643898, "adr": "Hedalsvegen 2824, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10968690", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmYAMA0", "r": 4}, {"navn": "Valdresvegen 329", "grp": "Kun mobil", "lat": 60.625377, "lon": 9.9043, "adr": "Valdresvegen 329, 2937 Begna", "area": "Begna", "bnr": "V-10968768", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmZQMA0", "r": 5}, {"navn": "Austsidevegen 1972", "grp": "Kun mobil", "lat": 60.656057, "lon": 9.839833, "adr": "Austsidevegen 1972, 2937 Begna", "area": "Begna", "bnr": "V-10968808", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Ema4MAC", "r": 5}, {"navn": "Åsemyrvegen 42", "grp": "Kun mobil", "lat": 60.760452, "lon": 9.660434, "adr": "Åsemyrvegen 42, 2930 Bagn", "area": "Bagn", "bnr": "V-10968827", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmaNMAS", "r": 3}, {"navn": "Skarovegen 38", "grp": "Kun mobil", "lat": 60.780325, "lon": 9.637477, "adr": "Skarovegen 38, 2930 Bagn", "area": "Bagn", "bnr": "V-10968869", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Emb3MAC", "r": 3}, {"navn": "Muggedølavegen 75", "grp": "Kun mobil", "lat": 60.673755, "lon": 9.732855, "adr": "Muggedølavegen 75, 2930 Bagn", "area": "Bagn", "bnr": "V-10968896", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmbUMAS", "r": 4}, {"navn": "Oslovegen 2187", "grp": "Kun mobil", "lat": 60.853983, "lon": 9.51917, "adr": "Oslovegen 2187, 2930 Bagn", "area": "Bagn", "bnr": "V-10968907", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmbfMAC", "r": 1}, {"navn": "Valdresvegen 694", "grp": "Kun mobil", "lat": 60.645372, "lon": 9.854596, "adr": "Valdresvegen 694, 2937 Begna", "area": "Begna", "bnr": "V-10968938", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmcAMAS", "r": 5}, {"navn": "Valdresvegen 2025", "grp": "Kun mobil", "lat": 60.705244, "lon": 9.715717, "adr": "Valdresvegen 2025, 2930 Bagn", "area": "Bagn", "bnr": "V-10968950", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmcMMAS", "r": 4}, {"navn": "Hedalsvegen 2798", "grp": "Kun mobil", "lat": 60.637065, "lon": 9.647747, "adr": "Hedalsvegen 2798, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10968966", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmccMAC", "r": 4}, {"navn": "Haftonsvegen 62", "grp": "Kun mobil", "lat": 60.795685, "lon": 9.713582, "adr": "Haftonsvegen 62, 2930 Bagn", "area": "Bagn", "bnr": "V-10969027", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmdbMAC", "r": 3}, {"navn": "Storebruvegen 12", "grp": "Kun mobil", "lat": 60.821837, "lon": 9.553286, "adr": "Storebruvegen 12, 2930 Bagn", "area": "Bagn", "bnr": "V-10969030", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmdeMAC", "r": 2}, {"navn": "Øvrevegen 172", "grp": "Kun mobil", "lat": 60.626274, "lon": 9.698818, "adr": "Øvrevegen 172, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10969082", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmeUMAS", "r": 4}, {"navn": "Skarovegen 449", "grp": "Kun mobil", "lat": 60.7885, "lon": 9.673199, "adr": "Skarovegen 449, 2930 Bagn", "area": "Bagn", "bnr": "V-10969113", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmezMAC", "r": 3}, {"navn": "Hedalsvegen 2977", "grp": "Kun mobil", "lat": 60.636331, "lon": 9.623414, "adr": "Hedalsvegen 2977, 3528 Hedalen", "area": "Hedalen", "bnr": "V-10969117", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Emf3MAC", "r": 4}, {"navn": "Reinlivegen 493", "grp": "Kun mobil", "lat": 60.828936, "lon": 9.472671, "adr": "Reinlivegen 493, 2933 Reinli", "area": "Reinli", "bnr": "V-10969219", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000EmghMAC", "r": 1}];
+var AREAS = ["Bagn", "Hedalen", "Begna", "Reinli", "Begnadalen"];
+var STORE_KEY = "dorkart_Markus_20.11.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Markus";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":35,"m":15,"h":[[[60.811605,9.545545],[60.802567,9.542735],[60.802391,9.542496],[60.802274,9.542138],[60.802232,9.541715],[60.802274,9.541292],[60.825319,9.453519],[60.83137,9.431733],[60.831487,9.431375],[60.831663,9.431136],[60.831871,9.431052],[60.832079,9.431136],[60.832255,9.431375],[60.832372,9.431733],[60.855652,9.512736],[60.855694,9.513159],[60.855652,9.513582],[60.854484,9.519593],[60.854367,9.519951],[60.854191,9.52019],[60.824135,9.548543],[60.822767,9.548992],[60.821196,9.548507],[60.821041,9.547083],[60.819469,9.546453],[60.818782,9.546511],[60.818305,9.547614],[60.813281,9.546063],[60.812306,9.544497]],[[60.868486,9.470571],[60.868694,9.470487],[60.868902,9.470571],[60.869078,9.47081],[60.869195,9.471168],[60.869237,9.471591],[60.869194,9.473496],[60.869152,9.473919],[60.869035,9.474277],[60.868859,9.474516],[60.868651,9.4746],[60.868443,9.474516],[60.868267,9.474277],[60.86815,9.473919],[60.868108,9.473496],[60.868151,9.471591],[60.868193,9.471168],[60.86831,9.47081]]],"b":[[60.855694,9.513159],[60.869237,9.471591]],"g":["Hagagrendvegen","Reinlivegen","Vestbygdvegen"]},{"n":2,"c":"#7b2cbf","s":35,"m":27,"h":[[[60.82333,9.55019],[60.823506,9.550429],[60.827703,9.559399],[60.82782,9.559757],[60.827862,9.56018],[60.82782,9.560603],[60.827709,9.561449],[60.826383,9.569321],[60.826266,9.569679],[60.82464,9.573609],[60.821027,9.580026],[60.820291,9.580977],[60.820083,9.581061],[60.787592,9.587858],[60.787384,9.587774],[60.782413,9.582188],[60.782237,9.581949],[60.78212,9.581591],[60.782078,9.581168],[60.78212,9.580745],[60.783794,9.573515],[60.783911,9.573157],[60.784087,9.572918],[60.807597,9.552477],[60.815515,9.549651],[60.817655,9.549216],[60.817804,9.548837],[60.819642,9.548184],[60.821254,9.549043],[60.821343,9.549864],[60.82165,9.550122],[60.822514,9.549739]]],"b":[[60.827862,9.56018]],"g":["Bagnslinna","Stabelvegen","Erstadvegen"]},{"n":3,"c":"#0b7285","s":29,"m":27,"h":[[[60.777711,9.596337],[60.777919,9.596253],[60.783404,9.597372],[60.783612,9.597456],[60.783788,9.597695],[60.802848,9.62868],[60.806453,9.636069],[60.80657,9.636427],[60.815907,9.756407],[60.815865,9.75683],[60.815748,9.757188],[60.815572,9.757427],[60.815364,9.757511],[60.815156,9.757427],[60.731822,9.71014],[60.731646,9.709901],[60.731529,9.709543],[60.729946,9.688314],[60.729988,9.687891],[60.730105,9.687533],[60.777535,9.596576]]],"b":[[60.815907,9.756407]],"g":["Leirskogvegen","Skarovegen","Åsemyrvegen"]},{"n":4,"c":"#a61e4d","s":27,"m":36,"h":[[[60.632959,9.6908],[60.625553,9.712372],[60.620408,9.718467],[60.6202,9.718551],[60.619992,9.718467],[60.619493,9.717835],[60.619376,9.717477],[60.619334,9.717054],[60.621532,9.692538],[60.632322,9.613647],[60.634403,9.606651],[60.634579,9.606412],[60.634787,9.606328],[60.634995,9.606412],[60.635171,9.606651],[60.635288,9.607009],[60.640887,9.648441],[60.640845,9.648864],[60.63869,9.661399]],[[60.711104,9.715794],[60.710987,9.716152],[60.693948,9.74612],[60.693772,9.746359],[60.693564,9.746443],[60.692525,9.745971],[60.692349,9.745732],[60.692232,9.745374],[60.69219,9.744951],[60.692232,9.744528],[60.700954,9.717787],[60.701575,9.71624],[60.707855,9.707254],[60.710352,9.705697],[60.71056,9.705613],[60.710768,9.705697],[60.710944,9.705936],[60.711061,9.706294],[60.711103,9.706717],[60.711139,9.708325],[60.711146,9.715371]],[[60.664209,9.74503],[60.662604,9.744513],[60.660715,9.743026],[60.660539,9.742787],[60.660422,9.742429],[60.66038,9.742006],[60.660422,9.741583],[60.660539,9.741225],[60.660715,9.740986],[60.673547,9.731835],[60.673755,9.731751],[60.673963,9.731835],[60.674139,9.732074],[60.674256,9.732432],[60.674298,9.732855],[60.672933,9.746896],[60.672816,9.747254],[60.67264,9.747493],[60.672432,9.747577],[60.668365,9.746317],[60.667533,9.743382],[60.666417,9.738523]]],"b":[[60.640887,9.648441],[60.711146,9.715371],[60.674298,9.732855]],"g":["Hedalsvegen","Valdresvegen","Øvrevegen"]},{"n":5,"c":"#343a40","s":25,"m":23,"h":[[[60.66541,9.746039],[60.665618,9.746123],[60.665794,9.746362],[60.666142,9.747045],[60.666259,9.747403],[60.666301,9.747826],[60.658789,9.8268],[60.656558,9.840256],[60.650237,9.870362],[60.638302,9.903732],[60.638126,9.903971],[60.617969,9.921978],[60.617761,9.922062],[60.617553,9.921978],[60.617377,9.921739],[60.61726,9.921381],[60.617218,9.920958],[60.61726,9.920535],[60.648358,9.751064],[60.648475,9.750706],[60.648651,9.750467],[60.648859,9.750383],[60.655262,9.748702],[60.655616,9.750565],[60.656977,9.755916],[60.659065,9.757481],[60.659239,9.757666],[60.663575,9.746896],[60.663715,9.746484]]],"b":[[60.666301,9.747826]],"g":["Valdresvegen","Austsidevegen","Moreina"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
