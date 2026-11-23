@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dørkart Adrian 23.11.26</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://electi1.github.io/dorkart/leaflet-rotate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+<style>
+:root{
+--hp:#2f9e57; --hc:#2f6fe0; --vula:#e07d2f; --mobil:#6b7683;
+--electi:#000089; --electi-dark:#000063; --electi-tint:#ecedf7;
+--bg:#ffffff; --ink:#12181f; --muted:#5c6773; --line:#e4e8ee;
+--shadow:0 6px 24px rgba(10,20,40,.18);
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+--font-display: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; font-family:var(--font); color:var(--ink); background:var(--bg);}
+#map{position:absolute; inset:0; z-index:0;}
+.topbar{ position:absolute; top:0; left:0; right:0; z-index:1000; }
+.brandbar{
+background:var(--electi); color:#fff;
+padding:calc(env(safe-area-inset-top,0) + 9px) 13px 9px;
+display:flex; align-items:center; justify-content:space-between; gap:10px;
+box-shadow:0 2px 12px rgba(0,0,90,.30);
+}
+.controls{
+background:rgba(255,255,255,.96); backdrop-filter:saturate(1.4) blur(6px);
+border-bottom:1px solid var(--line);
+padding:8px 12px;
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0;}
+.brand .logo{height:38px; width:auto; flex:none; display:block;}
+.brand .vr{width:1px; align-self:stretch; background:rgba(255,255,255,.28); margin:4px 0;}
+.brandtext{min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.title{font-family:var(--font-display); font-weight:700; font-size:15.5px; letter-spacing:.2px; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brandtext .date{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600; letter-spacing:.4px;}
+.remaining{font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--electi); background:#fff; white-space:nowrap; padding:6px 12px; border-radius:999px; letter-spacing:.2px; box-shadow:0 1px 6px rgba(0,0,50,.30);}
+.remaining b{font-size:14px; font-weight:800; margin-right:1px;}
+.areatabs{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.areatabs button{
+flex:1 1 auto; min-width:70px; padding:8px 8px; font-size:13px; font-weight:600; font-family:inherit;
+border:1px solid var(--line); background:#f3f5f8; color:var(--muted);
+border-radius:9px; cursor:pointer;
+}
+.areatabs button.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.chips{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.chip{
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 10px; border-radius:999px; font-size:12.5px; font-weight:600;
+border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; user-select:none;
+}
+.chip .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+.chip .n{color:var(--muted); font-weight:600;}
+.chip.off{opacity:.4; text-decoration:line-through;}
+.showdone{margin-top:8px; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+.showdone input{width:17px; height:17px;}
+.searchwrap{position:relative; margin-top:8px;}
+.searchwrap input{width:100%; font:inherit; font-size:15px; padding:11px 36px 11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+.searchwrap input::placeholder{color:var(--muted);}
+.searchwrap input:focus{outline:none; border-color:var(--electi);}
+.search-clear{position:absolute; top:9px; right:6px; border:none; background:none; font-size:19px; color:var(--muted); cursor:pointer; line-height:1; padding:6px 8px;}
+.searchresults{position:absolute; top:calc(100% + 5px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:1400; max-height:min(52vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.search-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.search-item:last-child{border-bottom:none;}
+.search-item:active{background:#f5f7fb;}
+.search-main{display:flex; flex-direction:column; min-width:0;}
+.search-addr{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.search-empty{padding:12px; color:var(--muted); font-size:13.5px;}
+.sheet{
+position:absolute; left:0; right:0; bottom:0; z-index:1200;
+background:#fff; border-radius:18px 18px 0 0; box-shadow:var(--shadow);
+padding:16px 16px calc(env(safe-area-inset-bottom,0) + 16px);
+transform:translateY(120%); transition:transform .22s ease; max-width:640px; margin:0 auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:3px; background:#d7dde5; margin:0 auto 12px;}
+.sheet .addr{font-family:var(--font-display); font-size:19px; font-weight:700; line-height:1.25;}
+.sheet .sub{font-size:13.5px; color:var(--muted); margin-top:3px;}
+.badges{display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px;}
+.badge{font-size:12.5px; font-weight:700; color:#fff; padding:4px 10px; border-radius:999px;}
+.badge.status{background:#eef1f5; color:var(--ink);}
+.sheet .meta{font-size:13px; color:var(--muted); margin-top:8px;}
+.actions{display:flex; gap:10px; margin-top:16px;}
+.actions a, .actions button{
+flex:1; text-align:center; padding:14px 8px; border-radius:12px;
+font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; border:none; text-decoration:none;
+}
+.btn-nav{background:var(--electi); color:#fff;}
+.btn-done{background:var(--ink); color:#fff;}
+.btn-undo{background:#f3f5f8; color:var(--ink); border:1px solid var(--line);}
+.sheet .close{position:absolute; top:12px; right:14px; font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer; line-height:1;}
+.scrim{position:absolute; inset:0; background:rgba(10,20,40,.28); z-index:1150; opacity:0; pointer-events:none; transition:opacity .2s;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.leaflet-top.leaflet-right{margin-top:172px;}
+.done-badge{background:#eef1f5; color:var(--muted);}
+.meta a.sflink{color:var(--electi); font-weight:700; text-decoration:none;}
+.meta a.mini{color:var(--electi); font-weight:700; text-decoration:none; white-space:nowrap;}
+.stackbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.stack-head{font-size:12.5px; font-weight:700; color:var(--electi); background:var(--electi-tint); padding:9px 12px;}
+.stack-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-top:1px solid var(--line); padding:11px 12px; cursor:pointer; font:inherit;}
+.stack-item:active{background:#f5f7fb;}
+.stack-item.cur{background:#f3f5fb; cursor:default;}
+.stack-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.stack-bol{font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.stack-item .mini{flex:none;}
+.stack-check{color:var(--hp); font-weight:800;}
+.apptbox{margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#f8f9fc;}
+.apptbox.has{background:#fff7e6; border-color:#f0d488;}
+.appt-row{display:flex; align-items:center; gap:8px;}
+.appt-title{font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px;}
+.appt-when{font-family:var(--font-display); font-weight:800; color:#8a6d1a;}
+.appt-form{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.appt-form input{font:inherit; padding:10px 11px; border:1px solid var(--line); border-radius:9px; flex:1 1 130px; min-width:120px; background:#fff;}
+.appt-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.appt-actions button, .appt-actions a{font:inherit; font-weight:700; font-size:13.5px; padding:10px 13px; border-radius:9px; cursor:pointer; border:none; text-decoration:none; text-align:center;}
+.appt-save{background:var(--electi); color:#fff;}
+.appt-cal{background:#e8a90c; color:#3a2c00;}
+.appt-open{background:#eef1f6; color:var(--electi);}
+.appt-del{background:#eef1f6; color:#b3261e;}
+.apptline{margin-top:9px;}
+.apptline button{font:inherit; font-weight:700; font-size:12.5px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:6px 12px; cursor:pointer;}
+.apptsheet{max-height:min(72vh, 540px); display:flex; flex-direction:column;}
+.apptsheet .apptsheet-title{font-family:var(--font-display); font-size:19px; font-weight:800; color:var(--electi);}
+.apptsheet .apptsheet-hint{font-size:12.5px; color:var(--muted); margin:2px 0 10px;}
+.appt-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; padding:2px 2px 0;}
+.appt-item{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:9px; cursor:pointer; font:inherit;}
+.appt-item:active{background:#f5f7fb;}
+.appt-dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.10);}
+.appt-item-main{display:flex; flex-direction:column; min-width:0; flex:1;}
+.appt-item-addr{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-sub{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.appt-item-when{font-family:var(--font-display); font-weight:800; font-size:13px; color:#8a6d1a; background:#fff7e6; border:1px solid #f0d488; border-radius:999px; padding:5px 10px; flex:none; white-space:nowrap;}
+.appt-item-when.past{color:var(--muted); background:#eef1f5; border-color:var(--line);}
+.appt-empty{color:var(--muted); font-size:14px; padding:10px 2px;}
+.locate{
+position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100;
+width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer;
+display:flex; align-items:center; justify-content:center; padding:0;
+}
+.locate.on{background:var(--electi); color:#fff; border-color:var(--electi);}
+.toast{
+position:absolute; left:50%; transform:translateX(-50%);
+bottom:calc(env(safe-area-inset-bottom,0) + 100px); z-index:1300;
+background:rgba(18,24,31,.92); color:#fff; font-size:13px; font-weight:600;
+padding:10px 14px; border-radius:10px; max-width:80%; text-align:center;
+opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:1;}
+.me-icon{background:transparent!important; border:0!important;}
+.me-core{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box;}
+.me-pulse{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ff2d78; opacity:.55; animation:mepulse 1.8s ease-out infinite;}
+@keyframes mepulse{0%{transform:scale(1); opacity:.55;} 70%{transform:scale(3.4); opacity:0;} 100%{transform:scale(3.4); opacity:0;}}
+.togglerow{display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+#roundsToggle[hidden]{display:none!important;}
+.rbadge-icon{background:transparent!important; border:0!important;}
+.rbadge{width:28px; height:28px; border-radius:50%; color:#fff; font-family:var(--font-display); font-weight:800; font-size:13px; line-height:23px; text-align:center; border:2.5px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.45); box-sizing:border-box; cursor:pointer; transition:transform .15s;}
+.rbadge.focus{transform:scale(1.25); box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 2px 10px rgba(0,0,0,.55);}
+.badge.rnd{background:#fff; border:2px solid currentColor; padding:2px 9px;}
+.compass{position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom,0) + 40px); z-index:1100; width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--electi); box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.compass[hidden]{display:none!important;}
+.compass svg{display:block; transform-origin:50% 50%;}
+.compass:active{background:var(--electi-tint);}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="topbar">
+<div class="brandbar">
+<div class="brand">
+<img class="logo" src="https://electi1.github.io/dorkart/electi_logo_white.png" alt="Electi Business Partner">
+<div class="vr"></div>
+<div class="brandtext">
+<div class="title">Adrian</div>
+<div class="date">23.11.26</div>
+</div>
+</div>
+<div class="remaining"><b id="remN">0</b> igjen<span id="remRound"></span></div>
+</div>
+<div class="controls">
+<div class="areatabs" id="areatabs"></div>
+<div class="chips" id="chips"></div>
+<div class="searchwrap">
+<input id="searchInput" type="text" inputmode="search" autocomplete="off" placeholder="Søk adresse…">
+<button class="search-clear" id="searchClear" hidden aria-label="Tøm søk">×</button>
+<div class="searchresults" id="searchResults" hidden></div>
+</div>
+<div class="togglerow"><label class="showdone"><input type="checkbox" id="showdone"> Vis fullførte dører</label><label class="showdone" id="roundsToggle" hidden><input type="checkbox" id="showrounds" checked> Vis runder</label></div>
+<div class="apptline" id="apptline" hidden></div>
+</div>
+</div>
+<button class="locate" id="locate" title="Min posisjon" aria-label="Min posisjon">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+</button>
+<button class="compass" id="compass" hidden title="Nord opp" aria-label="Nord opp"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".28"/><path d="M12 2.4 L15.4 12 L8.6 12 Z" fill="#e0352b"/><path d="M12 21.6 L8.6 12 L15.4 12 Z" fill="currentColor" opacity=".55"/></svg></button>
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+<div class="grab"></div>
+<button class="close" id="sheetClose">×</button>
+<div class="addr" id="sAddr"></div>
+<div class="sub" id="sSub"></div>
+<div class="badges" id="sBadges"></div>
+<div class="meta" id="sMeta"></div>
+<div class="stackbox" id="sStack" hidden></div>
+<div class="apptbox" id="sAppt"></div>
+<div class="actions">
+<a class="btn-nav" id="sNav" target="_blank" rel="noopener">Naviger</a>
+<button class="btn-done" id="sDone"></button>
+</div>
+</div>
+<div class="sheet apptsheet" id="apptSheet">
+<div class="grab"></div>
+<button class="close" id="apptClose">×</button>
+<div class="apptsheet-title">📅 Avtaler</div>
+<div class="apptsheet-hint">Sortert etter tid — trykk en avtale for å gå til døra</div>
+<div class="appt-list" id="apptListBody"></div>
+</div>
+<script>
+var DATA = [{"navn": "IGESUNDVEGEN 28", "grp": "Kun mobil", "lat": 62.340745, "lon": 5.629337, "adr": "IGESUNDVEGEN 28, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10970987", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000Fz6nMAC", "r": 2}, {"navn": "TOLLÅSBAKKEN 13", "grp": "Kun mobil", "lat": 62.341001, "lon": 5.630335, "adr": "TOLLÅSBAKKEN 13, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10971436", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzE2MAK", "r": 1}, {"navn": "KLEIVALIA 14", "grp": "Kun mobil", "lat": 62.34065, "lon": 5.625457, "adr": "KLEIVALIA 14, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10971669", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000FzHnMAK", "r": 3}, {"navn": "IGESUNDVEGEN 35", "grp": "Kun mobil", "lat": 62.340561, "lon": 5.632102, "adr": "IGESUNDVEGEN 35, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10972205", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzQRMA0", "r": 1}, {"navn": "NEDRE HULDALSVEG 2", "grp": "Kun mobil", "lat": 62.338441, "lon": 5.628031, "adr": "NEDRE HULDALSVEG 2, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10972208", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzQUMA0", "r": 5}, {"navn": "KLEIVALIA 10", "grp": "Kun mobil", "lat": 62.340378, "lon": 5.625101, "adr": "KLEIVALIA 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10972877", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000FzbHMAS", "r": 3}, {"navn": "BURÅSA 3", "grp": "Kun mobil", "lat": 62.338989, "lon": 5.625843, "adr": "BURÅSA 3, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10973132", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzfOMAS", "r": 4}, {"navn": "IGESUNDVEGEN 61", "grp": "Kun mobil", "lat": 62.341085, "lon": 5.624448, "adr": "IGESUNDVEGEN 61, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10973619", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FznFMAS", "r": 3}, {"navn": "HULDALSVEGEN 48", "grp": "Kun mobil", "lat": 62.336129, "lon": 5.62829, "adr": "HULDALSVEGEN 48, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10974258", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzxYMAS", "r": 5}, {"navn": "KLEIVALIA 19", "grp": "Kun mobil", "lat": 62.339284, "lon": 5.624264, "adr": "KLEIVALIA 19, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10974381", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000FzzXMAS", "r": 4}, {"navn": "HULDALSVEGEN 16", "grp": "Kun mobil", "lat": 62.338884, "lon": 5.627034, "adr": "HULDALSVEGEN 16, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10974698", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G04eMAC", "r": 4}, {"navn": "HULDALSVEGEN 27", "grp": "Kun mobil", "lat": 62.337165, "lon": 5.627323, "adr": "HULDALSVEGEN 27, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10974896", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G07qMAC", "r": 5}, {"navn": "TOLLÅSBAKKEN 3", "grp": "Kun mobil", "lat": 62.341824, "lon": 5.63082, "adr": "TOLLÅSBAKKEN 3, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10974986", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G09IMAS", "r": 1}, {"navn": "TOLLÅSBAKKEN 32", "grp": "Kun mobil", "lat": 62.341033, "lon": 5.629344, "adr": "TOLLÅSBAKKEN 32, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10975103", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0BBMA0", "r": 1}, {"navn": "HULDALSBANA 2 C", "grp": "Kun mobil", "lat": 62.339791, "lon": 5.628465, "adr": "HULDALSBANA 2 C, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10975117", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G0BPMA0", "r": 2}, {"navn": "HULDALSVEGEN 15", "grp": "Kun mobil", "lat": 62.338937, "lon": 5.627743, "adr": "HULDALSVEGEN 15, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10975958", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0OyMAK", "r": 4}, {"navn": "BERNMARKA 11", "grp": "Kun mobil", "lat": 62.337024, "lon": 5.629658, "adr": "BERNMARKA 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10976043", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0QLMA0", "r": 5}, {"navn": "NYGARDSVEGEN 8", "grp": "Kun mobil", "lat": 62.337969, "lon": 5.628953, "adr": "NYGARDSVEGEN 8, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10976457", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0YcMAK", "r": 5}, {"navn": "DJUPEDALEN 7", "grp": "Kun mobil", "lat": 62.339881, "lon": 5.631483, "adr": "DJUPEDALEN 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10976610", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0b5MAC", "r": 2}, {"navn": "TOLLÅSBAKKEN 20", "grp": "Kun mobil", "lat": 62.342012, "lon": 5.629698, "adr": "TOLLÅSBAKKEN 20, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10976948", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0gXMAS", "r": 1}, {"navn": "NEDRE HULDALSVEG 1", "grp": "Kun mobil", "lat": 62.338685, "lon": 5.6281, "adr": "NEDRE HULDALSVEG 1, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10977587", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G0qqMAC", "r": 5}, {"navn": "TOLLÅSBAKKEN 36", "grp": "Kun mobil", "lat": 62.340808, "lon": 5.629603, "adr": "TOLLÅSBAKKEN 36, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10978633", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G19JMAS", "r": 1}, {"navn": "BURÅSA 31", "grp": "Kun mobil", "lat": 62.340465, "lon": 5.625656, "adr": "BURÅSA 31, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10979204", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1IWMA0", "r": 3}, {"navn": "TOLLÅSBAKKEN 14", "grp": "Kun mobil", "lat": 62.342154, "lon": 5.629991, "adr": "TOLLÅSBAKKEN 14, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10979710", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1QgMAK", "r": 1}, {"navn": "IGESUNDVEGEN 44", "grp": "Kun mobil", "lat": 62.341359, "lon": 5.626118, "adr": "IGESUNDVEGEN 44, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10980440", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1e3MAC", "r": 3}, {"navn": "KLEIVALIA 18", "grp": "Kun mobil", "lat": 62.341053, "lon": 5.625727, "adr": "KLEIVALIA 18, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10980473", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1eaMAC", "r": 3}, {"navn": "HULDALSVEGEN 31", "grp": "Kun mobil", "lat": 62.337047, "lon": 5.627994, "adr": "HULDALSVEGEN 31, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10980857", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1kmMAC", "r": 5}, {"navn": "HULDALSBANA 4 D", "grp": "Kun mobil", "lat": 62.339596, "lon": 5.628382, "adr": "HULDALSBANA 4 D, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10981060", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CSg000000G1o3MAC", "r": 2}, {"navn": "HULDALSVEGEN 25", "grp": "Kun mobil", "lat": 62.337509, "lon": 5.62742, "adr": "HULDALSVEGEN 25, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10981604", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G1wpMAC", "r": 5}, {"navn": "IGESUNDVEGEN 41", "grp": "Kun mobil", "lat": 62.340574, "lon": 5.630806, "adr": "IGESUNDVEGEN 41, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10982058", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G249MAC", "r": 2}, {"navn": "BURÅSA 9", "grp": "Kun mobil", "lat": 62.339294, "lon": 5.625055, "adr": "BURÅSA 9, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10982178", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G265MAC", "r": 4}, {"navn": "IGESUNDVEGEN 32", "grp": "Kun mobil", "lat": 62.340747, "lon": 5.628661, "adr": "IGESUNDVEGEN 32, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10982628", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2DLMA0", "r": 2}, {"navn": "NYGARDSVEGEN 10", "grp": "Kun mobil", "lat": 62.338013, "lon": 5.629296, "adr": "NYGARDSVEGEN 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10983148", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2LjMAK", "r": 5}, {"navn": "KJØPMANNSGATA 6", "grp": "Kun mobil", "lat": 62.341222, "lon": 5.631951, "adr": "KJØPMANNSGATA 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10983280", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2NrMAK", "r": 1}, {"navn": "NEDRE HULDALSVEG 6", "grp": "Kun mobil", "lat": 62.338424, "lon": 5.628825, "adr": "NEDRE HULDALSVEG 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10983543", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2S6MAK", "r": 5}, {"navn": "BURÅSA 15", "grp": "Kun mobil", "lat": 62.339585, "lon": 5.626317, "adr": "BURÅSA 15, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10983621", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2TMMA0", "r": 4}, {"navn": "HULDALSVEGEN 9", "grp": "Kun mobil", "lat": 62.339533, "lon": 5.627889, "adr": "HULDALSVEGEN 9, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10984214", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2cvMAC", "r": 4}, {"navn": "BURÅSA 19", "grp": "Kun mobil", "lat": 62.339913, "lon": 5.626493, "adr": "BURÅSA 19, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10984594", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2j3MAC", "r": 4}, {"navn": "KLEIVANESET 4", "grp": "Kun mobil", "lat": 62.341297, "lon": 5.626898, "adr": "KLEIVANESET 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10984737", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G2lMMAS", "r": 3}, {"navn": "TOLLÅSBAKKEN 5", "grp": "Kun mobil", "lat": 62.341677, "lon": 5.630682, "adr": "TOLLÅSBAKKEN 5, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10985349", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G2vEMAS", "r": 1}, {"navn": "HULDALSBANA 2 B", "grp": "Kun mobil", "lat": 62.339902, "lon": 5.628551, "adr": "HULDALSBANA 2 B, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10985475", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G2xGMAS", "r": 2}, {"navn": "KJØPMANNSGATA 4", "grp": "Kun mobil", "lat": 62.341101, "lon": 5.632139, "adr": "KJØPMANNSGATA 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10985960", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G355MAC", "r": 1}, {"navn": "KJØPMANNSGATA 10", "grp": "Kun mobil", "lat": 62.341229, "lon": 5.631486, "adr": "KJØPMANNSGATA 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10986304", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3AdMAK", "r": 1}, {"navn": "TOLLÅSBAKKEN 6", "grp": "Kun mobil", "lat": 62.342335, "lon": 5.630435, "adr": "TOLLÅSBAKKEN 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10986609", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3FYMA0", "r": 1}, {"navn": "KLEIVALIA 11", "grp": "Kun mobil", "lat": 62.338317, "lon": 5.625146, "adr": "KLEIVALIA 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10986830", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3J7MAK", "r": 4}, {"navn": "KLEIVANESET 18", "grp": "Kun mobil", "lat": 62.34195, "lon": 5.62638, "adr": "KLEIVANESET 18, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10986981", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3LYMA0", "r": 3}, {"navn": "TOLLÅSBAKKEN 7", "grp": "Kun mobil", "lat": 62.341555, "lon": 5.630503, "adr": "TOLLÅSBAKKEN 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10987006", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3LxMAK", "r": 1}, {"navn": "HULDALSVEGEN 7", "grp": "Kun mobil", "lat": 62.339704, "lon": 5.627908, "adr": "HULDALSVEGEN 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10987174", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3OfMAK", "r": 4}, {"navn": "IGESUNDVEGEN 36", "grp": "Kun mobil", "lat": 62.340744, "lon": 5.628158, "adr": "IGESUNDVEGEN 36, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10987299", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3QgMAK", "r": 2}, {"navn": "HULDALSVEGEN 38", "grp": "Kun mobil", "lat": 62.336635, "lon": 5.626958, "adr": "HULDALSVEGEN 38, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10988170", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3ejMAC", "r": 5}, {"navn": "KLEIVANESET 1", "grp": "Kun mobil", "lat": 62.341594, "lon": 5.626536, "adr": "KLEIVANESET 1, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10988425", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3iqMAC", "r": 3}, {"navn": "HULDALSVEGEN 23", "grp": "Kun mobil", "lat": 62.337708, "lon": 5.627475, "adr": "HULDALSVEGEN 23, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10988505", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G3k8MAC", "r": 5}, {"navn": "IGESUNDVEGEN 37", "grp": "Kun mobil", "lat": 62.34056, "lon": 5.631697, "adr": "IGESUNDVEGEN 37, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10989413", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G40OMAS", "r": 1}, {"navn": "KLEIVALIA 3", "grp": "Kun mobil", "lat": 62.337666, "lon": 5.626365, "adr": "KLEIVALIA 3, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10989435", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G40kMAC", "r": 4}, {"navn": "BURÅSA 17", "grp": "Kun mobil", "lat": 62.339749, "lon": 5.626396, "adr": "BURÅSA 17, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10989617", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G45IMAS", "r": 4}, {"navn": "HULDALSVEGEN 24", "grp": "Kun mobil", "lat": 62.338481, "lon": 5.627118, "adr": "HULDALSVEGEN 24, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10990232", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4FDMA0", "r": 4}, {"navn": "IGESUNDVEGEN 36", "grp": "Kun mobil", "lat": 62.340744, "lon": 5.628158, "adr": "IGESUNDVEGEN 36, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10990640", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G4LnMAK", "r": 2}, {"navn": "IGESUNDVEGEN 57", "grp": "Kun mobil", "lat": 62.34084, "lon": 5.623606, "adr": "IGESUNDVEGEN 57, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10990840", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4P1MAK", "r": 3}, {"navn": "DJUPEDALEN 14", "grp": "Kun mobil", "lat": 62.339952, "lon": 5.631088, "adr": "DJUPEDALEN 14, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10991115", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4TSMA0", "r": 2}, {"navn": "DJUPEDALEN 4", "grp": "Kun mobil", "lat": 62.340278, "lon": 5.63082, "adr": "DJUPEDALEN 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10991295", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4WMMA0", "r": 2}, {"navn": "KJØPMANNSGATA 12", "grp": "Kun mobil", "lat": 62.341109, "lon": 5.631732, "adr": "KJØPMANNSGATA 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10991487", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4ZSMA0", "r": 1}, {"navn": "HULDALSVEGEN 39", "grp": "Kun mobil", "lat": 62.33622, "lon": 5.628705, "adr": "HULDALSVEGEN 39, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10991488", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4ZTMA0", "r": 5}, {"navn": "KLEIVALIA 16", "grp": "Kun mobil", "lat": 62.34074, "lon": 5.625527, "adr": "KLEIVALIA 16, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10991921", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4gSMAS", "r": 3}, {"navn": "KLEIVALIA 23", "grp": "Kun mobil", "lat": 62.339927, "lon": 5.624114, "adr": "KLEIVALIA 23, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10992658", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4twMAC", "r": 3}, {"navn": "HULDALSVEGEN 21", "grp": "Kun mobil", "lat": 62.337961, "lon": 5.627505, "adr": "HULDALSVEGEN 21, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10992856", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4x8MAC", "r": 5}, {"navn": "NYGARDSVEGEN 5", "grp": "Kun mobil", "lat": 62.338207, "lon": 5.628405, "adr": "NYGARDSVEGEN 5, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10992900", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G4xqMAC", "r": 5}, {"navn": "HULDALSVEGEN 30", "grp": "Kun mobil", "lat": 62.338008, "lon": 5.626881, "adr": "HULDALSVEGEN 30, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10993576", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G58kMAC", "r": 5}, {"navn": "BURÅSA 37", "grp": "Kun mobil", "lat": 62.340629, "lon": 5.625603, "adr": "BURÅSA 37, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10994635", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5PpMAK", "r": 3}, {"navn": "IGESUNDVEGEN 45", "grp": "Kun mobil", "lat": 62.340566, "lon": 5.629705, "adr": "IGESUNDVEGEN 45, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10994666", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G5QKMA0", "r": 2}, {"navn": "KLEIVANESET 2", "grp": "Kun mobil", "lat": 62.341076, "lon": 5.626672, "adr": "KLEIVANESET 2, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10994710", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5R2MAK", "r": 3}, {"navn": "HULDALSVEGEN 14", "grp": "Kun mobil", "lat": 62.339079, "lon": 5.626567, "adr": "HULDALSVEGEN 14, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10994801", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5SVMA0", "r": 4}, {"navn": "NYGARDSVEGEN 6", "grp": "Kun mobil", "lat": 62.337923, "lon": 5.628552, "adr": "NYGARDSVEGEN 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10995062", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5WiMAK", "r": 5}, {"navn": "KLEIVALIA 8", "grp": "Kun mobil", "lat": 62.339793, "lon": 5.624883, "adr": "KLEIVALIA 8, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10995173", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5YVMA0", "r": 4}, {"navn": "BURÅSA 7", "grp": "Kun mobil", "lat": 62.339349, "lon": 5.625493, "adr": "BURÅSA 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10995700", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5h0MAC", "r": 4}, {"navn": "DJUPEDALEN 16", "grp": "Kun mobil", "lat": 62.339748, "lon": 5.630997, "adr": "DJUPEDALEN 16, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10995858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5jYMAS", "r": 2}, {"navn": "NYGARDSVEGEN 2", "grp": "Kun mobil", "lat": 62.337968, "lon": 5.627832, "adr": "NYGARDSVEGEN 2, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10995971", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5lNMAS", "r": 5}, {"navn": "IGESUNDVEGEN 73", "grp": "Kun mobil", "lat": 62.340299, "lon": 5.62243, "adr": "IGESUNDVEGEN 73, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10996209", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5pDMAS", "r": 3}, {"navn": "HULDALSVEGEN 36", "grp": "Kun mobil", "lat": 62.336924, "lon": 5.626616, "adr": "HULDALSVEGEN 36, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10996520", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5uEMAS", "r": 5}, {"navn": "KJØPMANNSGATA 12", "grp": "Kun mobil", "lat": 62.341109, "lon": 5.631732, "adr": "KJØPMANNSGATA 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10996781", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G5yRMAS", "r": 1}, {"navn": "IGESUNDVEGEN 49", "grp": "Kun mobil", "lat": 62.340577, "lon": 5.628602, "adr": "IGESUNDVEGEN 49, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10996788", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G5yYMAS", "r": 2}, {"navn": "KJØPMANNSGATA 8", "grp": "Kun mobil", "lat": 62.34135, "lon": 5.631685, "adr": "KJØPMANNSGATA 8, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997137", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G64BMAS", "r": 1}, {"navn": "IGESUNDVEGEN 30", "grp": "Kun mobil", "lat": 62.340737, "lon": 5.62899, "adr": "IGESUNDVEGEN 30, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997173", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G64lMAC", "r": 2}, {"navn": "TOLLÅSBAKKEN 28", "grp": "Kun mobil", "lat": 62.341317, "lon": 5.629196, "adr": "TOLLÅSBAKKEN 28, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997343", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G67VMAS", "r": 1}, {"navn": "DJUPEDALEN 11", "grp": "Kun mobil", "lat": 62.339465, "lon": 5.631742, "adr": "DJUPEDALEN 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997623", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6C1MAK", "r": 2}, {"navn": "HULDALSBANA 6 A", "grp": "Kun mobil", "lat": 62.339177, "lon": 5.628412, "adr": "HULDALSBANA 6 A, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997627", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6C5MAK", "r": 2}, {"navn": "KLEIVALIA 15", "grp": "Kun mobil", "lat": 62.338826, "lon": 5.624682, "adr": "KLEIVALIA 15, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997766", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6EKMA0", "r": 4}, {"navn": "IGESUNDVEGEN 34", "grp": "Kun mobil", "lat": 62.341001, "lon": 5.628748, "adr": "IGESUNDVEGEN 34, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997789", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6EhMAK", "r": 2}, {"navn": "HULDALSVEGEN 17", "grp": "Kun mobil", "lat": 62.338729, "lon": 5.627689, "adr": "HULDALSVEGEN 17, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10997987", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G6HtMAK", "r": 4}, {"navn": "KLEIVANESET 16", "grp": "Kun mobil", "lat": 62.341799, "lon": 5.626842, "adr": "KLEIVANESET 16, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10998884", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6WMMA0", "r": 3}, {"navn": "TOLLÅSBAKKEN 24", "grp": "Kun mobil", "lat": 62.341345, "lon": 5.629985, "adr": "TOLLÅSBAKKEN 24, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10998892", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6WUMA0", "r": 1}, {"navn": "BURÅSA 29", "grp": "Kun mobil", "lat": 62.340381, "lon": 5.625609, "adr": "BURÅSA 29, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10999328", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G6dWMAS", "r": 3}, {"navn": "HULDALSVEGEN 19", "grp": "Kun mobil", "lat": 62.33845, "lon": 5.627701, "adr": "HULDALSVEGEN 19, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-10999793", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6l1MAC", "r": 4}, {"navn": "TOLLÅSBAKKEN 34", "grp": "Kun mobil", "lat": 62.341073, "lon": 5.62988, "adr": "TOLLÅSBAKKEN 34, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11000092", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6pqMAC", "r": 1}, {"navn": "TOLLÅSBAKKEN 12", "grp": "Kun mobil", "lat": 62.34223, "lon": 5.630176, "adr": "TOLLÅSBAKKEN 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11000155", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6qrMAC", "r": 1}, {"navn": "IGESUNDVEGEN 43", "grp": "Kun mobil", "lat": 62.340569, "lon": 5.630207, "adr": "IGESUNDVEGEN 43, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11000241", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6sFMAS", "r": 2}, {"navn": "NYGARDSVEGEN 4", "grp": "Kun mobil", "lat": 62.337941, "lon": 5.628183, "adr": "NYGARDSVEGEN 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11000347", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G6txMAC", "r": 5}, {"navn": "KJØPMANNSGATA 14", "grp": "Kun mobil", "lat": 62.340986, "lon": 5.631861, "adr": "KJØPMANNSGATA 14, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11001013", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G74hMAC", "r": 1}, {"navn": "TOLLÅSBAKKEN 15", "grp": "Kun mobil", "lat": 62.340841, "lon": 5.630312, "adr": "TOLLÅSBAKKEN 15, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11001526", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7CyMAK", "r": 1}, {"navn": "KLEIVANESET 10", "grp": "Kun mobil", "lat": 62.34189, "lon": 5.627624, "adr": "KLEIVANESET 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11001595", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7E5MAK", "r": 3}, {"navn": "NEDRE HULDALSVEG 4", "grp": "Kun mobil", "lat": 62.338433, "lon": 5.628476, "adr": "NEDRE HULDALSVEG 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11001787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7HBMA0", "r": 5}, {"navn": "HULDALSVEGEN 42", "grp": "Kun mobil", "lat": 62.336277, "lon": 5.627732, "adr": "HULDALSVEGEN 42, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11002402", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7R6MAK", "r": 5}, {"navn": "TOLLÅSBAKKEN 6", "grp": "Kun mobil", "lat": 62.342335, "lon": 5.630435, "adr": "TOLLÅSBAKKEN 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11002477", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G7SJMA0", "r": 1}, {"navn": "KLEIVALIA 21", "grp": "Kun mobil", "lat": 62.339587, "lon": 5.624172, "adr": "KLEIVALIA 21, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11002835", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7Y5MAK", "r": 4}, {"navn": "BURÅSA 39", "grp": "Kun mobil", "lat": 62.340717, "lon": 5.625666, "adr": "BURÅSA 39, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11003142", "bol": "U0102", "st": "Ikke besøkt", "sfid": "a4CSg000000G7d2MAC", "r": 3}, {"navn": "DJUPEDALEN 3", "grp": "Kun mobil", "lat": 62.340284, "lon": 5.631786, "adr": "DJUPEDALEN 3, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11003367", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7gfMAC", "r": 2}, {"navn": "KLEIVALIA 6", "grp": "Kun mobil", "lat": 62.339031, "lon": 5.625336, "adr": "KLEIVALIA 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11003458", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7i8MAC", "r": 4}, {"navn": "NEDRE HULDALSVEG 11", "grp": "Kun mobil", "lat": 62.337611, "lon": 5.629766, "adr": "NEDRE HULDALSVEG 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11003853", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7oVMAS", "r": 5}, {"navn": "IGESUNDVEGEN 55", "grp": "Kun mobil", "lat": 62.340658, "lon": 5.626854, "adr": "IGESUNDVEGEN 55, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11004137", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G7t5MAC", "r": 3}, {"navn": "HULDALSVEGEN 35", "grp": "Kun mobil", "lat": 62.336479, "lon": 5.629024, "adr": "HULDALSVEGEN 35, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11005190", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8A4MAK", "r": 5}, {"navn": "HULDALSVEGEN 28", "grp": "Kun mobil", "lat": 62.338297, "lon": 5.626191, "adr": "HULDALSVEGEN 28, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11005195", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8A9MAK", "r": 4}, {"navn": "DJUPEDALEN 10", "grp": "Kun mobil", "lat": 62.339854, "lon": 5.630017, "adr": "DJUPEDALEN 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11005518", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8FMMA0", "r": 2}, {"navn": "KLEIVALIA 9", "grp": "Kun mobil", "lat": 62.338044, "lon": 5.625389, "adr": "KLEIVALIA 9, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11005791", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8JlMAK", "r": 4}, {"navn": "BERNMARKA 7", "grp": "Kun mobil", "lat": 62.337173, "lon": 5.6291, "adr": "BERNMARKA 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11006517", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8VTMA0", "r": 5}, {"navn": "TOLLÅSBAKKEN 30", "grp": "Kun mobil", "lat": 62.341194, "lon": 5.62892, "adr": "TOLLÅSBAKKEN 30, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11006798", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8a0MAC", "r": 1}, {"navn": "IGESUNDVEGEN 63", "grp": "Kun mobil", "lat": 62.340766, "lon": 5.624119, "adr": "IGESUNDVEGEN 63, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11007787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8pxMAC", "r": 3}, {"navn": "HULDALSVEGEN 10", "grp": "Kun mobil", "lat": 62.339417, "lon": 5.626781, "adr": "HULDALSVEGEN 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11008024", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8tmMAC", "r": 4}, {"navn": "HULDALSVEGEN 22", "grp": "Kun mobil", "lat": 62.338506, "lon": 5.626303, "adr": "HULDALSVEGEN 22, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11008110", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G8vAMAS", "r": 4}, {"navn": "KLEIVALIA 4", "grp": "Kun mobil", "lat": 62.338091, "lon": 5.626214, "adr": "KLEIVALIA 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11008491", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G91JMAS", "r": 4}, {"navn": "KLEIVALIA 29", "grp": "Kun mobil", "lat": 62.340781, "lon": 5.624869, "adr": "KLEIVALIA 29, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11008598", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G932MAC", "r": 3}, {"navn": "IGESUNDVEGEN 46", "grp": "Kun mobil", "lat": 62.341462, "lon": 5.625932, "adr": "IGESUNDVEGEN 46, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11008811", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G96TMAS", "r": 3}, {"navn": "BERNMARKA 13", "grp": "Kun mobil", "lat": 62.336717, "lon": 5.629557, "adr": "BERNMARKA 13, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11009444", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9GgMAK", "r": 5}, {"navn": "HULDALSVEGEN 13", "grp": "Kun mobil", "lat": 62.339099, "lon": 5.627783, "adr": "HULDALSVEGEN 13, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11009907", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9O9MAK", "r": 4}, {"navn": "HULDALSBANA 4 C", "grp": "Kun mobil", "lat": 62.339485, "lon": 5.628367, "adr": "HULDALSBANA 4 C, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11009970", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000G9PAMA0", "r": 2}, {"navn": "TOLLÅSBAKKEN 11", "grp": "Kun mobil", "lat": 62.341232, "lon": 5.6305, "adr": "TOLLÅSBAKKEN 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11010095", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9RBMA0", "r": 1}, {"navn": "BURÅSA 23", "grp": "Kun mobil", "lat": 62.34032, "lon": 5.626235, "adr": "BURÅSA 23, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11010641", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9ZzMAK", "r": 3}, {"navn": "NYGARDSVEGEN 3", "grp": "Kun mobil", "lat": 62.338189, "lon": 5.62802, "adr": "NYGARDSVEGEN 3, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11010762", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9bwMAC", "r": 5}, {"navn": "IGESUNDVEGEN 45", "grp": "Kun mobil", "lat": 62.340566, "lon": 5.629705, "adr": "IGESUNDVEGEN 45, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11010877", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9dnMAC", "r": 2}, {"navn": "DJUPEDALEN 1", "grp": "Kun mobil", "lat": 62.340289, "lon": 5.631282, "adr": "DJUPEDALEN 1, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011101", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9hPMAS", "r": 2}, {"navn": "HULDALSVEGEN 11", "grp": "Kun mobil", "lat": 62.339244, "lon": 5.627824, "adr": "HULDALSVEGEN 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011126", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9hoMAC", "r": 4}, {"navn": "KLEIVANESET 4", "grp": "Kun mobil", "lat": 62.341297, "lon": 5.626898, "adr": "KLEIVANESET 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011189", "bol": "H0301", "st": "Ikke besøkt", "sfid": "a4CSg000000G9ipMAC", "r": 3}, {"navn": "HULDALSBANA 4 A", "grp": "Kun mobil", "lat": 62.339476, "lon": 5.628452, "adr": "HULDALSBANA 4 A, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011205", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9j5MAC", "r": 2}, {"navn": "HULDALSVEGEN 18", "grp": "Kun mobil", "lat": 62.338669, "lon": 5.627077, "adr": "HULDALSVEGEN 18, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011471", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9oyMAC", "r": 4}, {"navn": "BURÅSA 11", "grp": "Kun mobil", "lat": 62.339567, "lon": 5.624831, "adr": "BURÅSA 11, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011581", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9qkMAC", "r": 4}, {"navn": "HULDALSBANA 6 D", "grp": "Kun mobil", "lat": 62.339278, "lon": 5.628259, "adr": "HULDALSBANA 6 D, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011663", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CSg000000G9s4MAC", "r": 2}, {"navn": "BURÅSA 43", "grp": "Kun mobil", "lat": 62.340679, "lon": 5.6266, "adr": "BURÅSA 43, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011809", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9uQMAS", "r": 3}, {"navn": "DJUPEDALEN 18", "grp": "Kun mobil", "lat": 62.339614, "lon": 5.631223, "adr": "DJUPEDALEN 18, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011886", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9vfMAC", "r": 2}, {"navn": "KLEIVANESET 12", "grp": "Kun mobil", "lat": 62.342278, "lon": 5.626962, "adr": "KLEIVANESET 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11011973", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000G9x4MAC", "r": 3}, {"navn": "IGESUNDVEGEN 16", "grp": "Kun mobil", "lat": 62.340809, "lon": 5.632995, "adr": "IGESUNDVEGEN 16, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11012254", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GA1bMAG", "r": 1}, {"navn": "BERNMARKA 15", "grp": "Kun mobil", "lat": 62.336488, "lon": 5.629757, "adr": "BERNMARKA 15, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11013050", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAERMA4", "r": 5}, {"navn": "HULDALSVEGEN 29", "grp": "Kun mobil", "lat": 62.337325, "lon": 5.627982, "adr": "HULDALSVEGEN 29, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11013286", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAIFMA4", "r": 5}, {"navn": "HULDALSBANA 2 A", "grp": "Kun mobil", "lat": 62.339788, "lon": 5.628519, "adr": "HULDALSBANA 2 A, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11013394", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAJzMAO", "r": 2}, {"navn": "IGESUNDVEGEN 47", "grp": "Kun mobil", "lat": 62.340594, "lon": 5.629281, "adr": "IGESUNDVEGEN 47, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11013405", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAKAMA4", "r": 2}, {"navn": "HULDALSBANA 6 B", "grp": "Kun mobil", "lat": 62.33926, "lon": 5.628424, "adr": "HULDALSBANA 6 B, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11013760", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000GAPtMAO", "r": 2}, {"navn": "KLEIVALIA 13", "grp": "Kun mobil", "lat": 62.338607, "lon": 5.6249, "adr": "KLEIVALIA 13, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11014192", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAWrMAO", "r": 4}, {"navn": "KLEIVANESET 6", "grp": "Kun mobil", "lat": 62.341455, "lon": 5.627112, "adr": "KLEIVANESET 6, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11014229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAXSMA4", "r": 3}, {"navn": "BERNMARKA 3 B", "grp": "Kun mobil", "lat": 62.337248, "lon": 5.628504, "adr": "BERNMARKA 3 B, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11014698", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAf1MAG", "r": 5}, {"navn": "KLEIVANESET 20", "grp": "Kun mobil", "lat": 62.342146, "lon": 5.626706, "adr": "KLEIVANESET 20, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11014749", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAfqMAG", "r": 3}, {"navn": "BURÅSA 1", "grp": "Kun mobil", "lat": 62.338734, "lon": 5.625678, "adr": "BURÅSA 1, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11014779", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAhvMAG", "r": 4}, {"navn": "IGESUNDVEGEN 42", "grp": "Kun mobil", "lat": 62.341196, "lon": 5.62718, "adr": "IGESUNDVEGEN 42, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11014947", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAkdMAG", "r": 3}, {"navn": "IGESUNDVEGEN 38", "grp": "Kun mobil", "lat": 62.340777, "lon": 5.627672, "adr": "IGESUNDVEGEN 38, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11015280", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAq0MAG", "r": 3}, {"navn": "IGESUNDVEGEN 12", "grp": "Kun mobil", "lat": 62.340893, "lon": 5.633167, "adr": "IGESUNDVEGEN 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11015694", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAwgMAG", "r": 1}, {"navn": "IGESUNDVEGEN 51", "grp": "Kun mobil", "lat": 62.340587, "lon": 5.628232, "adr": "IGESUNDVEGEN 51, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11015729", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAxFMAW", "r": 2}, {"navn": "KLEIVANESET 14", "grp": "Kun mobil", "lat": 62.342048, "lon": 5.627123, "adr": "KLEIVANESET 14, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11015735", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAxLMAW", "r": 3}, {"navn": "BURÅSA 41", "grp": "Kun mobil", "lat": 62.340908, "lon": 5.626033, "adr": "BURÅSA 41, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11015858", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GAzKMAW", "r": 3}, {"navn": "TOLLÅSBAKKEN 1", "grp": "Kun mobil", "lat": 62.341966, "lon": 5.631152, "adr": "TOLLÅSBAKKEN 1, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11016141", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GB3tMAG", "r": 1}, {"navn": "HULDALSVEGEN 46", "grp": "Kun mobil", "lat": 62.336074, "lon": 5.627504, "adr": "HULDALSVEGEN 46, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11016395", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GB7zMAG", "r": 5}, {"navn": "BURÅSA 35", "grp": "Kun mobil", "lat": 62.340441, "lon": 5.625328, "adr": "BURÅSA 35, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11016801", "bol": "U0102", "st": "Ikke besøkt", "sfid": "a4CSg000000GBEXMA4", "r": 3}, {"navn": "TOLLÅSBAKKEN 18", "grp": "Kun mobil", "lat": 62.341816, "lon": 5.630126, "adr": "TOLLÅSBAKKEN 18, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11017427", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBOdMAO", "r": 1}, {"navn": "KLEIVALIA 17", "grp": "Kun mobil", "lat": 62.339047, "lon": 5.624522, "adr": "KLEIVALIA 17, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11017461", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBPBMA4", "r": 4}, {"navn": "BERNMARKA 3 A", "grp": "Kun mobil", "lat": 62.337244, "lon": 5.62836, "adr": "BERNMARKA 3 A, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11017473", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBPNMA4", "r": 5}, {"navn": "HULDALSVEGEN 37", "grp": "Kun mobil", "lat": 62.336411, "lon": 5.628452, "adr": "HULDALSVEGEN 37, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11017819", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBUxMAO", "r": 5}, {"navn": "BURÅSA 5", "grp": "Kun mobil", "lat": 62.339226, "lon": 5.625952, "adr": "BURÅSA 5, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11018109", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBZdMAO", "r": 4}, {"navn": "HULDALSVEGEN 8", "grp": "Kun mobil", "lat": 62.339673, "lon": 5.626965, "adr": "HULDALSVEGEN 8, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11018142", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBaAMAW", "r": 4}, {"navn": "TOLLÅSBAKKEN 16", "grp": "Kun mobil", "lat": 62.341947, "lon": 5.630362, "adr": "TOLLÅSBAKKEN 16, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11018198", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBb4MAG", "r": 1}, {"navn": "NYGARDSVEGEN 7", "grp": "Kun mobil", "lat": 62.338246, "lon": 5.628883, "adr": "NYGARDSVEGEN 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11018229", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBbZMAW", "r": 5}, {"navn": "KLEIVALIA 5", "grp": "Kun mobil", "lat": 62.337693, "lon": 5.626163, "adr": "KLEIVALIA 5, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11018271", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBcFMAW", "r": 4}, {"navn": "KLEIVALIA 12", "grp": "Kun mobil", "lat": 62.340469, "lon": 5.625176, "adr": "KLEIVALIA 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11019010", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBoAMAW", "r": 3}, {"navn": "HULDALSBANA 4 B", "grp": "Kun mobil", "lat": 62.33958, "lon": 5.628475, "adr": "HULDALSBANA 4 B, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11019102", "bol": "H0102", "st": "Ikke besøkt", "sfid": "a4CSg000000GBpeMAG", "r": 2}, {"navn": "KLEIVANESET 3", "grp": "Kun mobil", "lat": 62.341674, "lon": 5.626141, "adr": "KLEIVANESET 3, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11019320", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GBtAMAW", "r": 3}, {"navn": "BURÅSA 33", "grp": "Kun mobil", "lat": 62.340352, "lon": 5.625247, "adr": "BURÅSA 33, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11020636", "bol": "U0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCEOMA4", "r": 3}, {"navn": "IGESUNDVEGEN 39", "grp": "Kun mobil", "lat": 62.34056, "lon": 5.63131, "adr": "IGESUNDVEGEN 39, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11020767", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCGVMA4", "r": 1}, {"navn": "KLEIVANESET 4", "grp": "Kun mobil", "lat": 62.341297, "lon": 5.626898, "adr": "KLEIVANESET 4, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11021318", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCPOMA4", "r": 3}, {"navn": "IGESUNDVEGEN 31", "grp": "Kun mobil", "lat": 62.340468, "lon": 5.633079, "adr": "IGESUNDVEGEN 31, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11021863", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCYBMA4", "r": 1}, {"navn": "HULDALSVEGEN 26", "grp": "Kun mobil", "lat": 62.338261, "lon": 5.62693, "adr": "HULDALSVEGEN 26, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11022299", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCfDMAW", "r": 4}, {"navn": "HULDALSBANA 2 D", "grp": "Kun mobil", "lat": 62.339911, "lon": 5.628507, "adr": "HULDALSBANA 2 D, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11022628", "bol": "H0202", "st": "Ikke besøkt", "sfid": "a4CSg000000GCkWMAW", "r": 2}, {"navn": "HULDALSVEGEN 12", "grp": "Kun mobil", "lat": 62.339068, "lon": 5.627245, "adr": "HULDALSVEGEN 12, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11022779", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCmxMAG", "r": 4}, {"navn": "IGESUNDVEGEN 59", "grp": "Kun mobil", "lat": 62.34065, "lon": 5.623202, "adr": "IGESUNDVEGEN 59, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11023211", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCtvMAG", "r": 3}, {"navn": "HULDALSBANA 6 C", "grp": "Kun mobil", "lat": 62.339191, "lon": 5.628254, "adr": "HULDALSBANA 6 C, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11023415", "bol": "H0201", "st": "Ikke besøkt", "sfid": "a4CSg000000GCxDMAW", "r": 2}, {"navn": "TOLLÅSBAKKEN 10", "grp": "Kun mobil", "lat": 62.342113, "lon": 5.630517, "adr": "TOLLÅSBAKKEN 10, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11023555", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GCzTMAW", "r": 1}, {"navn": "HULDALSVEGEN 40", "grp": "Kun mobil", "lat": 62.336725, "lon": 5.627701, "adr": "HULDALSVEGEN 40, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11023607", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD0JMAW", "r": 5}, {"navn": "NEDRE HULDALSVEG 7", "grp": "Kun mobil", "lat": 62.338109, "lon": 5.629923, "adr": "NEDRE HULDALSVEG 7, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11023787", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD3DMAW", "r": 5}, {"navn": "TOLLÅSBAKKEN 8", "grp": "Kun mobil", "lat": 62.342157, "lon": 5.630841, "adr": "TOLLÅSBAKKEN 8, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11023804", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD3UMAW", "r": 1}, {"navn": "HULDALSVEGEN 5", "grp": "Kun mobil", "lat": 62.339885, "lon": 5.627946, "adr": "HULDALSVEGEN 5, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11024071", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GD7nMAG", "r": 4}, {"navn": "HULDALSVEGEN 20", "grp": "Kun mobil", "lat": 62.338715, "lon": 5.626376, "adr": "HULDALSVEGEN 20, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11025320", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDRwMAO", "r": 4}, {"navn": "KLEIVALIA 1", "grp": "Kun mobil", "lat": 62.337657, "lon": 5.626862, "adr": "KLEIVALIA 1, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11025929", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDdMMAW", "r": 4}, {"navn": "HULDALSVEGEN 17", "grp": "Kun mobil", "lat": 62.338729, "lon": 5.627689, "adr": "HULDALSVEGEN 17, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11025989", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDeKMAW", "r": 4}, {"navn": "KLEIVALIA 2", "grp": "Kun mobil", "lat": 62.33804, "lon": 5.626301, "adr": "KLEIVALIA 2, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11026544", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDnHMAW", "r": 4}, {"navn": "DJUPEDALEN 9", "grp": "Kun mobil", "lat": 62.339704, "lon": 5.631599, "adr": "DJUPEDALEN 9, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11026674", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDpNMAW", "r": 2}, {"navn": "TOLLÅSBAKKEN 22", "grp": "Kun mobil", "lat": 62.34155, "lon": 5.629923, "adr": "TOLLÅSBAKKEN 22, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11026757", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDqiMAG", "r": 1}, {"navn": "BURÅSA 27", "grp": "Kun mobil", "lat": 62.34044, "lon": 5.625812, "adr": "BURÅSA 27, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11026773", "bol": "U0102", "st": "Ikke besøkt", "sfid": "a4CSg000000GDqyMAG", "r": 3}, {"navn": "IGESUNDVEGEN 33", "grp": "Kun mobil", "lat": 62.340563, "lon": 5.632547, "adr": "IGESUNDVEGEN 33, 6090 Fosnavåg", "area": "Fosnavåg", "bnr": "V-11026890", "bol": "H0101", "st": "Ikke besøkt", "sfid": "a4CSg000000GDsrMAG", "r": 1}];
+var AREAS = ["Fosnavåg"];
+var STORE_KEY = "dorkart_Adrian_23.11.26";
+var SF_BASE = "https://cview.lightning.force.com";
+var SF_OBJECT = "Visit__c";
+var APPT_KEY = "dorkart_appt_Adrian";
+var ICS_ENDPOINT = "https://electi-ics.daniel-kolstad.workers.dev/";
+var GROUPS = {
+"HP": {raw:"#2f9e57", label:"HP"},
+"HC": {raw:"#2f6fe0", label:"HC"},
+"HC Vula": {raw:"#e07d2f", label:"HC Vula"},
+"Kun mobil":{raw:"#6b7683", label:"Kun mobil"}
+};
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]")); }catch(e){ return new Set(); } }
+function saveDone(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+var done = loadDone();
+function loadAppts(){ try{ return JSON.parse(localStorage.getItem(APPT_KEY)||"{}") || {}; }catch(e){ return {}; } }
+function saveAppts(){ try{ localStorage.setItem(APPT_KEY, JSON.stringify(appts)); }catch(e){} }
+var appts = loadAppts();
+var activeGroups = new Set(Object.keys(GROUPS));
+var area = "alle";
+var showDone = false;
+// Rotasjon (leaflet-rotate): to-finger-rotasjon med dødsone, så en vanlig pinch-zoom ikke vrir kartet ved et uhell.
+var ROT_DEADZONE = 12, ROT_MINDIST = 50, ROT_SNAP = 4;
+function rotNorm(d){ d = d % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d; }
+if(L.Map.TouchGestures){
+var __tg = L.Map.TouchGestures.prototype, __tgStart = __tg._onTouchStart, __tgMove = __tg._onTouchMove, __tgEnd = __tg._onTouchEnd;
+L.Map.TouchGestures.include({
+_onTouchStart: function(e){
+this._rotEngaged = false;
+__tgStart.call(this, e);
+if(this._rotating && e.touches && e.touches.length === 2){
+var p1 = this._map.mouseEventToContainerPoint(e.touches[0]), p2 = this._map.mouseEventToContainerPoint(e.touches[1]);
+this._rotStartFlip = (p1.y - p2.y) < 0 ? 180 : 0;
+}
+},
+_onTouchMove: function(e){
+if(this._rotating && !this._rotEngaged && e.touches && e.touches.length === 2){
+var map = this._map, p1 = map.mouseEventToContainerPoint(e.touches[0]), p2 = map.mouseEventToContainerPoint(e.touches[1]), v = p1.subtract(p2);
+var theta = Math.atan(v.x / v.y), d = (theta - this._startTheta) * L.DomUtil.RAD_TO_DEG;
+if(v.y < 0) d += 180;
+d = rotNorm(d - this._rotStartFlip);
+if(Math.abs(d) < ROT_DEADZONE || p1.distanceTo(p2) < ROT_MINDIST){
+this._rotating = false;
+try{ __tgMove.call(this, e); } finally{ this._rotating = true; }
+return;
+}
+// dreiningen starter her, uten hopp: bare vridningen ut over dødsonen følger fingrene
+this._rotEngaged = true;
+this._startTheta = theta - (d - Math.sign(d) * ROT_DEADZONE) * L.DomUtil.DEG_TO_RAD;
+this._startBearing = map.getBearing() + (v.y < 0 ? 180 : 0);
+}
+__tgMove.call(this, e);
+},
+_onTouchEnd: function(e){
+var moved = this._moved, active = this._zooming || this._rotating, map = this._map;
+this._rotEngaged = false;
+if(!moved || !active){
+this._zooming = false; this._rotating = false;
+L.DomEvent.off(document, "touchmove", this._onTouchMove, this).off(document, "touchend touchcancel", this._onTouchEnd, this);
+return;
+}
+__tgEnd.call(this, e);
+if(map._rotate){ var b = rotNorm(map.getBearing()); if(b && Math.abs(b) <= ROT_SNAP) animateBearing(0, 180); }
+}
+});
+}
+var map = L.map("map", {zoomControl:true, tap:true, rotate:true, bearing:0, touchRotate:true, rotateControl:false});
+var compassBtn = document.getElementById("compass"), rotAnim = null, rotGuard = null;
+function animateBearing(target, ms){
+if(!map._rotate) return;
+var b0 = map.getBearing(), d = rotNorm(target - b0), t0 = null;
+if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; }
+if(rotGuard){ clearTimeout(rotGuard); rotGuard = null; }
+if(!d){ map.setBearing(target); return; }
+function step(ts){
+if(t0 === null) t0 = ts;
+var k = Math.min(1, (ts - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+map.setBearing(k < 1 ? b0 + d * ease : target);
+rotAnim = k < 1 ? requestAnimationFrame(step) : null;
+}
+rotAnim = requestAnimationFrame(step);
+// vakt: fullfør uansett (requestAnimationFrame står stille i en skjult fane)
+rotGuard = setTimeout(function(){ rotGuard = null; if(rotAnim){ cancelAnimationFrame(rotAnim); rotAnim = null; map.setBearing(target); } }, ms + 250);
+}
+function updateCompass(){
+if(!compassBtn) return;
+var b = map._rotate ? map.getBearing() : 0;
+compassBtn.hidden = Math.abs(rotNorm(b)) <= 0.5;
+var svg = compassBtn.querySelector("svg"); if(svg) svg.style.transform = "rotate(" + b + "deg)";
+}
+if(map._rotate){
+// egne paneler (f.eks. runde-omrissene) skal rotere med kartet
+var __createPane = map.createPane;
+map.createPane = function(name, container){ return __createPane.call(this, name, container || this._rotatePane); };
+// fitBounds-padding (topp-feltet) skal gjelde i skjermretning også når kartet er dreid
+map._getBoundsCenterZoom = function(bounds, options){
+options = options || {};
+bounds = bounds.getBounds ? bounds.getBounds() : L.latLngBounds(bounds);
+var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]), paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]);
+var zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+zoom = (typeof options.maxZoom === "number") ? Math.min(options.maxZoom, zoom) : zoom;
+if(zoom === Infinity) return {center: bounds.getCenter(), zoom: zoom};
+var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2);
+if(this._bearing) paddingOffset = paddingOffset.rotate(-this._bearing);
+var swPoint = this.project(bounds.getSouthWest(), zoom), nePoint = this.project(bounds.getNorthEast(), zoom);
+return {center: this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom), zoom: zoom};
+};
+map.on("rotate", updateCompass);
+if(compassBtn) compassBtn.addEventListener("click", function(){ animateBearing(0, 260); });
+updateCompass();
+if(L.Browser.touch) setTimeout(function(){
+var seen = false; try{ seen = localStorage.getItem("dorkart_rotatetips") === "1"; localStorage.setItem("dorkart_rotatetips", "1"); }catch(e){}
+if(!seen && typeof toast === "function") toast("Nytt: drei kartet med to fingre. Trykk kompasset nede til venstre for å få nord opp igjen.");
+}, 6500);
+}
+var KV = "https://cache.kartverket.no/v1/wmts/1.0.0/";
+var kvFarge = L.tileLayer(KV+"topo/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+var kvGraa = L.tileLayer(KV+"topograatone/default/webmercator/{z}/{y}/{x}.png", {maxNativeZoom:18, maxZoom:19, attribution:"© Kartverket"});
+kvFarge.addTo(map);
+L.control.layers({"Kartverket farge":kvFarge, "Kartverket gråtone":kvGraa}, null, {position:"topright", collapsed:true}).addTo(map);
+// Grupper dører som deler (nesten) samme koordinat = flere boenheter på samme punkt.
+var __stacks = {};
+DATA.forEach(function(d){
+var key = d.lat.toFixed(5)+","+d.lon.toFixed(5);
+(__stacks[key] = __stacks[key] || []).push(d);
+});
+DATA.forEach(function(d){
+var s = __stacks[d.lat.toFixed(5)+","+d.lon.toFixed(5)];
+d._stack = s; d._stackN = s.length;
+if(s.length > 1){
+var i = s.indexOf(d), ang = (2*Math.PI*i/s.length) - Math.PI/2;
+d._ox = Math.cos(ang); d._oy = Math.sin(ang);
+} else { d._ox = 0; d._oy = 0; }
+});
+var group = L.layerGroup().addTo(map);
+DATA.forEach(function(d){
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var m = L.circleMarker([d.lat, d.lon], {radius:8, color:"#ffffff", weight:2, fillColor:g.raw, fillOpacity:1});
+m.on("click", function(){ openSheet(d); });
+d._m = m;
+});
+// Vifte ut overlappende markører i pikselrom, så hver boenhet blir en egen prikk på alle zoom-nivåer.
+var STACK_PX = 15;
+function layoutStacks(){
+if(!map._loaded) return;
+DATA.forEach(function(d){
+if(d._stackN > 1){
+try{
+var base = map.latLngToLayerPoint([d.lat, d.lon]);
+d._m.setLatLng(map.layerPointToLatLng(L.point(base.x + d._ox*STACK_PX, base.y + d._oy*STACK_PX)));
+}catch(e){}
+}
+});
+}
+map.on("zoomend", layoutStacks);
+function fitB(b){ var tb=document.querySelector(".topbar"); var th=tb?tb.getBoundingClientRect().height:0; map.fitBounds(b, {paddingTopLeft:[40, th+30+((typeof showRounds!=="undefined" && showRounds && typeof ROUNDS!=="undefined" && ROUNDS.length) ? 36 : 0)], paddingBottomRight:[40,40], maxZoom:16}); }
+function bounds(pred){
+var pts = DATA.filter(pred).map(function(d){ return [d.lat, d.lon]; });
+return pts.length ? L.latLngBounds(pts) : null;
+}
+function visible(d){
+if(!activeGroups.has(d.grp)) return false;
+if(area !== "alle" && d.area !== area) return false;
+if(done.has(d.bnr) && !showDone && !appts[d.bnr]) return false;
+return true;
+}
+function refresh(){
+DATA.forEach(function(d){
+var m = d._m, on = visible(d);
+if(on){
+if(!group.hasLayer(m)) group.addLayer(m);
+if(appts[d.bnr]){ m.setStyle({color:"#e8a90c", weight:3, fillOpacity:1}); m.bringToFront(); }
+else { m.setStyle({color:"#ffffff", fillOpacity: done.has(d.bnr) ? 0.30 : 1, weight: done.has(d.bnr) ? 1 : 2}); }
+} else { if(group.hasLayer(m)) group.removeLayer(m); }
+});
+updateCounts();
+}
+function updateCounts(){
+var rem = 0;
+Object.keys(GROUPS).forEach(function(k){
+var n = DATA.filter(function(d){ return d.grp===k && !done.has(d.bnr) && (area==="alle" || d.area===area); }).length;
+var el = document.getElementById("cnt-"+cssKey(k));
+if(el) el.textContent = n;
+if(activeGroups.has(k)) rem += n;
+});
+document.getElementById("remN").textContent = rem;
+var na = DATA.filter(function(d){ return appts[d.bnr]; }).length;
+var al = document.getElementById("apptline");
+if(na>0){
+al.hidden=false;
+al.innerHTML='<button id="apptZoom">📅 '+na+' avtale'+(na>1?'r':'')+'</button>';
+document.getElementById("apptZoom").onclick=openApptList;
+} else { al.hidden=true; al.innerHTML=""; }
+}
+function cssKey(k){ return k.replace(/[^a-zA-Z]/g,""); }
+// Omraadefaner (bare hvis mer enn ett omraade)
+var tabs = document.getElementById("areatabs");
+function setArea(a, btn){
+area = a;
+tabs.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+if(btn) btn.classList.add("on");
+var bb = bounds(function(d){ return area==="alle" || d.area===area; });
+if(bb) fitB(bb);
+refresh();
+}
+if(AREAS.length > 1){
+var mk = function(label, val){
+var b=document.createElement("button"); b.textContent=label;
+b.addEventListener("click", function(){ setArea(val, b); });
+tabs.appendChild(b); return b;
+};
+var allBtn = mk("Alle","alle"); allBtn.classList.add("on");
+AREAS.forEach(function(a){ mk(a, a); });
+} else {
+tabs.style.display = "none";
+}
+var chips = document.getElementById("chips");
+Object.keys(GROUPS).forEach(function(k){
+var g = GROUPS[k];
+var c = document.createElement("div"); c.className = "chip";
+c.innerHTML = '<span class="dot" style="background:'+g.raw+'"></span>'+g.label+' <span class="n" id="cnt-'+cssKey(k)+'">0</span>';
+c.addEventListener("click", function(){
+if(activeGroups.has(k)){ activeGroups.delete(k); c.classList.add("off"); }
+else { activeGroups.add(k); c.classList.remove("off"); }
+refresh();
+});
+chips.appendChild(c);
+});
+document.getElementById("showdone").addEventListener("change", function(e){ showDone = e.target.checked; refresh(); });
+var sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtWhen(a){ var p=a.date.split("-"); return p[2]+"."+p[1]+"."+p[0].slice(2)+" kl "+a.time; }
+function escH(s){ return (""+s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function apptSorted(){
+var arr=DATA.filter(function(d){ return appts[d.bnr]; }).map(function(d){ return {d:d, a:appts[d.bnr]}; });
+arr.sort(function(x,y){ var kx=x.a.date+"T"+x.a.time, ky=y.a.date+"T"+y.a.time; return kx<ky?-1:(kx>ky?1:0); });
+return arr;
+}
+function openApptList(){
+closeSheet();
+var arr=apptSorted(), body=document.getElementById("apptListBody"), now=Date.now();
+if(!arr.length){ body.innerHTML='<div class="appt-empty">Ingen avtaler ennå.</div>'; }
+else {
+body.innerHTML=arr.map(function(it,i){
+var g=GROUPS[it.d.grp]||GROUPS["Kun mobil"];
+var t=new Date(it.a.date+"T"+it.a.time).getTime();
+var past=(!isNaN(t) && t<now) ? " past" : "";
+return '<button class="appt-item" data-i="'+i+'">'+
+'<span class="appt-dot" style="background:'+g.raw+'"></span>'+
+'<span class="appt-item-main"><span class="appt-item-addr">'+escH(it.d.navn)+'</span>'+
+'<span class="appt-item-sub">'+escH(it.d.adr)+'</span></span>'+
+'<span class="appt-item-when'+past+'">'+fmtWhen(it.a)+'</span></button>';
+}).join("");
+Array.prototype.forEach.call(body.querySelectorAll(".appt-item"), function(btn){
+btn.addEventListener("click", function(){ var it=arr[+btn.getAttribute("data-i")]; goToAppt(it.d); });
+});
+}
+document.getElementById("apptSheet").classList.add("open");
+scrim.classList.add("open");
+}
+function closeApptList(){ document.getElementById("apptSheet").classList.remove("open"); scrim.classList.remove("open"); }
+function goToAppt(d){ closeApptList(); map.setView([d.lat,d.lon], 18, {animate:true}); openSheet(d); }
+// Adressesøk
+function renderSearch(q){
+var box=document.getElementById("searchResults");
+q=(q||"").trim().toLowerCase();
+if(q.length<2){ box.hidden=true; box.innerHTML=""; return; }
+var hits=DATA.filter(function(d){ return (d.navn+" "+d.adr).toLowerCase().indexOf(q)>=0; });
+hits.sort(function(a,b){
+var ai=a.navn.toLowerCase().indexOf(q)===0?0:1, bi=b.navn.toLowerCase().indexOf(q)===0?0:1;
+if(ai!==bi) return ai-bi;
+return a.navn.localeCompare(b.navn,"no");
+});
+hits=hits.slice(0,8);
+if(!hits.length){ box.hidden=false; box.innerHTML='<div class="search-empty">Ingen treff</div>'; return; }
+box.hidden=false;
+box.innerHTML=hits.map(function(d){
+var g=GROUPS[d.grp]||GROUPS["Kun mobil"];
+var ssub = escH(d.adr) + (d._stackN>1 ? ' · Bolig '+escH(d.bol) : '');
+return '<button class="search-item" data-bnr="'+escH(d.bnr)+'"><span class="appt-dot" style="background:'+g.raw+'"></span><span class="search-main"><span class="search-addr">'+escH(d.navn)+'</span><span class="search-sub">'+ssub+'</span></span></button>';
+}).join("");
+Array.prototype.forEach.call(box.querySelectorAll(".search-item"), function(btn){
+btn.addEventListener("click", function(){
+var bnr=btn.getAttribute("data-bnr"), d=null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ d=DATA[i]; break; } }
+if(d) goToSearchDoor(d);
+});
+});
+}
+function hideSearch(){ var box=document.getElementById("searchResults"); if(box) box.hidden=true; }
+function goToSearchDoor(d){
+hideSearch();
+if(d._m && !group.hasLayer(d._m)) group.addLayer(d._m);
+map.setView([d.lat, d.lon], 18, {animate:true});
+openSheet(d);
+}
+(function(){
+var si=document.getElementById("searchInput"); if(!si) return;
+var sc=document.getElementById("searchClear"), wrap=si.parentNode;
+si.addEventListener("input", function(){ sc.hidden = !si.value; renderSearch(si.value); });
+si.addEventListener("focus", function(){ if(si.value.trim().length>=2) renderSearch(si.value); });
+sc.addEventListener("click", function(){ si.value=""; sc.hidden=true; hideSearch(); si.focus(); });
+document.addEventListener("click", function(e){ if(!wrap.contains(e.target)) hideSearch(); });
+})();
+// Hold Leaflet-kontrollen (lag-velger) under topbaren uansett topbar-høyde
+function fitTopbar(){
+var tb=document.querySelector(".topbar"); if(!tb) return;
+var el=document.querySelector(".leaflet-top.leaflet-right");
+if(el) el.style.marginTop=(tb.getBoundingClientRect().height + 10)+"px";
+}
+window.addEventListener("resize", fitTopbar);
+function icsUri(d,a){
+var dt=a.date.replace(/-/g,""), tm=a.time.replace(":","")+"00", start=dt+"T"+tm;
+var sfurl = d.sfid ? (SF_BASE+"/lightning/r/"+d.sfid+"/view") : "";
+var sum="Besøk: "+d.navn;
+var desc="Electi dørsalg. Besøksnr "+d.bnr+(sfurl?" — "+sfurl:"");
+if(ICS_ENDPOINT){
+return ICS_ENDPOINT+(ICS_ENDPOINT.indexOf("?")>=0?"&":"?")+"start="+start+"&dur=30&uid="+encodeURIComponent(d.bnr+"-"+start)+"&sum="+encodeURIComponent(sum)+"&loc="+encodeURIComponent(d.adr)+"&desc="+encodeURIComponent(desc);
+}
+var hh=parseInt(a.time.slice(0,2),10), mm=parseInt(a.time.slice(3,5),10);
+var em=mm+30, eh=hh+Math.floor(em/60); em=em%60; eh=eh%24;
+var end=dt+"T"+pad2(eh)+pad2(em)+"00";
+var n=new Date(), stamp=n.getUTCFullYear()+pad2(n.getUTCMonth()+1)+pad2(n.getUTCDate())+"T"+pad2(n.getUTCHours())+pad2(n.getUTCMinutes())+pad2(n.getUTCSeconds())+"Z";
+function esc(s){ return (""+s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Electi//Dorkart//NO","METHOD:PUBLISH","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+"UID:"+d.bnr+"-"+start+"@electi-dorkart","DTSTAMP:"+stamp,"DTSTART:"+start,"DTEND:"+end,
+"SUMMARY:"+esc(sum),"LOCATION:"+esc(d.adr),"DESCRIPTION:"+esc(desc),
+"BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+esc("Besøk om 15 min: "+d.navn),"END:VALARM",
+"END:VEVENT","END:VCALENDAR"];
+var ics=L.join("\r\n");
+try{ if(window.__apptBlob) URL.revokeObjectURL(window.__apptBlob); }catch(e){}
+try{ window.__apptBlob = URL.createObjectURL(new Blob([ics], {type:"text/calendar;charset=utf-8"})); return window.__apptBlob; }
+catch(e){ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); }
+}
+function renderAppt(d){
+var box=document.getElementById("sAppt"), a=appts[d.bnr];
+if(a){
+box.className="apptbox has";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale <span class="appt-when">'+fmtWhen(a)+'</span></div></div>'+
+'<div class="appt-actions"><a class="appt-cal" id="aCal" target="_blank" rel="noopener">Legg i kalender</a><button class="appt-open" id="aEdit">Endre</button><button class="appt-del" id="aDel">Fjern avtale</button></div>';
+document.getElementById("aCal").href=icsUri(d,a);
+document.getElementById("aEdit").onclick=function(){ showApptForm(d,a); };
+document.getElementById("aDel").onclick=function(){ delete appts[d.bnr]; saveAppts(); renderAppt(d); refresh(); };
+} else {
+box.className="apptbox";
+box.innerHTML='<div class="appt-row"><div class="appt-title">📅 Avtale</div><button class="appt-open" id="aAdd" style="margin-left:auto">+ Sett tid</button></div>';
+document.getElementById("aAdd").onclick=function(){ showApptForm(d,null); };
+}
+}
+function showApptForm(d,a){
+var box=document.getElementById("sAppt");
+var today=new Date(); var todayStr=today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate());
+var dv=a?a.date:todayStr, tv=a?a.time:"17:00";
+box.className="apptbox";
+box.innerHTML='<div class="appt-title">📅 Sett avtale</div>'+
+'<div class="appt-form"><input type="date" id="aDate" value="'+dv+'"><input type="time" id="aTime" value="'+tv+'"></div>'+
+'<div class="appt-actions"><button class="appt-save" id="aSave">Lagre avtale</button><button class="appt-open" id="aCancel">Avbryt</button></div>';
+document.getElementById("aSave").onclick=function(){
+var dd=document.getElementById("aDate").value, tt=document.getElementById("aTime").value;
+if(!dd||!tt) return;
+appts[d.bnr]={date:dd,time:tt}; saveAppts(); renderAppt(d); refresh();
+};
+document.getElementById("aCancel").onclick=function(){ renderAppt(d); };
+}
+var cur = null;
+function openSheet(d){
+cur = d;
+document.getElementById("sAddr").textContent = d.navn;
+document.getElementById("sSub").textContent = d.adr;
+var g = GROUPS[d.grp] || GROUPS["Kun mobil"];
+var badges = '<span class="badge" style="background:'+g.raw+'">'+g.label+'</span>' + '<span class="badge status">'+d.st+'</span>';
+var rr0 = (d.r && typeof roundOf==="function") ? roundOf(d.r) : null;
+if(rr0) badges += '<span class="badge rnd" style="color:'+rr0.c+'">Runde '+d.r+'</span>';
+if(done.has(d.bnr)) badges += '<span class="badge done-badge">Fullført</span>';
+document.getElementById("sBadges").innerHTML = badges;
+if(d.sfid){
+document.getElementById("sMeta").innerHTML = '<a class="sflink" href="' + SF_BASE + '/lightning/r/' + d.sfid + '/view" target="_blank" rel="noopener">Besøksnr ' + d.bnr + ' ↗</a> · Bolig ' + d.bol;
+} else {
+document.getElementById("sMeta").textContent = "Besøksnr " + d.bnr + " · Bolig " + d.bol;
+}
+var stackBox = document.getElementById("sStack");
+if(d._stackN > 1){
+stackBox.hidden = false;
+var sameNavn = d._stack.every(function(s){ return s.navn === d.navn; });
+var sibs = d._stack.slice().sort(function(a,b){ return (""+a.bol).localeCompare(""+b.bol,"no"); });
+stackBox.innerHTML = '<div class="stack-head">🏠 '+d._stackN+' boenheter her</div>' + sibs.map(function(sd){
+var g2 = GROUPS[sd.grp] || GROUPS["Kun mobil"];
+var isCur = String(sd.bnr) === String(d.bnr);
+var chk = done.has(sd.bnr) ? ' <span class="stack-check">✓</span>' : '';
+var primary = (sameNavn ? "" : escH(sd.navn)+" · ") + "Bolig " + escH(sd.bol) + (isCur ? " (denne)" : "") + chk;
+var link = sd.sfid ? '<a class="mini" href="'+SF_BASE+'/lightning/r/'+sd.sfid+'/view" target="_blank" rel="noopener">Besøk ↗</a>' : '';
+return '<button class="stack-item'+(isCur?' cur':'')+'" data-bnr="'+escH(sd.bnr)+'">'+
+'<span class="appt-dot" style="background:'+g2.raw+'"></span>'+
+'<span class="stack-main"><span class="stack-bol">'+primary+'</span>'+
+'<span class="stack-sub">'+escH(sd.grp)+' · '+escH(sd.st)+'</span></span>'+link+'</button>';
+}).join("");
+Array.prototype.forEach.call(stackBox.querySelectorAll(".stack-item"), function(btn){
+btn.addEventListener("click", function(ev){
+if(ev.target.closest("a")) return;
+var bnr = btn.getAttribute("data-bnr"), nd = null;
+for(var i=0;i<DATA.length;i++){ if(String(DATA[i].bnr)===String(bnr)){ nd = DATA[i]; break; } }
+if(nd && !(cur && String(nd.bnr)===String(cur.bnr))) openSheet(nd);
+});
+});
+} else { stackBox.hidden = true; stackBox.innerHTML = ""; }
+renderAppt(d);
+document.getElementById("sNav").href = "https://www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lon;
+var db = document.getElementById("sDone");
+if(done.has(d.bnr)){ db.textContent = "Angre"; db.className = "btn-undo"; }
+else { db.textContent = "Ferdig – fjern"; db.className = "btn-done"; }
+sheet.classList.add("open"); scrim.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("open"); cur = null; }
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("apptClose").addEventListener("click", closeApptList);
+scrim.addEventListener("click", function(){ closeSheet(); closeApptList(); });
+document.getElementById("sDone").addEventListener("click", function(){
+if(!cur) return;
+if(done.has(cur.bnr)) done.delete(cur.bnr); else done.add(cur.bnr);
+saveDone(); refresh(); closeSheet();
+});
+// Min posisjon (GPS)
+var meDot=null, meCirc=null, locBtn=document.getElementById("locate");
+var toastEl=document.getElementById("toast"), toastT=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); }, 4500); }
+locBtn.addEventListener("click", function(){
+if(!navigator.geolocation){ toast("Nettleseren støtter ikke posisjon."); return; }
+if(meDot){ map.setView(meDot.getLatLng(), Math.max(map.getZoom(), 17)); return; }
+toast("Henter posisjon …");
+navigator.geolocation.watchPosition(function(pos){
+var ll=[pos.coords.latitude, pos.coords.longitude], acc=pos.coords.accuracy || 30;
+if(!meDot){
+meCirc = L.circle(ll, {radius:acc, color:"#ff2d78", weight:1, fillColor:"#ff2d78", fillOpacity:0.12, interactive:false}).addTo(map);
+meDot = L.marker(ll, {icon:L.divIcon({className:"me-icon", html:'<div class="me-pulse"></div><div class="me-core"></div>', iconSize:[20,20], iconAnchor:[10,10]}), interactive:false, keyboard:false, zIndexOffset:1000}).addTo(map);
+map.setView(ll, 17); locBtn.classList.add("on"); toastEl.classList.remove("show");
+} else { meDot.setLatLng(ll); meCirc.setLatLng(ll).setRadius(acc); }
+}, function(err){
+if(err && err.code===1) toast("Posisjon avslått – tillat posisjon for denne siden i nettleseren.");
+else toast("Fikk ikke posisjon. Krever https-lenke og at GPS er på.");
+}, {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+});
+// Runder: én runde per salgsdag (balansert på HP/HC/HC Vula, kun mobil i tillegg). Tapp et nummer = dagens runde.
+var ROUNDS = [{"n":1,"c":"#000089","s":37,"m":0,"h":[[[62.341298,5.628384],[62.342204,5.629288],[62.342586,5.630213],[62.342606,5.630435],[62.342586,5.630657],[62.342349,5.631251],[62.340997,5.633703],[62.340893,5.633748],[62.340364,5.633615],[62.340276,5.633489],[62.340217,5.633301],[62.340197,5.633079],[62.340227,5.632498],[62.340327,5.632329],[62.340433,5.631903],[62.340407,5.63154],[62.34043,5.63104],[62.340911,5.631085],[62.340685,5.630502],[62.340729,5.629977],[62.34068,5.629575],[62.340889,5.629347],[62.34091,5.629073],[62.341058,5.629037],[62.341194,5.62834]]],"b":[[62.342606,5.630435]],"g":["TOLLÅSBAKKEN","IGESUNDVEGEN","KJØPMANNSGATA"]},{"n":2,"c":"#7b2cbf","s":35,"m":0,"h":[[[62.340327,5.632329],[62.339465,5.632323],[62.339361,5.632278],[62.339273,5.632152],[62.339214,5.631964],[62.338907,5.62843],[62.338926,5.628292],[62.338996,5.628151],[62.339159,5.628005],[62.339237,5.62805],[62.339381,5.627999],[62.339408,5.628082],[62.339548,5.628146],[62.339613,5.628108],[62.339713,5.628211],[62.339784,5.62816],[62.33987,5.628232],[62.34023,5.628155],[62.340279,5.627606],[62.340452,5.627596],[62.340633,5.627877],[62.341047,5.628004],[62.341194,5.628341],[62.341058,5.629037],[62.34091,5.629073],[62.340889,5.629347],[62.34068,5.629575],[62.340729,5.629977],[62.340685,5.630502],[62.340849,5.63091],[62.340825,5.631028],[62.340807,5.63109],[62.34043,5.63104],[62.340407,5.63154],[62.340433,5.631903]]],"b":[[62.341194,5.628341]],"g":["IGESUNDVEGEN","HULDALSBANA","DJUPEDALEN"]},{"n":3,"c":"#0b7285","s":40,"m":0,"h":[[[62.339737,5.623615],[62.340107,5.62202],[62.340195,5.621894],[62.340299,5.621849],[62.340403,5.621894],[62.340491,5.62202],[62.341032,5.623196],[62.34247,5.626552],[62.342529,5.62674],[62.342549,5.626962],[62.342529,5.627184],[62.34247,5.627372],[62.342082,5.628034],[62.341994,5.62816],[62.34189,5.628205],[62.341521,5.62822],[62.341479,5.628119],[62.341377,5.628051],[62.340633,5.627877],[62.340409,5.627528],[62.340176,5.626797],[62.340036,5.62578],[62.33998,5.625644],[62.34011,5.624697],[62.339768,5.624424]]],"b":[[62.342549,5.626962]],"g":["KLEIVANESET","IGESUNDVEGEN","BURÅSA"]},{"n":4,"c":"#a61e4d","s":43,"m":0,"h":[[[62.340178,5.626812],[62.340133,5.628176],[62.33987,5.628232],[62.339784,5.62816],[62.339713,5.628211],[62.339613,5.628108],[62.339548,5.628146],[62.339408,5.628082],[62.339381,5.627999],[62.339237,5.62805],[62.339159,5.628005],[62.338996,5.628151],[62.338926,5.628292],[62.338819,5.627949],[62.338591,5.627838],[62.338574,5.627883],[62.338317,5.62785],[62.338217,5.627471],[62.33812,5.62724],[62.338146,5.626622],[62.337861,5.626549],[62.337835,5.626628],[62.337829,5.627112],[62.337624,5.627191],[62.33739,5.626907],[62.337395,5.626365],[62.337442,5.625941],[62.337852,5.624979],[62.33794,5.624853],[62.33918,5.623728],[62.339587,5.623591],[62.339691,5.623636],[62.339741,5.623707],[62.339768,5.624424],[62.340044,5.624661],[62.340076,5.625039],[62.33998,5.625644],[62.340036,5.62578]]],"b":[[62.340178,5.626812]],"g":["HULDALSVEGEN","KLEIVALIA","BURÅSA"]},{"n":5,"c":"#343a40","s":36,"m":0,"h":[[[62.338926,5.628292],[62.338301,5.630333],[62.338213,5.630459],[62.338109,5.630504],[62.336488,5.630338],[62.336384,5.630293],[62.336296,5.630167],[62.335969,5.628927],[62.335878,5.628512],[62.335803,5.627504],[62.335823,5.627282],[62.335882,5.627094],[62.33597,5.626968],[62.33682,5.62608],[62.336924,5.626035],[62.337267,5.626119],[62.337301,5.626569],[62.337367,5.62688],[62.337624,5.627191],[62.337829,5.627112],[62.337835,5.626628],[62.337861,5.626549],[62.338146,5.626622],[62.33812,5.62724],[62.338217,5.627471],[62.338317,5.62785],[62.338574,5.627883],[62.338591,5.627838],[62.338819,5.627949]]],"b":[[62.338926,5.628292]],"g":["HULDALSVEGEN","NYGARDSVEGEN","BERNMARKA"]}];
+var RUNDER_KEY = APPT_KEY.replace("dorkart_appt_", "dorkart_runder_");
+var roundLayer = L.layerGroup(), roundPolys = {}, roundBadges = {};
+var showRounds = true, focusRound = 0, tipTimer = null;
+try{ if(localStorage.getItem(RUNDER_KEY)==="0") showRounds = false; focusRound = parseInt(localStorage.getItem(RUNDER_KEY+"_fokus")||"0",10) || 0; }catch(e){}
+function roundOf(n){ for(var i=0;i<ROUNDS.length;i++){ if(ROUNDS[i].n===n) return ROUNDS[i]; } return null; }
+if(!roundOf(focusRound)) focusRound = 0;
+function roundBounds(n){ return bounds(function(d){ return d.r===n; }); }
+function applyRounds(){
+if(ROUNDS.length && showRounds){ if(!map.hasLayer(roundLayer)) roundLayer.addTo(map); }
+else if(map.hasLayer(roundLayer)) map.removeLayer(roundLayer);
+}
+function applyFocus(){
+var f = (ROUNDS.length && showRounds && focusRound) ? focusRound : 0;
+DATA.forEach(function(d){ if(!d._m) return; if(f && d.r!==f) d._m.setStyle({fillOpacity:0.2, opacity:0.35}); else d._m.setStyle({opacity:1}); });
+Object.keys(roundPolys).forEach(function(k){ var on = !f || +k===f; roundPolys[k].forEach(function(p){ p.setStyle({opacity: on ? 0.9 : 0.25, fillOpacity: on ? (f ? 0.13 : 0.08) : 0.02}); }); });
+Object.keys(roundBadges).forEach(function(k){ roundBadges[k].forEach(function(b){ var el = b.getElement ? b.getElement() : null, inner = el ? el.querySelector(".rbadge") : null; if(inner){ inner.classList.toggle("focus", +k===f); inner.style.opacity = (!f || +k===f) ? "1" : "0.55"; } }); });
+var rs = document.getElementById("remRound");
+if(f){ document.getElementById("remN").textContent = DATA.filter(function(d){ return d.r===f && activeGroups.has(d.grp) && !done.has(d.bnr); }).length; if(rs) rs.textContent = " i runde "+f; }
+else if(rs) rs.textContent = "";
+}
+var refresh0 = refresh;
+refresh = function(){ refresh0(); applyFocus(); };
+function setFocus(n){
+focusRound = n; if(tipTimer){ clearTimeout(tipTimer); tipTimer = null; } try{ localStorage.setItem(RUNDER_KEY+"_fokus", String(n)); }catch(e){}
+refresh();
+if(n){ var r = roundOf(n), bb = roundBounds(n); if(bb) fitB(bb); toast("Runde "+n+" valgt: "+r.s+" HP/HC/Vula"+(r.m ? " + "+r.m+" kun mobil" : "")+". Trykk nummeret igjen for å se alle runder."); }
+else { var ab = bounds(function(d){ return !!d.r; }); if(ab) fitB(ab); toast("Alle runder vises."); }
+}
+if(ROUNDS.length){
+map.createPane("rounds"); map.getPane("rounds").style.zIndex = 350;
+ROUNDS.forEach(function(r){
+r.h.forEach(function(poly){ var p = L.polygon(poly, {pane:"rounds", color:r.c, weight:3, opacity:0.9, fillColor:r.c, fillOpacity:0.08, interactive:false}).addTo(roundLayer); (roundPolys[r.n] = roundPolys[r.n] || []).push(p); });
+r.b.forEach(function(pt){
+var bm = L.marker(pt, {icon:L.divIcon({className:"rbadge-icon", html:'<div class="rbadge" style="background:'+r.c+'">'+r.n+'</div>', iconSize:[28,28], iconAnchor:[14,31]}), keyboard:false, zIndexOffset:500, title:"Runde "+r.n});
+bm.on("click", function(){ setFocus(focusRound===r.n ? 0 : r.n); });
+bm.addTo(roundLayer); (roundBadges[r.n] = roundBadges[r.n] || []).push(bm);
+});
+});
+document.getElementById("roundsToggle").hidden = false;
+var rcb = document.getElementById("showrounds"); rcb.checked = showRounds;
+rcb.addEventListener("change", function(e){ showRounds = e.target.checked; try{ localStorage.setItem(RUNDER_KEY, showRounds ? "1" : "0"); }catch(err){} applyRounds(); refresh(); });
+}
+applyRounds();
+if(ROUNDS.length && showRounds){
+var seen = false; try{ seen = localStorage.getItem(RUNDER_KEY+"_tips")==="1"; localStorage.setItem(RUNDER_KEY+"_tips","1"); }catch(e){}
+if(!seen) tipTimer = setTimeout(function(){ tipTimer = null; toast("Én runde per salgsdag. Trykk et rundenummer for å velge dagens runde."); }, 1500);
+}
+var all = (ROUNDS.length && showRounds && focusRound ? roundBounds(focusRound) : null) || (ROUNDS.length ? bounds(function(d){ return !!d.r; }) : null) || bounds(function(){ return true; });
+if(all) fitB(all);
+refresh();
+layoutStacks(); setTimeout(layoutStacks, 300);
+fitTopbar(); window.addEventListener("load", fitTopbar); setTimeout(fitTopbar, 400);
+</script>
+</body>
+</html>
